@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InitData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">inside_payment.init</a> &gt; <span class="el_source">InitData.java</span></div><h1>InitData.java</h1><pre class="source lang-java linenums">package inside_payment.init;
+
+import inside_payment.entity.*;
+import inside_payment.repository.AddMoneyRepository;
+import inside_payment.repository.PaymentRepository;
+import inside_payment.service.InsidePaymentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author fdse
+ */
+@Component
+<span class="fc" id="L15">public class InitData implements CommandLineRunner {</span>
+    @Autowired
+    InsidePaymentService service;
+
+    @Autowired
+    PaymentRepository paymentRepository;
+
+    @Autowired
+    AddMoneyRepository addMoneyRepository;
+
+    @Override
+    public void run(String... args) throws Exception{
+<span class="fc" id="L27">        AccountInfo info1 = new AccountInfo();</span>
+<span class="fc" id="L28">        info1.setUserId(&quot;4d2a46c7-71cb-4cf1-b5bb-b68406d9da6f&quot;);</span>
+<span class="fc" id="L29">        info1.setMoney(&quot;10000&quot;);</span>
+<span class="fc" id="L30">        service.createAccount(info1,null);</span>
+
+<span class="fc" id="L32">        Payment payment = new Payment();</span>
+<span class="fc" id="L33">        payment.setId(&quot;5ad7750ba68b49c0a8c035276b321701&quot;);</span>
+<span class="fc" id="L34">        payment.setOrderId(&quot;5ad7750b-a68b-49c0-a8c0-32776b067702&quot;);</span>
+<span class="fc" id="L35">        payment.setPrice(&quot;100.0&quot;);</span>
+<span class="fc" id="L36">        payment.setUserId(&quot;4d2a46c7-71cb-4cf1-b5bb-b68406d9da6f&quot;);</span>
+<span class="fc" id="L37">        payment.setType(PaymentType.P);</span>
+<span class="fc" id="L38">        service.initPayment(payment,null);</span>
+<span class="fc" id="L39">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

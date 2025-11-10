@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">security.controller</a> &gt; <span class="el_source">SecurityController.java</span></div><h1>SecurityController.java</h1><pre class="source lang-java linenums">package security.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+import security.entity.*;
+import security.service.SecurityService;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/securityservice&quot;)
+<span class="fc" id="L19">public class SecurityController {</span>
+
+    @Autowired
+    private SecurityService securityService;
+
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityController.class);</span>
+
+    @GetMapping(value = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L28">        return &quot;welcome to [Security Service]&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/securityConfigs&quot;)
+    public HttpEntity findAllSecurityConfig(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L34">        SecurityController.LOGGER.info(&quot;[findAllSecurityConfig][Find All]&quot;);</span>
+<span class="nc" id="L35">        return ok(securityService.findAllSecurityConfig(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/securityConfigs&quot;)
+    public HttpEntity create(@RequestBody SecurityConfig info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L41">        SecurityController.LOGGER.info(&quot;[addNewSecurityConfig][Create][SecurityConfig Name: {}]&quot;, info.getName());</span>
+<span class="nc" id="L42">        return ok(securityService.addNewSecurityConfig(info, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/securityConfigs&quot;)
+    public HttpEntity update(@RequestBody SecurityConfig info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L48">        SecurityController.LOGGER.info(&quot;[modifySecurityConfig][Update][SecurityConfig Name: {}]&quot;, info.getName());</span>
+<span class="nc" id="L49">        return ok(securityService.modifySecurityConfig(info, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/securityConfigs/{id}&quot;)
+    public HttpEntity delete(@PathVariable String id, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L55">        SecurityController.LOGGER.info(&quot;[deleteSecurityConfig][Delete][SecurityConfig Id: {}]&quot;, id);</span>
+<span class="nc" id="L56">        return ok(securityService.deleteSecurityConfig(id, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/securityConfigs/{accountId}&quot;)
+    public HttpEntity check(@PathVariable String accountId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L62">        SecurityController.LOGGER.info(&quot;[check][Check Security][Check Account Id: {}]&quot;, accountId);</span>
+<span class="nc" id="L63">        return ok(securityService.check(accountId, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

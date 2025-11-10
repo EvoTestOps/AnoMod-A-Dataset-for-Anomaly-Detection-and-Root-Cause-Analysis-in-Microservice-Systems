@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StationFoodController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">food.controller</a> &gt; <span class="el_source">StationFoodController.java</span></div><h1>StationFoodController.java</h1><pre class="source lang-java linenums">package food.controller;
+
+import food.service.StationFoodService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+@RestController
+@RequestMapping(&quot;/api/v1/stationfoodservice&quot;)
+<span class="fc" id="L17">public class StationFoodController {</span>
+
+    @Autowired
+    StationFoodService stationFoodService;
+
+<span class="fc" id="L22">    private static final Logger LOGGER = LoggerFactory.getLogger(StationFoodController.class);</span>
+
+    @GetMapping(path = &quot;/stationfoodstores/welcome&quot;)
+    public String home() {
+<span class="fc" id="L26">        return &quot;Welcome to [ Food store Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(&quot;/stationfoodstores&quot;)
+    public HttpEntity getAllFoodStores(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L32">        StationFoodController.LOGGER.info(&quot;[Food Map Service][Get All FoodStores]&quot;);</span>
+<span class="fc" id="L33">        return ok(stationFoodService.listFoodStores(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(&quot;/stationfoodstores/{stationId}&quot;)
+    public HttpEntity getFoodStoresOfStation(@PathVariable String stationName, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L39">        StationFoodController.LOGGER.info(&quot;[Food Map Service][Get FoodStores By StationName]&quot;);</span>
+<span class="nc" id="L40">        return ok(stationFoodService.listFoodStoresByStationName(stationName, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(&quot;/stationfoodstores&quot;)
+    public HttpEntity getFoodStoresByStationNames(@RequestBody List&lt;String&gt; stationNameList) {
+<span class="fc" id="L46">        StationFoodController.LOGGER.info(&quot;[Food Map Service][Get FoodStores By StationNames]&quot;);</span>
+<span class="fc" id="L47">        return ok(stationFoodService.getFoodStoresByStationNames(stationNameList));</span>
+    }
+    @GetMapping(&quot;/stationfoodstores/bystoreid/{stationFoodStoreId}&quot;)
+    public HttpEntity getFoodListByStationFoodStoreId(@PathVariable String stationFoodStoreId, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L51">        StationFoodController.LOGGER.info(&quot;[Food Map Service][Get Foodlist By stationFoodStoreId]&quot;);</span>
+<span class="fc" id="L52">        return ok(stationFoodService.getStaionFoodStoreById(stationFoodStoreId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

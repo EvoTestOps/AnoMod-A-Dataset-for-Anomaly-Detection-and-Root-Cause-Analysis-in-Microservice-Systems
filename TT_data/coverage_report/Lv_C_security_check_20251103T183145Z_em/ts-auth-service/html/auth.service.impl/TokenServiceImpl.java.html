@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TokenServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">auth.service.impl</a> &gt; <span class="el_source">TokenServiceImpl.java</span></div><h1>TokenServiceImpl.java</h1><pre class="source lang-java linenums">package auth.service.impl;
+
+import auth.constant.InfoConstant;
+import auth.dto.BasicAuthDto;
+import auth.dto.TokenDto;
+import auth.entity.User;
+import auth.exception.UserOperationException;
+import auth.repository.UserRepository;
+import auth.security.jwt.JWTProvider;
+import auth.service.TokenService;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+
+import java.text.MessageFormat;
+import java.util.List;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L36">public class TokenServiceImpl implements TokenService {</span>
+<span class="fc" id="L37">    private static final Logger LOGGER = LoggerFactory.getLogger(TokenServiceImpl.class);</span>
+
+    @Autowired
+    private JWTProvider jwtProvider;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L55">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+    @Override
+    public Response getToken(BasicAuthDto dto, HttpHeaders headers) throws UserOperationException {
+<span class="nc" id="L60">        String username = dto.getUsername();</span>
+<span class="nc" id="L61">        String password = dto.getPassword();</span>
+<span class="nc" id="L62">        String verifyCode = dto.getVerificationCode();</span>
+//        LOGGER.info(&quot;LOGIN USER :&quot; + username + &quot; __ &quot; + password + &quot; __ &quot; + verifyCode);
+<span class="nc" id="L64">        String verification_code_service_url = getServiceUrl(&quot;ts-verification-code-service&quot;);</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if (!StringUtils.isEmpty(verifyCode)) {</span>
+<span class="nc" id="L66">            HttpEntity requestEntity = new HttpEntity(headers);</span>
+<span class="nc" id="L67">            ResponseEntity&lt;Boolean&gt; re = restTemplate.exchange(</span>
+                     verification_code_service_url + &quot;/api/v1/verifycode/verify/&quot; + verifyCode,
+                    HttpMethod.GET,
+                    requestEntity,
+                    Boolean.class);
+<span class="nc" id="L72">            boolean id = re.getBody();</span>
+
+            // failed code
+<span class="nc bnc" id="L75" title="All 2 branches missed.">            if (!id) {</span>
+<span class="nc" id="L76">                LOGGER.info(&quot;[getToken][Verification failed][userName: {}]&quot;, username);</span>
+<span class="nc" id="L77">                return new Response&lt;&gt;(0, &quot;Verification failed.&quot;, null);</span>
+            }
+        }
+
+        // verify username and password
+<span class="nc" id="L82">        UsernamePasswordAuthenticationToken upat = new UsernamePasswordAuthenticationToken(username, password);</span>
+        try {
+<span class="nc" id="L84">            authenticationManager.authenticate(upat);</span>
+<span class="nc" id="L85">        } catch (AuthenticationException e) {</span>
+<span class="nc" id="L86">            LOGGER.warn(&quot;[getToken][Incorrect username or password][username: {}, password: {}]&quot;, username, password);</span>
+<span class="nc" id="L87">            return new Response&lt;&gt;(0, &quot;Incorrect username or password.&quot;, null);</span>
+<span class="nc" id="L88">        }</span>
+
+<span class="nc" id="L90">        User user = userRepository.findByUsername(username)</span>
+<span class="nc" id="L91">                .orElseThrow(() -&gt; new UserOperationException(MessageFormat.format(</span>
+                        InfoConstant.USER_NAME_NOT_FOUND_1, username
+                )));
+<span class="nc" id="L94">        String token = jwtProvider.createToken(user);</span>
+<span class="nc" id="L95">        LOGGER.info(&quot;[getToken][success][USER TOKEN: {} USER ID: {}]&quot;, token, user.getUserId());</span>
+<span class="nc" id="L96">        return new Response&lt;&gt;(1, &quot;login success&quot;, new TokenDto(user.getUserId(), username, token));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">notification.controller</a> &gt; <span class="el_source">NotificationController.java</span></div><h1>NotificationController.java</h1><pre class="source lang-java linenums">package notification.controller;
+
+import notification.entity.NotifyInfo;
+import notification.mq.RabbitSend;
+import notification.service.NotificationService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * @author Wenvi
+ * @date 2017/6/15
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/notifyservice&quot;)
+<span class="fc" id="L17">public class NotificationController {</span>
+
+    @Autowired
+    NotificationService service;
+
+    @Autowired
+    RabbitSend sender;
+
+    @Value(&quot;${test_send_mail_user}&quot;)
+    String test_mail_user;
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="fc" id="L30">        return &quot;Welcome to [ Notification Service ] !&quot;;</span>
+    }
+
+    @GetMapping(&quot;/test_send_mq&quot;)
+    public boolean test_send() {
+<span class="fc" id="L35">        sender.send(&quot;test&quot;);</span>
+<span class="fc" id="L36">        return true;</span>
+    }
+
+    @GetMapping(&quot;/test_send_mail&quot;)
+    public boolean test_send_mail() {
+<span class="fc" id="L41">        NotifyInfo notifyInfo = new NotifyInfo();</span>
+<span class="fc" id="L42">        notifyInfo.setDate(&quot;Wed Jul 21 09:49:44 CST 2021&quot;);</span>
+<span class="fc" id="L43">        notifyInfo.setEmail(test_mail_user);</span>
+<span class="fc" id="L44">        notifyInfo.setEndPlace(&quot;Test&quot;);</span>
+<span class="fc" id="L45">        notifyInfo.setStartPlace(&quot;Test&quot;);</span>
+<span class="fc" id="L46">        notifyInfo.setOrderNumber(&quot;111-111-111&quot;);</span>
+<span class="fc" id="L47">        notifyInfo.setPrice(&quot;100&quot;);</span>
+<span class="fc" id="L48">        notifyInfo.setSeatClass(&quot;1&quot;);</span>
+<span class="fc" id="L49">        notifyInfo.setSeatNumber(&quot;1102&quot;);</span>
+<span class="fc" id="L50">        notifyInfo.setStartTime(&quot;Sat May 04 07:00:00 CST 2013&quot;);</span>
+<span class="fc" id="L51">        notifyInfo.setUsername(&quot;h10g&quot;);</span>
+
+<span class="fc" id="L53">        service.preserveSuccess(notifyInfo, null);</span>
+<span class="fc" id="L54">        return true;</span>
+    }
+
+    @PostMapping(value = &quot;/notification/preserve_success&quot;)
+    public boolean preserve_success(@RequestBody NotifyInfo info, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L59">        return service.preserveSuccess(info, headers);</span>
+    }
+
+    @PostMapping(value = &quot;/notification/order_create_success&quot;)
+    public boolean order_create_success(@RequestBody NotifyInfo info, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L64">        return service.orderCreateSuccess(info, headers);</span>
+    }
+
+    @PostMapping(value = &quot;/notification/order_changed_success&quot;)
+    public boolean order_changed_success(@RequestBody NotifyInfo info, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L69">        return service.orderChangedSuccess(info, headers);</span>
+    }
+
+    @PostMapping(value = &quot;/notification/order_cancel_success&quot;)
+    public boolean order_cancel_success(@RequestBody NotifyInfo info, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L74">        return service.orderCancelSuccess(info, headers);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

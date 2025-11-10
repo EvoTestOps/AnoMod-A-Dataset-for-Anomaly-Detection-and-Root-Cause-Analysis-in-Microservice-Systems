@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminBasicInfoController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">adminbasic.controller</a> &gt; <span class="el_source">AdminBasicInfoController.java</span></div><h1>AdminBasicInfoController.java</h1><pre class="source lang-java linenums">package adminbasic.controller;
+
+import adminbasic.entity.*;
+import adminbasic.service.AdminBasicInfoService;
+import edu.fudan.common.entity.Config;
+import edu.fudan.common.entity.Contacts;
+import edu.fudan.common.entity.Station;
+import edu.fudan.common.entity.TrainType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/adminbasicservice&quot;)
+<span class="fc" id="L23">public class AdminBasicInfoController {</span>
+
+    @Autowired
+    AdminBasicInfoService adminBasicInfoService;
+<span class="fc" id="L27">    private static final Logger LOGGER = LoggerFactory.getLogger(AdminBasicInfoController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L31">        return &quot;Welcome to [ AdminBasicInfo Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/adminbasic/contacts&quot;)
+    public HttpEntity getAllContacts(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L37">        AdminBasicInfoController.LOGGER.info(&quot;[getAllContacts][Find All Contacts by admin][getAllContacts] &quot;);</span>
+<span class="nc" id="L38">        return ok(adminBasicInfoService.getAllContacts(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/adminbasic/contacts/{contactsId}&quot;)
+    public HttpEntity deleteContacts(@PathVariable String contactsId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L44">        AdminBasicInfoController.LOGGER.info(&quot;[deleteContacts][Delete Contacts by admin][contactsId: {}]&quot;, contactsId);</span>
+<span class="nc" id="L45">        return ok(adminBasicInfoService.deleteContact(contactsId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/adminbasic/contacts&quot;)
+    public HttpEntity modifyContacts(@RequestBody Contacts mci, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L51">        AdminBasicInfoController.LOGGER.info(&quot;[modifyContacts][Modify Contacts by admin][Contacts name:{}]&quot;, mci.getName());</span>
+<span class="nc" id="L52">        return ok(adminBasicInfoService.modifyContact(mci, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/adminbasic/contacts&quot;)
+    public HttpEntity addContacts(@RequestBody Contacts c, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L58">        AdminBasicInfoController.LOGGER.info(&quot;[addContacts][Modify Contacts by admin][Contacts name: {}]&quot;, c.getName());</span>
+<span class="nc" id="L59">        return ok(adminBasicInfoService.addContact(c, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/adminbasic/stations&quot;)
+    public HttpEntity getAllStations(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L65">        AdminBasicInfoController.LOGGER.info(&quot;[getAllStations][Find All Station by admin][getAllStations]&quot;);</span>
+<span class="nc" id="L66">        return ok(adminBasicInfoService.getAllStations(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/adminbasic/stations/{id}&quot;)
+    public HttpEntity deleteStation(@PathVariable String id, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L72">        AdminBasicInfoController.LOGGER.info(&quot;[deleteStation][Delete Station by admin][Station id: {}]&quot;, id);</span>
+<span class="nc" id="L73">        return ok(adminBasicInfoService.deleteStation(id, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/adminbasic/stations&quot;)
+    public HttpEntity modifyStation(@RequestBody Station s, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L79">        AdminBasicInfoController.LOGGER.info(&quot;[modifyStation][Modify Station by admin][Station id: {}]&quot;, s.getId());</span>
+<span class="nc" id="L80">        return ok(adminBasicInfoService.modifyStation(s, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/adminbasic/stations&quot;)
+    public HttpEntity addStation(@RequestBody Station s, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L86">        AdminBasicInfoController.LOGGER.info(&quot;[addStation][Add Station by admin][Station id: {}]&quot;, s.getId());</span>
+<span class="nc" id="L87">        return ok(adminBasicInfoService.addStation(s, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/adminbasic/trains&quot;)
+    public HttpEntity getAllTrains(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L93">        AdminBasicInfoController.LOGGER.info(&quot;[getAllTrains][Find All Train by admin][getAllStations]&quot;);</span>
+<span class="nc" id="L94">        return ok(adminBasicInfoService.getAllTrains(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/adminbasic/trains/{id}&quot;)
+    public HttpEntity deleteTrain(@PathVariable String id, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L100">        AdminBasicInfoController.LOGGER.info(&quot;[deleteTrain][Delete Train by admin][train id: {}]&quot;, id);</span>
+<span class="nc" id="L101">        return ok(adminBasicInfoService.deleteTrain(id, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/adminbasic/trains&quot;)
+    public HttpEntity modifyTrain(@RequestBody TrainType t, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L107">        AdminBasicInfoController.LOGGER.info(&quot;[modifyTrain][Modify Train by admin][TrainType id: {}]&quot;, t.getId());</span>
+<span class="nc" id="L108">        return ok(adminBasicInfoService.modifyTrain(t, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/adminbasic/trains&quot;)
+    public HttpEntity addTrain(@RequestBody TrainType t, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L114">        AdminBasicInfoController.LOGGER.info(&quot;[addTrain][Add Train by admin][TrainType id: {}]&quot;, t.getId());</span>
+<span class="nc" id="L115">        return ok(adminBasicInfoService.addTrain(t, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/adminbasic/configs&quot;)
+    public HttpEntity getAllConfigs(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L121">        AdminBasicInfoController.LOGGER.info(&quot;[getAllConfigs][Find All Config by admin][getAllConfigs]&quot;);</span>
+<span class="nc" id="L122">        return ok(adminBasicInfoService.getAllConfigs(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/adminbasic/configs/{name}&quot;)
+    public HttpEntity deleteConfig(@PathVariable String name, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L128">        AdminBasicInfoController.LOGGER.info(&quot;[deleteConfig][Delete Config by admin][Config name: {}]&quot;, name);</span>
+<span class="nc" id="L129">        return ok(adminBasicInfoService.deleteConfig(name, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/adminbasic/configs&quot;)
+    public HttpEntity modifyConfig(@RequestBody Config c, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L135">        AdminBasicInfoController.LOGGER.info(&quot;[modifyConfig][Modify Config by admin][Config name: {}]&quot;, c.getName());</span>
+<span class="nc" id="L136">        return ok(adminBasicInfoService.modifyConfig(c, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/adminbasic/configs&quot;)
+    public HttpEntity addConfig(@RequestBody Config c, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L142">        AdminBasicInfoController.LOGGER.info(&quot;[addConfig][Add Config by admin][Config name: {}]&quot;, c.getName());</span>
+<span class="nc" id="L143">        return ok(adminBasicInfoService.addConfig(c, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/adminbasic/prices&quot;)
+    public HttpEntity getAllPrices(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L149">        AdminBasicInfoController.LOGGER.info(&quot;[getAllPrices][Find All Price by admin][getAllPrices]&quot;);</span>
+<span class="nc" id="L150">        return ok(adminBasicInfoService.getAllPrices(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/adminbasic/prices/{pricesId}&quot;)
+    public HttpEntity deletePrice(@PathVariable String pricesId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L156">        AdminBasicInfoController.LOGGER.info(&quot;[deletePrice][Delete Price by admin][PriceInfo id: {}]&quot;, pricesId);</span>
+<span class="nc" id="L157">        return ok(adminBasicInfoService.deletePrice(pricesId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/adminbasic/prices&quot;)
+    public HttpEntity modifyPrice(@RequestBody PriceInfo pi, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L163">        AdminBasicInfoController.LOGGER.info(&quot;[modifyPrice][Modify Price by admin][PriceInfo id: {}]&quot;, pi.getId());</span>
+<span class="nc" id="L164">        return ok(adminBasicInfoService.modifyPrice(pi, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/adminbasic/prices&quot;)
+    public HttpEntity addPrice(@RequestBody PriceInfo pi, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L170">        AdminBasicInfoController.LOGGER.info(&quot;[addPrice][Add Price by admin[PriceInfo id: {}]&quot;, pi.getId());</span>
+<span class="nc" id="L171">        return ok(adminBasicInfoService.addPrice(pi, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

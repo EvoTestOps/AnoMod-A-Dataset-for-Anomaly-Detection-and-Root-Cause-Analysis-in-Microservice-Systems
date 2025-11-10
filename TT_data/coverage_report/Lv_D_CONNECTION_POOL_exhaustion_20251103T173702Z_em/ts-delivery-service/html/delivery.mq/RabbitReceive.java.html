@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RabbitReceive.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">delivery.mq</a> &gt; <span class="el_source">RabbitReceive.java</span></div><h1>RabbitReceive.java</h1><pre class="source lang-java linenums">package delivery.mq;
+
+import delivery.config.Queues;
+import delivery.entity.Delivery;
+import delivery.repository.DeliveryRepository;
+import edu.fudan.common.util.JsonUtils;
+import edu.fudan.common.util.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.UUID;
+
+
+@Component
+<span class="fc" id="L24">public class RabbitReceive {</span>
+
+<span class="fc" id="L26">    private static final Logger logger = LoggerFactory.getLogger(RabbitReceive.class);</span>
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private DeliveryRepository deliveryRepository;
+
+
+    @RabbitListener(queues = Queues.queueName)
+    public void process(String payload) {
+<span class="fc" id="L37">        Delivery delivery = JsonUtils.json2Object(payload, Delivery.class);</span>
+
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if (delivery == null) {</span>
+<span class="nc" id="L40">            logger.error(&quot;[process][json2Object][Receive delivery object is null error]&quot;);</span>
+<span class="nc" id="L41">            return;</span>
+        }
+<span class="fc" id="L43">        logger.info(&quot;[process][Receive delivery object][delivery object: {}]&quot; + delivery);</span>
+
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (delivery.getId() == null) {</span>
+<span class="fc" id="L46">            delivery.setId(UUID.randomUUID().toString());</span>
+        }
+
+        try {
+<span class="fc" id="L50">            deliveryRepository.save(delivery);</span>
+<span class="fc" id="L51">            logger.info(&quot;[process][Save delivery object into database success]&quot;);</span>
+<span class="nc" id="L52">        } catch (Exception e) {</span>
+<span class="nc" id="L53">            logger.error(&quot;[process][deliveryRepository.save][Save delivery object into database failed][exception: {}]&quot;, e.toString());</span>
+<span class="fc" id="L54">        }</span>
+<span class="fc" id="L55">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

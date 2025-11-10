@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminOrderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">adminorder.service</a> &gt; <span class="el_source">AdminOrderServiceImpl.java</span></div><h1>AdminOrderServiceImpl.java</h1><pre class="source lang-java linenums">package adminorder.service;
+
+import edu.fudan.common.entity.*;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L26">public class AdminOrderServiceImpl implements AdminOrderService {</span>
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+<span class="fc" id="L32">    private static final Logger LOGGER = LoggerFactory.getLogger(AdminOrderServiceImpl.class);</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L35">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+    @Override
+    public Response getAllOrders(HttpHeaders headers) {
+
+<span class="nc" id="L41">        AdminOrderServiceImpl.LOGGER.info(&quot;[getAllOrders][Get All Orders: Generate Reponse Begin]&quot;);</span>
+        //Get all of the orders
+<span class="nc" id="L43">        ArrayList&lt;Order&gt; orders = new ArrayList&lt;&gt;();</span>
+        //From ts-order-service
+<span class="nc" id="L45">        HttpEntity requestEntity = new HttpEntity(null);</span>
+
+<span class="nc" id="L47">        String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L48">        ResponseEntity&lt;Response&lt;ArrayList&lt;Order&gt;&gt;&gt; re = restTemplate.exchange(</span>
+                order_service_url + &quot;/api/v1/orderservice/order&quot;,
+                HttpMethod.GET,
+                requestEntity,
+<span class="nc" id="L52">                new ParameterizedTypeReference&lt;Response&lt;ArrayList&lt;Order&gt;&gt;&gt;() {</span>
+                });
+<span class="nc" id="L54">        Response&lt;ArrayList&lt;Order&gt;&gt; result = re.getBody();</span>
+
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (result.getStatus() == 1) {</span>
+<span class="nc" id="L57">            AdminOrderServiceImpl.LOGGER.info(&quot;[getAllOrders][Get Orders From ts-order-service successfully!]&quot;);</span>
+<span class="nc" id="L58">            ArrayList&lt;Order&gt; orders1 = result.getData();</span>
+<span class="nc" id="L59">            orders.addAll(orders1);</span>
+<span class="nc" id="L60">        } else {</span>
+<span class="nc" id="L61">            AdminOrderServiceImpl.LOGGER.error(&quot;[getAllOrders][receive response][Get Orders From ts-order-service fail!]&quot;);</span>
+        }
+        //From ts-order-other-service
+<span class="nc" id="L64">        HttpEntity requestEntity2 = new HttpEntity(null);</span>
+<span class="nc" id="L65">        String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc" id="L66">        ResponseEntity&lt;Response&lt;ArrayList&lt;Order&gt;&gt;&gt; re2 = restTemplate.exchange(</span>
+                order_other_service_url + &quot;/api/v1/orderOtherService/orderOther&quot;,
+                HttpMethod.GET,
+                requestEntity2,
+<span class="nc" id="L70">                new ParameterizedTypeReference&lt;Response&lt;ArrayList&lt;Order&gt;&gt;&gt;() {</span>
+                });
+<span class="nc" id="L72">        result = re2.getBody();</span>
+
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (result.getStatus() == 1) {</span>
+<span class="nc" id="L75">            AdminOrderServiceImpl.LOGGER.info(&quot;[getAllOrders][Get Orders From ts-order-other-service successfully!]&quot;);</span>
+<span class="nc" id="L76">            ArrayList&lt;Order&gt; orders1 = (ArrayList&lt;Order&gt;) result.getData();</span>
+<span class="nc" id="L77">            orders.addAll(orders1);</span>
+<span class="nc" id="L78">        } else {</span>
+<span class="nc" id="L79">            AdminOrderServiceImpl.LOGGER.error(&quot;[getAllOrders][receive response][Get Orders From ts-order-other-service fail!]&quot;);</span>
+        }
+        //Return orders
+<span class="nc" id="L82">        return new Response&lt;&gt;(1, &quot;Get the orders successfully!&quot;, orders);</span>
+
+    }
+
+    @Override
+    public Response deleteOrder(String orderId, String trainNumber, HttpHeaders headers) {
+        Response deleteOrderResult;
+<span class="nc bnc" id="L89" title="All 4 branches missed.">        if (trainNumber.startsWith(&quot;G&quot;) || trainNumber.startsWith(&quot;D&quot;)) {</span>
+<span class="nc" id="L90">            AdminOrderServiceImpl.LOGGER.info(&quot;[deleteOrder][Delete Order][orderId: {}, trainNumber: {}]&quot;, orderId, trainNumber);</span>
+<span class="nc" id="L91">            HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="nc" id="L92">            String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L93">            ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                     order_service_url + &quot;/api/v1/orderservice/order/&quot; + orderId,
+                    HttpMethod.DELETE,
+                    requestEntity,
+                    Response.class);
+<span class="nc" id="L98">            deleteOrderResult = re.getBody();</span>
+
+<span class="nc" id="L100">        } else {</span>
+<span class="nc" id="L101">            AdminOrderServiceImpl.LOGGER.info(&quot;[deleteOrder][Delete Order Other][trainNumber doesn't starts With G or D]&quot;);</span>
+<span class="nc" id="L102">            HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="nc" id="L103">            String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc" id="L104">            ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                    order_other_service_url + &quot;/api/v1/orderOtherService/orderOther/&quot; + orderId,
+                    HttpMethod.DELETE,
+                    requestEntity,
+                    Response.class);
+<span class="nc" id="L109">            deleteOrderResult = re.getBody();</span>
+
+        }
+<span class="nc" id="L112">        return deleteOrderResult;</span>
+
+    }
+
+    @Override
+    public Response updateOrder(Order request, HttpHeaders headers) {
+
+        Response updateOrderResult;
+<span class="nc" id="L120">        LOGGER.info(&quot;[updateOrder][UPDATE ORDER INFO][request info: {}]&quot;, request.toString());</span>
+<span class="nc bnc" id="L121" title="All 4 branches missed.">        if (request.getTrainNumber().startsWith(&quot;G&quot;) || request.getTrainNumber().startsWith(&quot;D&quot;)) {</span>
+
+<span class="nc" id="L123">            AdminOrderServiceImpl.LOGGER.info(&quot;[updateOrder][Update Order][trainNumber starts With G or D]&quot;);</span>
+<span class="nc" id="L124">            HttpEntity requestEntity = new HttpEntity(request, headers);</span>
+<span class="nc" id="L125">            String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L126">            ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                    order_service_url + &quot;/api/v1/orderservice/order/admin&quot;,
+                    HttpMethod.PUT,
+                    requestEntity,
+                    Response.class);
+<span class="nc" id="L131">            updateOrderResult = re.getBody();</span>
+
+<span class="nc" id="L133">        } else {</span>
+<span class="nc" id="L134">            AdminOrderServiceImpl.LOGGER.info(&quot;[updateOrder][Add New Order Other][trainNumber doesn't starts With G or D]&quot;);</span>
+<span class="nc" id="L135">            HttpEntity requestEntity = new HttpEntity(request, headers);</span>
+<span class="nc" id="L136">            String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc" id="L137">            ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                    order_other_service_url + &quot;/api/v1/orderOtherService/orderOther/admin&quot;,
+                    HttpMethod.PUT,
+                    requestEntity,
+                    Response.class);
+<span class="nc" id="L142">            updateOrderResult = re.getBody();</span>
+
+        }
+<span class="nc" id="L145">        return updateOrderResult;</span>
+    }
+
+    @Override
+    public Response addOrder(Order request, HttpHeaders headers) {
+
+        Response addOrderResult;
+<span class="nc" id="L152">        LOGGER.info(&quot;[addOrder][ADD ORDER][request info: {}]&quot;, request.toString());</span>
+<span class="nc bnc" id="L153" title="All 4 branches missed.">        if (request.getTrainNumber().startsWith(&quot;G&quot;) || request.getTrainNumber().startsWith(&quot;D&quot;)) {</span>
+<span class="nc" id="L154">            AdminOrderServiceImpl.LOGGER.info(&quot;[addOrder][Add New Order][trainNumber starts With G or D]&quot;);</span>
+<span class="nc" id="L155">            HttpEntity requestEntity = new HttpEntity(request, headers);</span>
+<span class="nc" id="L156">            String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L157">            ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                    order_service_url + &quot;/api/v1/orderservice/order/admin&quot;,
+                    HttpMethod.POST,
+                    requestEntity,
+                    Response.class);
+<span class="nc" id="L162">            addOrderResult = re.getBody();</span>
+
+<span class="nc" id="L164">        } else {</span>
+<span class="nc" id="L165">            AdminOrderServiceImpl.LOGGER.info(&quot;[addOrder][Add New Order Other][trainNumber doesn't starts With G or D]&quot;);</span>
+<span class="nc" id="L166">            HttpEntity requestEntity = new HttpEntity(request, headers);</span>
+<span class="nc" id="L167">            String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc" id="L168">            ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                     order_other_service_url + &quot;/api/v1/orderOtherService/orderOther/admin&quot;,
+                    HttpMethod.POST,
+                    requestEntity,
+                    Response.class);
+<span class="nc" id="L173">            addOrderResult = re.getBody();</span>
+
+        }
+<span class="nc" id="L176">        return addOrderResult;</span>
+
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

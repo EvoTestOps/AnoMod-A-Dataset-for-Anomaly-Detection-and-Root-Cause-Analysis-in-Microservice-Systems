@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RouteServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">route.service</a> &gt; <span class="el_source">RouteServiceImpl.java</span></div><h1>RouteServiceImpl.java</h1><pre class="source lang-java linenums">package route.service;
+
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import route.entity.Route;
+import route.entity.RouteInfo;
+import route.repository.RouteRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L23">public class RouteServiceImpl implements RouteService {</span>
+
+    @Autowired
+    private RouteRepository routeRepository;
+<span class="fc" id="L27">    private static final Logger LOGGER = LoggerFactory.getLogger(RouteServiceImpl.class);</span>
+
+<span class="fc" id="L29">    String success = &quot;Success&quot;;</span>
+
+    @Override
+    public Response createAndModify(RouteInfo info, HttpHeaders headers) {
+<span class="fc" id="L33">        RouteServiceImpl.LOGGER.info(&quot;[createAndModify][Create and modify start and end][Start: {} End: {}]&quot;, info.getStartStation(), info.getEndStation());</span>
+
+<span class="fc" id="L35">        String[] stations = info.getStationList().split(&quot;,&quot;);</span>
+<span class="fc" id="L36">        String[] distances = info.getDistanceList().split(&quot;,&quot;);</span>
+<span class="fc" id="L37">        List&lt;String&gt; stationList = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L38">        List&lt;Integer&gt; distanceList = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if (stations.length != distances.length) {</span>
+<span class="nc" id="L40">            RouteServiceImpl.LOGGER.error(&quot;[createAndModify][Create and modify error][Station number not equal to distance number][RouteId: {}]&quot;,info.getId());</span>
+<span class="nc" id="L41">            return new Response&lt;&gt;(0, &quot;Station Number Not Equal To Distance Number&quot;, null);</span>
+        }
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        for (int i = 0; i &lt; stations.length; i++) {</span>
+<span class="fc" id="L44">            stationList.add(stations[i]);</span>
+<span class="fc" id="L45">            distanceList.add(Integer.parseInt(distances[i]));</span>
+        }
+<span class="fc" id="L47">        int maxIdArrayLen = 32;</span>
+<span class="fc" id="L48">        Route route = new Route();</span>
+<span class="pc bpc" id="L49" title="2 of 4 branches missed.">        if (info.getId() == null || info.getId().length() &lt; maxIdArrayLen) {</span>
+<span class="nc" id="L50">            route.setId(UUID.randomUUID().toString());</span>
+        }else{
+<span class="fc" id="L52">            Optional&lt;Route&gt; routeOld = routeRepository.findById(info.getId());</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">            if(routeOld.isPresent()) {</span>
+<span class="fc" id="L54">                route = routeOld.get();</span>
+            } else {
+<span class="nc" id="L56">                route.setId(info.getId());</span>
+            }
+        }
+<span class="fc" id="L59">        route.setStartStation(info.getStartStation());</span>
+<span class="fc" id="L60">        route.setEndStation(info.getEndStation());</span>
+<span class="fc" id="L61">        route.setStations(stationList);</span>
+<span class="fc" id="L62">        route.setDistances(distanceList);</span>
+<span class="fc" id="L63">        routeRepository.save(route);</span>
+<span class="fc" id="L64">        return new Response&lt;&gt;(1, &quot;Save and Modify success&quot;, route);</span>
+    }
+
+    @Override
+    @Transactional
+    public Response deleteRoute(String routeId, HttpHeaders headers) {
+<span class="fc" id="L70">        routeRepository.removeRouteById(routeId);</span>
+<span class="fc" id="L71">        Optional&lt;Route&gt; route = routeRepository.findById(routeId);</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (!route.isPresent()) {</span>
+<span class="fc" id="L73">            return new Response&lt;&gt;(1, &quot;Delete Success&quot;, routeId);</span>
+        } else {
+<span class="nc" id="L75">            RouteServiceImpl.LOGGER.error(&quot;[deleteRoute][Delete error][Route not found][RouteId: {}]&quot;,routeId);</span>
+<span class="nc" id="L76">            return new Response&lt;&gt;(0, &quot;Delete failed, Reason unKnown with this routeId&quot;, routeId);</span>
+        }
+    }
+
+    @Override
+    public Response getRouteById(String routeId, HttpHeaders headers) {
+<span class="fc" id="L82">        Optional&lt;Route&gt; route = routeRepository.findById(routeId);</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (!route.isPresent()) {</span>
+<span class="fc" id="L84">            RouteServiceImpl.LOGGER.error(&quot;[getRouteById][Find route error][Route not found][RouteId: {}]&quot;,routeId);</span>
+<span class="fc" id="L85">            return new Response&lt;&gt;(0, &quot;No content with the routeId&quot;, null);</span>
+        } else {
+<span class="fc" id="L87">            return new Response&lt;&gt;(1, success, route);</span>
+        }
+
+    }
+
+    @Override
+    public Response getRouteByIds(List&lt;String&gt; routeIds, HttpHeaders headers) {
+<span class="fc" id="L94">        List&lt;Route&gt; routes = routeRepository.findByIds(routeIds);</span>
+<span class="pc bpc" id="L95" title="2 of 4 branches missed.">        if (routes == null || routes.isEmpty()) {</span>
+<span class="fc" id="L96">            RouteServiceImpl.LOGGER.error(&quot;[getRouteById][Find route error][Route not found][RouteIds: {}]&quot;,routeIds);</span>
+<span class="fc" id="L97">            return new Response&lt;&gt;(0, &quot;No content with the routeIds&quot;, null);</span>
+        } else {
+<span class="nc" id="L99">            return new Response&lt;&gt;(1, success, routes);</span>
+        }
+    }
+
+    @Override
+    public Response getRouteByStartAndEnd(String startId, String terminalId, HttpHeaders headers) {
+<span class="fc" id="L105">        ArrayList&lt;Route&gt; routes = routeRepository.findAll();</span>
+<span class="fc" id="L106">        RouteServiceImpl.LOGGER.info(&quot;[getRouteByStartAndEnd][Find All][size:{}]&quot;, routes.size());</span>
+<span class="fc" id="L107">        List&lt;Route&gt; resultList = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        for (Route route : routes) {</span>
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">            if (route.getStations().contains(startId) &amp;&amp;</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">                    route.getStations().contains(terminalId) &amp;&amp;</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">                    route.getStations().indexOf(startId) &lt; route.getStations().indexOf(terminalId)) {</span>
+<span class="nc" id="L112">                resultList.add(route);</span>
+            }
+<span class="fc" id="L114">        }</span>
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">        if (!resultList.isEmpty()) {</span>
+<span class="nc" id="L116">            return new Response&lt;&gt;(1, success, resultList);</span>
+        } else {
+<span class="fc" id="L118">            RouteServiceImpl.LOGGER.warn(&quot;[getRouteByStartAndEnd][Find by start and terminal warn][Routes not found][startId: {},terminalId: {}]&quot;,startId,terminalId);</span>
+<span class="fc" id="L119">            return new Response&lt;&gt;(0, &quot;No routes with the startId and terminalId&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response getAllRoutes(HttpHeaders headers) {
+<span class="fc" id="L125">        ArrayList&lt;Route&gt; routes = routeRepository.findAll();</span>
+<span class="pc bpc" id="L126" title="2 of 4 branches missed.">        if (routes != null &amp;&amp; !routes.isEmpty()) {</span>
+<span class="fc" id="L127">            return new Response&lt;&gt;(1, success, routes);</span>
+        } else {
+<span class="nc" id="L129">            RouteServiceImpl.LOGGER.warn(&quot;[getAllRoutes][Find all routes warn][{}]&quot;,&quot;No Content&quot;);</span>
+<span class="nc" id="L130">            return new Response&lt;&gt;(0, &quot;No Content&quot;, null);</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

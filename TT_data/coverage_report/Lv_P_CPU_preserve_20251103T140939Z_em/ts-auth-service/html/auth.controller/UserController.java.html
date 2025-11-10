@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">auth.controller</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">package auth.controller;
+
+
+import auth.dto.BasicAuthDto;
+import auth.entity.User;
+import auth.exception.UserOperationException;
+import auth.service.TokenService;
+import auth.service.UserService;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/users&quot;)
+<span class="fc" id="L26">public class UserController {</span>
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private TokenService tokenService;
+
+<span class="fc" id="L34">    private static final Logger logger = LoggerFactory.getLogger(UserController.class);</span>
+
+    @GetMapping(&quot;/hello&quot;)
+    public Object getHello() {
+<span class="nc" id="L38">        return &quot;Hello&quot;;</span>
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;Response&gt; getToken(@RequestBody BasicAuthDto dao , @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L43">        logger.info(&quot;Login request of username: {}&quot;, dao.getUsername());</span>
+        try {
+<span class="nc" id="L45">            Response&lt;?&gt; res = tokenService.getToken(dao, headers);</span>
+<span class="nc" id="L46">            return ResponseEntity.ok(res);</span>
+<span class="nc" id="L47">        } catch (UserOperationException e) {</span>
+<span class="nc" id="L48">            logger.error(&quot;[getToken][tokenService.getToken error][UserOperationException, message: {}]&quot;, e.getMessage());</span>
+<span class="nc" id="L49">            return ResponseEntity.ok(new Response&lt;&gt;(0, &quot;get token error&quot;, null));</span>
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity&lt;List&lt;User&gt;&gt; getAllUser(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L55">        logger.info(&quot;[getAllUser][Get all users]&quot;);</span>
+<span class="nc" id="L56">        return ResponseEntity.ok().body(userService.getAllUser(headers));</span>
+    }
+
+    @DeleteMapping(&quot;/{userId}&quot;)
+    public ResponseEntity&lt;Response&gt; deleteUserById(@PathVariable String userId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L61">        logger.info(&quot;[deleteUserById][Delete user][userId: {}]&quot;, userId);</span>
+<span class="nc" id="L62">        return ResponseEntity.ok(userService.deleteByUserId(userId, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

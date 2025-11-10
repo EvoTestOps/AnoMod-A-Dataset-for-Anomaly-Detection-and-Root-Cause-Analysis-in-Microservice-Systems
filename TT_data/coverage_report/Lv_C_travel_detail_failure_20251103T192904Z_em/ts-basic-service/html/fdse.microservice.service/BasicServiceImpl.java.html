@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BasicServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">fdse.microservice.service</a> &gt; <span class="el_source">BasicServiceImpl.java</span></div><h1>BasicServiceImpl.java</h1><pre class="source lang-java linenums">package fdse.microservice.service;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.fudan.common.entity.*;
+import edu.fudan.common.util.JsonUtils;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.*;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L25">public class BasicServiceImpl implements BasicService {</span>
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+<span class="fc" id="L33">    private static final Logger LOGGER = LoggerFactory.getLogger(BasicServiceImpl.class);</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="fc" id="L36">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+    @Override
+    public Response queryForTravel(Travel info, HttpHeaders headers) {
+
+<span class="fc" id="L42">        Response response = new Response&lt;&gt;();</span>
+<span class="fc" id="L43">        TravelResult result = new TravelResult();</span>
+<span class="fc" id="L44">        result.setStatus(true);</span>
+<span class="fc" id="L45">        response.setStatus(1);</span>
+<span class="fc" id="L46">        response.setMsg(&quot;Success&quot;);</span>
+<span class="fc" id="L47">        String start = info.getStartPlace();</span>
+<span class="fc" id="L48">        String end = info.getEndPlace();</span>
+<span class="fc" id="L49">        boolean startingPlaceExist = checkStationExists(start, headers);</span>
+<span class="fc" id="L50">        boolean endPlaceExist = checkStationExists(end, headers);</span>
+<span class="pc bpc" id="L51" title="3 of 4 branches missed.">        if (!startingPlaceExist || !endPlaceExist) {</span>
+<span class="fc" id="L52">            result.setStatus(false);</span>
+<span class="fc" id="L53">            response.setStatus(0);</span>
+<span class="fc" id="L54">            response.setMsg(&quot;Start place or end place not exist!&quot;);</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">            if (!startingPlaceExist)</span>
+<span class="fc" id="L56">                BasicServiceImpl.LOGGER.warn(&quot;[queryForTravel][Start place not exist][start place: {}]&quot;, info.getStartPlace());</span>
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">            if (!endPlaceExist)</span>
+<span class="fc" id="L58">                BasicServiceImpl.LOGGER.warn(&quot;[queryForTravel][End place not exist][end place: {}]&quot;, info.getEndPlace());</span>
+        }
+
+<span class="fc" id="L61">        TrainType trainType = queryTrainTypeByName(info.getTrip().getTrainTypeName(), headers);</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">        if (trainType == null) {</span>
+<span class="fc" id="L63">            BasicServiceImpl.LOGGER.warn(&quot;[queryForTravel][traintype doesn't exist][trainTypeName: {}]&quot;, info.getTrip().getTrainTypeName());</span>
+<span class="fc" id="L64">            result.setStatus(false);</span>
+<span class="fc" id="L65">            response.setStatus(0);</span>
+<span class="fc" id="L66">            response.setMsg(&quot;Train type doesn't exist&quot;);</span>
+<span class="fc" id="L67">            return response;</span>
+        } else {
+<span class="nc" id="L69">            result.setTrainType(trainType);</span>
+        }
+
+<span class="nc" id="L72">        String routeId = info.getTrip().getRouteId();</span>
+<span class="nc" id="L73">        Route route = getRouteByRouteId(routeId, headers);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if(route == null){</span>
+<span class="nc" id="L75">            result.setStatus(false);</span>
+<span class="nc" id="L76">            response.setStatus(0);</span>
+<span class="nc" id="L77">            response.setMsg(&quot;Route doesn't exist&quot;);</span>
+<span class="nc" id="L78">            return response;</span>
+        }
+
+        //Check the route list for this train. Check that the required start and arrival stations are in the list of stops that are not on the route, and check that the location of the start station is before the stop
+        //Trains that meet the above criteria are added to the return list
+<span class="nc" id="L83">        int indexStart = 0;</span>
+<span class="nc" id="L84">        int indexEnd = 0;</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (route.getStations().contains(start) &amp;&amp;</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">                route.getStations().contains(end) &amp;&amp;</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                route.getStations().indexOf(start) &lt; route.getStations().indexOf(end)){</span>
+<span class="nc" id="L88">            indexStart = route.getStations().indexOf(start);</span>
+<span class="nc" id="L89">            indexEnd = route.getStations().indexOf(end);</span>
+<span class="nc" id="L90">            LOGGER.info(&quot;[queryForTravel][query start index and end index][indexStart: {} indexEnd: {}]&quot;, indexStart, indexEnd);</span>
+<span class="nc" id="L91">            LOGGER.info(&quot;[queryForTravel][query stations and distances][stations: {} distances: {}]&quot;, route.getStations(), route.getDistances());</span>
+        }else {
+<span class="nc" id="L93">            result.setStatus(false);</span>
+<span class="nc" id="L94">            response.setStatus(0);</span>
+<span class="nc" id="L95">            response.setMsg(&quot;Station not correct in Route&quot;);</span>
+<span class="nc" id="L96">            return response;</span>
+        }
+<span class="nc" id="L98">        PriceConfig priceConfig = queryPriceConfigByRouteIdAndTrainType(routeId, trainType.getName(), headers);</span>
+<span class="nc" id="L99">        HashMap&lt;String, String&gt; prices = new HashMap&lt;&gt;();</span>
+        try {
+<span class="nc" id="L101">            int distance = 0;</span>
+<span class="nc" id="L102">            distance = route.getDistances().get(indexEnd) - route.getDistances().get(indexStart);</span>
+            /**
+             * We need the price Rate and distance (starting station).
+             */
+<span class="nc" id="L106">            double priceForEconomyClass = distance * priceConfig.getBasicPriceRate();</span>
+<span class="nc" id="L107">            double priceForConfortClass = distance * priceConfig.getFirstClassPriceRate();</span>
+<span class="nc" id="L108">            prices.put(&quot;economyClass&quot;, &quot;&quot; + priceForEconomyClass);</span>
+<span class="nc" id="L109">            prices.put(&quot;confortClass&quot;, &quot;&quot; + priceForConfortClass);</span>
+<span class="nc" id="L110">        }catch (Exception e){</span>
+<span class="nc" id="L111">                prices.put(&quot;economyClass&quot;, &quot;95.0&quot;);</span>
+<span class="nc" id="L112">                prices.put(&quot;confortClass&quot;, &quot;120.0&quot;);</span>
+<span class="nc" id="L113">        }</span>
+<span class="nc" id="L114">        result.setRoute(route);</span>
+<span class="nc" id="L115">        result.setPrices(prices);</span>
+<span class="nc" id="L116">        result.setPercent(1.0);</span>
+<span class="nc" id="L117">        response.setData(result);</span>
+<span class="nc" id="L118">        BasicServiceImpl.LOGGER.info(&quot;[queryForTravel][all done][result: {}]&quot;, result);</span>
+
+<span class="nc" id="L120">        return response;</span>
+    }
+
+    @Override
+    public Response queryForTravels(List&lt;Travel&gt; infos, HttpHeaders headers) {
+<span class="nc" id="L125">        Response response = new Response&lt;&gt;();</span>
+<span class="nc" id="L126">        response.setStatus(1);</span>
+<span class="nc" id="L127">        response.setMsg(&quot;Success&quot;);</span>
+
+<span class="nc" id="L129">        HashMap&lt;String, Travel&gt; tripInfos = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L130">        HashMap&lt;String, List&lt;String&gt;&gt; startTrips = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L131">        HashMap&lt;String, List&lt;String&gt;&gt; endTrips = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L132">        HashMap&lt;String, List&lt;String&gt;&gt; routeTrips = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L133">        HashMap&lt;String, List&lt;String&gt;&gt; typeTrips = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L134">        Set&lt;String&gt; stationNames = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L135">        Set&lt;String&gt; trainTypeNames = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L136">        Set&lt;String&gt; routeIds = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L137">        Set&lt;String&gt; avaTrips = new HashSet&lt;&gt;();</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        for(Travel info: infos){</span>
+<span class="nc" id="L139">            stationNames.add(info.getStartPlace());</span>
+<span class="nc" id="L140">            stationNames.add(info.getEndPlace());</span>
+<span class="nc" id="L141">            trainTypeNames.add(info.getTrip().getTrainTypeName());</span>
+<span class="nc" id="L142">            routeIds.add(info.getTrip().getRouteId());</span>
+
+<span class="nc" id="L144">            String tripNumber = info.getTrip().getTripId().toString();</span>
+<span class="nc" id="L145">            avaTrips.add(tripNumber);</span>
+<span class="nc" id="L146">            tripInfos.put(tripNumber, info);</span>
+
+<span class="nc" id="L148">            String start = info.getStartPlace();</span>
+<span class="nc" id="L149">            List&lt;String&gt; trips = startTrips.get(start);</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">            if(trips == null) {</span>
+<span class="nc" id="L151">               trips = new ArrayList&lt;&gt;();</span>
+            }
+<span class="nc" id="L153">            trips.add(tripNumber);</span>
+<span class="nc" id="L154">            startTrips.put(start, trips);</span>
+
+<span class="nc" id="L156">            String end = info.getEndPlace();</span>
+<span class="nc" id="L157">            trips = endTrips.get(end);</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">            if(trips == null) {</span>
+<span class="nc" id="L159">                trips = new ArrayList&lt;&gt;();</span>
+            }
+<span class="nc" id="L161">            trips.add(tripNumber);</span>
+<span class="nc" id="L162">            endTrips.put(end, trips);</span>
+
+<span class="nc" id="L164">            String routeId = info.getTrip().getRouteId();</span>
+<span class="nc" id="L165">            trips = routeTrips.get(routeId);</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            if(trips == null) {</span>
+<span class="nc" id="L167">                trips = new ArrayList&lt;&gt;();</span>
+            }
+<span class="nc" id="L169">            trips.add(tripNumber);</span>
+<span class="nc" id="L170">            routeTrips.put(routeId, trips);</span>
+
+<span class="nc" id="L172">            String trainTypeName = info.getTrip().getTrainTypeName();</span>
+<span class="nc" id="L173">            trips = typeTrips.get(trainTypeName);</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">            if(trips == null) {</span>
+<span class="nc" id="L175">                trips = new ArrayList&lt;&gt;();</span>
+            }
+<span class="nc" id="L177">            trips.add(tripNumber);</span>
+<span class="nc" id="L178">            typeTrips.put(trainTypeName, trips);</span>
+<span class="nc" id="L179">        }</span>
+
+        //List&lt;String&gt; invalidTrips = new ArrayList&lt;&gt;();
+
+        // check if station exist to exclude invalid travel info
+<span class="nc" id="L184">        Map&lt;String, String&gt; stationMap = checkStationsExists(new ArrayList&lt;&gt;(stationNames), headers);</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        if(stationMap == null) {</span>
+<span class="nc" id="L186">            response.setStatus(0);</span>
+<span class="nc" id="L187">            response.setMsg(&quot;all stations don't exist&quot;);</span>
+<span class="nc" id="L188">            return response;</span>
+        }
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        for(Map.Entry&lt;String, String&gt; s : stationMap.entrySet()){</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">            if(s.getValue() == null ){</span>
+                // station not exist
+<span class="nc bnc" id="L193" title="All 2 branches missed.">                if(startTrips.get(s.getKey()) != null){</span>
+<span class="nc" id="L194">                    avaTrips.removeAll(startTrips.get(s.getKey()));</span>
+                }
+<span class="nc bnc" id="L196" title="All 2 branches missed.">                if(endTrips.get(s.getKey()) != null){</span>
+<span class="nc" id="L197">                    avaTrips.removeAll(endTrips.get(s.getKey()));</span>
+                }
+            }
+<span class="nc" id="L200">        }</span>
+
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if(avaTrips.size() == 0){</span>
+<span class="nc" id="L203">            response.setStatus(0);</span>
+<span class="nc" id="L204">            response.setMsg(&quot;no travel info available&quot;);</span>
+<span class="nc" id="L205">            return response;</span>
+        }
+
+        // check if train_type exist
+<span class="nc" id="L209">        List&lt;TrainType&gt; tts = queryTrainTypeByNames(new ArrayList&lt;&gt;(trainTypeNames), headers);</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">        if(tts == null){</span>
+<span class="nc" id="L211">            response.setStatus(0);</span>
+<span class="nc" id="L212">            response.setMsg(&quot;all train_type don't exist&quot;);</span>
+<span class="nc" id="L213">            return response;</span>
+        }
+<span class="nc" id="L215">        Map&lt;String, TrainType&gt; trainTypeMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        for(TrainType t: tts){</span>
+<span class="nc" id="L217">            trainTypeMap.put(t.getName(), t);</span>
+<span class="nc" id="L218">        }</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        for(Map.Entry&lt;String, List&lt;String&gt;&gt; typeTrip: typeTrips.entrySet()){</span>
+<span class="nc" id="L220">            String ttype = typeTrip.getKey();</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">            if(trainTypeMap.get(ttype) == null){</span>
+<span class="nc" id="L222">                avaTrips.removeAll(typeTrip.getValue());</span>
+            }
+<span class="nc" id="L224">        }</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">        if(avaTrips.size() ==0){</span>
+<span class="nc" id="L226">            response.setStatus(0);</span>
+<span class="nc" id="L227">            response.setMsg(&quot;no travel info available&quot;);</span>
+<span class="nc" id="L228">            return response;</span>
+        }
+
+        // check if route exist to exclude invalid travel info
+<span class="nc" id="L232">        List&lt;Route&gt; routes = getRoutesByRouteIds(new ArrayList&lt;&gt;(routeIds), headers);</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">        if(routes == null) {</span>
+<span class="nc" id="L234">            response.setStatus(0);</span>
+<span class="nc" id="L235">            response.setMsg(&quot;all routes don't exist&quot;);</span>
+<span class="nc" id="L236">            return response;</span>
+        }
+<span class="nc" id="L238">        Map&lt;String, Route&gt; routeMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        for(Route r: routes){</span>
+<span class="nc" id="L240">            routeMap.put(r.getId(), r);</span>
+<span class="nc" id="L241">        }</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        for(Map.Entry&lt;String, List&lt;String&gt;&gt; routeTrip: routeTrips.entrySet()){</span>
+<span class="nc" id="L243">            String routeId = routeTrip.getKey();</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">            if(routeMap.get(routeId) == null){</span>
+<span class="nc" id="L245">                avaTrips.removeAll(routeTrip.getValue());</span>
+            }else{
+<span class="nc" id="L247">                Route route = routeMap.get(routeId);</span>
+<span class="nc" id="L248">                List&lt;String&gt; trips = routeTrip.getValue();</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">                for(String t: trips){</span>
+<span class="nc" id="L250">                    String start = tripInfos.get(t).getStartPlace();</span>
+<span class="nc" id="L251">                    String end = tripInfos.get(t).getEndPlace();</span>
+<span class="nc bnc" id="L252" title="All 2 branches missed.">                    if (!route.getStations().contains(start) ||</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">                            !route.getStations().contains(end) ||</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">                            route.getStations().indexOf(start) &gt;= route.getStations().indexOf(end)){</span>
+<span class="nc" id="L255">                        avaTrips.remove(t);</span>
+                    }
+<span class="nc" id="L257">                }</span>
+            }
+<span class="nc" id="L259">        }</span>
+<span class="nc bnc" id="L260" title="All 2 branches missed.">        if(avaTrips.size() == 0){</span>
+<span class="nc" id="L261">            response.setStatus(0);</span>
+<span class="nc" id="L262">            response.setMsg(&quot;no travel info available&quot;);</span>
+<span class="nc" id="L263">            return response;</span>
+        }
+
+<span class="nc" id="L266">        List&lt;String&gt; routeIdAndTypes = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">        for(String tripNumber: avaTrips){</span>
+<span class="nc" id="L268">            String routeId = tripInfos.get(tripNumber).getTrip().getRouteId();</span>
+<span class="nc" id="L269">            String trainType = tripInfos.get(tripNumber).getTrip().getTrainTypeName();</span>
+<span class="nc" id="L270">            routeIdAndTypes.add(routeId+&quot;:&quot;+trainType);</span>
+<span class="nc" id="L271">        }</span>
+<span class="nc" id="L272">        Map&lt;String, PriceConfig&gt; pcMap = queryPriceConfigByRouteIdsAndTrainTypes(routeIdAndTypes, headers);</span>
+
+<span class="nc" id="L274">        Map&lt;String, TravelResult&gt; trMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">        for(String tripNumber: avaTrips){</span>
+<span class="nc" id="L276">            Travel info = tripInfos.get(tripNumber);</span>
+<span class="nc" id="L277">            String trainType = info.getTrip().getTrainTypeName();</span>
+<span class="nc" id="L278">            String routeId = info.getTrip().getRouteId();</span>
+<span class="nc" id="L279">            Route route = routeMap.get(routeId);</span>
+
+<span class="nc" id="L281">            int indexStart = route.getStations().indexOf(info.getStartPlace());</span>
+<span class="nc" id="L282">            int indexEnd = route.getStations().indexOf(info.getEndPlace());</span>
+
+<span class="nc" id="L284">            double basicPriceRate = 0.75;</span>
+<span class="nc" id="L285">            double firstPriceRate = 1;</span>
+<span class="nc" id="L286">            PriceConfig priceConfig = pcMap.get(routeId+&quot;:&quot;+trainType);</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">            if(priceConfig != null){</span>
+<span class="nc" id="L288">                basicPriceRate = priceConfig.getBasicPriceRate();</span>
+<span class="nc" id="L289">                firstPriceRate = priceConfig.getFirstClassPriceRate();</span>
+            }
+
+<span class="nc" id="L292">            HashMap&lt;String, String&gt; prices = new HashMap&lt;&gt;();</span>
+            try {
+<span class="nc" id="L294">                int distance = 0;</span>
+<span class="nc" id="L295">                distance = route.getDistances().get(indexEnd) - route.getDistances().get(indexStart);</span>
+                /**
+                 * We need the price Rate and distance (starting station).
+                 */
+<span class="nc" id="L299">                double priceForEconomyClass = distance * basicPriceRate;</span>
+<span class="nc" id="L300">                double priceForConfortClass = distance * firstPriceRate;</span>
+<span class="nc" id="L301">                prices.put(&quot;economyClass&quot;, &quot;&quot; + priceForEconomyClass);</span>
+<span class="nc" id="L302">                prices.put(&quot;confortClass&quot;, &quot;&quot; + priceForConfortClass);</span>
+<span class="nc" id="L303">            }catch (Exception e){</span>
+<span class="nc" id="L304">                prices.put(&quot;economyClass&quot;, &quot;95.0&quot;);</span>
+<span class="nc" id="L305">                prices.put(&quot;confortClass&quot;, &quot;120.0&quot;);</span>
+<span class="nc" id="L306">            }</span>
+
+
+<span class="nc" id="L309">            TravelResult result = new TravelResult();</span>
+<span class="nc" id="L310">            result.setStatus(true);</span>
+<span class="nc" id="L311">            result.setTrainType(trainTypeMap.get(trainType));</span>
+<span class="nc" id="L312">            result.setRoute(route);</span>
+<span class="nc" id="L313">            result.setPrices(prices);</span>
+<span class="nc" id="L314">            result.setPercent(1.0);</span>
+
+<span class="nc" id="L316">            trMap.put(tripNumber, result);</span>
+<span class="nc" id="L317">        }</span>
+<span class="nc" id="L318">        response.setData(trMap);</span>
+<span class="nc" id="L319">        BasicServiceImpl.LOGGER.info(&quot;[queryForTravels][all done][result map: {}]&quot;, trMap);</span>
+<span class="nc" id="L320">        return response;</span>
+    }
+
+    @Override
+    public Response queryForStationId(String stationName, HttpHeaders headers) {
+<span class="fc" id="L325">        BasicServiceImpl.LOGGER.info(&quot;[queryForStationId][Query For Station Id][stationName: {}]&quot;, stationName);</span>
+<span class="fc" id="L326">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="fc" id="L327">        String station_service_url=getServiceUrl(&quot;ts-station-service&quot;);</span>
+<span class="fc" id="L328">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                station_service_url + &quot;/api/v1/stationservice/stations/id/&quot; + stationName,
+                HttpMethod.GET,
+                requestEntity,
+                Response.class);
+<span class="pc bpc" id="L333" title="1 of 2 branches missed.">        if (re.getBody().getStatus() != 1) {</span>
+<span class="fc" id="L334">            String msg = re.getBody().getMsg();</span>
+<span class="fc" id="L335">            BasicServiceImpl.LOGGER.warn(&quot;[queryForStationId][Query for stationId error][stationName: {}, message: {}]&quot;, stationName, msg);</span>
+<span class="fc" id="L336">            return new Response&lt;&gt;(0, msg, null);</span>
+        }
+<span class="nc" id="L338">        return  re.getBody();</span>
+    }
+
+    public Map&lt;String,String&gt; checkStationsExists(List&lt;String&gt; stationNames, HttpHeaders headers) {
+<span class="nc" id="L342">        BasicServiceImpl.LOGGER.info(&quot;[checkStationsExists][Check Stations Exists][stationNames: {}]&quot;, stationNames);</span>
+<span class="nc" id="L343">        HttpEntity requestEntity = new HttpEntity(stationNames, null);</span>
+<span class="nc" id="L344">        String station_service_url=getServiceUrl(&quot;ts-station-service&quot;);</span>
+<span class="nc" id="L345">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                station_service_url + &quot;/api/v1/stationservice/stations/idlist&quot;,
+                HttpMethod.POST,
+                requestEntity,
+                Response.class);
+<span class="nc" id="L350">        Response&lt;Map&lt;String, String&gt;&gt; r = re.getBody();</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">        if(r.getStatus() == 0) {</span>
+<span class="nc" id="L352">            return null;</span>
+        }
+<span class="nc" id="L354">        Map&lt;String, String&gt; stationMap = r.getData();</span>
+<span class="nc" id="L355">        return stationMap;</span>
+    }
+
+    public boolean checkStationExists(String stationName, HttpHeaders headers) {
+<span class="fc" id="L359">        BasicServiceImpl.LOGGER.info(&quot;[checkStationExists][Check Station Exists][stationName: {}]&quot;, stationName);</span>
+<span class="fc" id="L360">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="fc" id="L361">        String station_service_url=getServiceUrl(&quot;ts-station-service&quot;);</span>
+<span class="fc" id="L362">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                station_service_url + &quot;/api/v1/stationservice/stations/id/&quot; + stationName,
+                HttpMethod.GET,
+                requestEntity,
+                Response.class);
+<span class="fc" id="L367">        Response exist = re.getBody();</span>
+
+<span class="pc bpc" id="L369" title="1 of 2 branches missed.">        return exist.getStatus() == 1;</span>
+    }
+
+    public List&lt;TrainType&gt; queryTrainTypeByNames(List&lt;String&gt; trainTypeNames, HttpHeaders headers) {
+<span class="nc" id="L373">        BasicServiceImpl.LOGGER.info(&quot;[queryTrainTypeByNames][Query Train Type][Train Type names: {}]&quot;, trainTypeNames);</span>
+<span class="nc" id="L374">        HttpEntity requestEntity = new HttpEntity(trainTypeNames, null);</span>
+<span class="nc" id="L375">        String train_service_url=getServiceUrl(&quot;ts-train-service&quot;);</span>
+<span class="nc" id="L376">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                train_service_url + &quot;/api/v1/trainservice/trains/byNames&quot;,
+                HttpMethod.POST,
+                requestEntity,
+                Response.class);
+<span class="nc" id="L381">        Response&lt;List&lt;TrainType&gt;&gt;  response = re.getBody();</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">        if(response.getStatus() == 0){</span>
+<span class="nc" id="L383">            return null;</span>
+        }
+<span class="nc" id="L385">        List&lt;TrainType&gt; tts = Arrays.asList(JsonUtils.conveterObject(response.getData(), TrainType[].class));</span>
+<span class="nc" id="L386">        return tts;</span>
+    }
+
+    public TrainType queryTrainTypeByName(String trainTypeName, HttpHeaders headers) {
+<span class="fc" id="L390">        BasicServiceImpl.LOGGER.info(&quot;[queryTrainTypeByName][Query Train Type][Train Type name: {}]&quot;, trainTypeName);</span>
+<span class="fc" id="L391">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="fc" id="L392">        String train_service_url=getServiceUrl(&quot;ts-train-service&quot;);</span>
+<span class="fc" id="L393">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                train_service_url + &quot;/api/v1/trainservice/trains/byName/&quot; + trainTypeName,
+                HttpMethod.GET,
+                requestEntity,
+                Response.class);
+<span class="fc" id="L398">        Response  response = re.getBody();</span>
+
+<span class="fc" id="L400">        return JsonUtils.conveterObject(response.getData(), TrainType.class);</span>
+    }
+
+    private List&lt;Route&gt; getRoutesByRouteIds(List&lt;String&gt; routeIds, HttpHeaders headers) {
+<span class="nc" id="L404">        BasicServiceImpl.LOGGER.info(&quot;[getRoutesByRouteIds][Get Route By Ids][Route IDs：{}]&quot;, routeIds);</span>
+<span class="nc" id="L405">        HttpEntity requestEntity = new HttpEntity(routeIds, null);</span>
+<span class="nc" id="L406">        String route_service_url=getServiceUrl(&quot;ts-route-service&quot;);</span>
+<span class="nc" id="L407">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                route_service_url + &quot;/api/v1/routeservice/routes/byIds/&quot;,
+                HttpMethod.POST,
+                requestEntity,
+                Response.class);
+<span class="nc" id="L412">        Response&lt;List&lt;Route&gt;&gt; result = re.getBody();</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">        if ( result.getStatus() == 0) {</span>
+<span class="nc" id="L414">            BasicServiceImpl.LOGGER.warn(&quot;[getRoutesByRouteIds][Get Route By Ids Failed][Fail msg: {}]&quot;, result.getMsg());</span>
+<span class="nc" id="L415">            return null;</span>
+        } else {
+<span class="nc" id="L417">            BasicServiceImpl.LOGGER.info(&quot;[getRoutesByRouteIds][Get Route By Ids][Success]&quot;);</span>
+<span class="nc" id="L418">            List&lt;Route&gt; routes = Arrays.asList(JsonUtils.conveterObject(result.getData(), Route[].class));;</span>
+<span class="nc" id="L419">            return routes;</span>
+        }
+    }
+
+    private Route getRouteByRouteId(String routeId, HttpHeaders headers) {
+<span class="nc" id="L424">        BasicServiceImpl.LOGGER.info(&quot;[getRouteByRouteId][Get Route By Id][Route ID：{}]&quot;, routeId);</span>
+<span class="nc" id="L425">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="nc" id="L426">        String route_service_url=getServiceUrl(&quot;ts-route-service&quot;);</span>
+<span class="nc" id="L427">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                route_service_url + &quot;/api/v1/routeservice/routes/&quot; + routeId,
+                HttpMethod.GET,
+                requestEntity,
+                Response.class);
+<span class="nc" id="L432">        Response result = re.getBody();</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">        if ( result.getStatus() == 0) {</span>
+<span class="nc" id="L434">            BasicServiceImpl.LOGGER.warn(&quot;[getRouteByRouteId][Get Route By Id Failed][Fail msg: {}]&quot;, result.getMsg());</span>
+<span class="nc" id="L435">            return null;</span>
+        } else {
+<span class="nc" id="L437">            BasicServiceImpl.LOGGER.info(&quot;[getRouteByRouteId][Get Route By Id][Success]&quot;);</span>
+<span class="nc" id="L438">            return JsonUtils.conveterObject(result.getData(), Route.class);</span>
+        }
+    }
+
+    private PriceConfig queryPriceConfigByRouteIdAndTrainType(String routeId, String trainType, HttpHeaders headers) {
+<span class="nc" id="L443">        BasicServiceImpl.LOGGER.info(&quot;[queryPriceConfigByRouteIdAndTrainType][Query For Price Config][RouteId: {} ,TrainType: {}]&quot;, routeId, trainType);</span>
+<span class="nc" id="L444">        HttpEntity requestEntity = new HttpEntity(null, null);</span>
+<span class="nc" id="L445">        String price_service_url=getServiceUrl(&quot;ts-price-service&quot;);</span>
+<span class="nc" id="L446">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                price_service_url + &quot;/api/v1/priceservice/prices/&quot; + routeId + &quot;/&quot; + trainType,
+                HttpMethod.GET,
+                requestEntity,
+                Response.class);
+<span class="nc" id="L451">        Response result = re.getBody();</span>
+
+<span class="nc" id="L453">        BasicServiceImpl.LOGGER.info(&quot;[queryPriceConfigByRouteIdAndTrainType][Response Resutl to String][result: {}]&quot;, result.toString());</span>
+<span class="nc" id="L454">        return  JsonUtils.conveterObject(result.getData(), PriceConfig.class);</span>
+    }
+
+    private Map&lt;String, PriceConfig&gt; queryPriceConfigByRouteIdsAndTrainTypes(List&lt;String&gt; routeIdsTypes, HttpHeaders headers) {
+<span class="nc" id="L458">        BasicServiceImpl.LOGGER.info(&quot;[queryPriceConfigByRouteIdsAndTrainTypes][Query For Price Config][RouteId and TrainType: {}]&quot;, routeIdsTypes);</span>
+<span class="nc" id="L459">        HttpEntity requestEntity = new HttpEntity(routeIdsTypes, null);</span>
+<span class="nc" id="L460">        String price_service_url=getServiceUrl(&quot;ts-price-service&quot;);</span>
+<span class="nc" id="L461">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                price_service_url + &quot;/api/v1/priceservice/prices/byRouteIdsAndTrainTypes&quot;,
+                HttpMethod.POST,
+                requestEntity,
+                Response.class);
+<span class="nc" id="L466">        Response&lt;Map&lt;String, PriceConfig&gt;&gt; result = re.getBody();</span>
+
+        Map&lt;String, PriceConfig&gt; pcMap;
+<span class="nc bnc" id="L469" title="All 2 branches missed.">        if ( result.getStatus() == 0) {</span>
+<span class="nc" id="L470">            BasicServiceImpl.LOGGER.warn(&quot;[queryPriceConfigByRouteIdsAndTrainTypes][Get Price Config by routeId and trainType Failed][Fail msg: {}]&quot;, result.getMsg());</span>
+<span class="nc" id="L471">            return null;</span>
+        } else {
+<span class="nc" id="L473">            ObjectMapper mapper = new ObjectMapper();</span>
+            try{
+<span class="nc" id="L475">                pcMap = mapper.readValue(JsonUtils.object2Json(result.getData()), new TypeReference&lt;Map&lt;String, PriceConfig&gt;&gt;(){});</span>
+<span class="nc" id="L476">            }catch(Exception e) {</span>
+<span class="nc" id="L477">                BasicServiceImpl.LOGGER.warn(&quot;[queryPriceConfigByRouteIdsAndTrainTypes][Get Price Config by routeId and trainType Failed][Fail msg: {}]&quot;, e.getMessage());</span>
+<span class="nc" id="L478">                return null;</span>
+<span class="nc" id="L479">            }</span>
+<span class="nc" id="L480">            BasicServiceImpl.LOGGER.info(&quot;[queryPriceConfigByRouteIdsAndTrainTypes][Get Price Config by routeId and trainType][Success][priceConfigs: {}]&quot;, result.getData());</span>
+<span class="nc" id="L481">            return pcMap;</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

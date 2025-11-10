@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">security.service</a> &gt; <span class="el_source">SecurityServiceImpl.java</span></div><h1>SecurityServiceImpl.java</h1><pre class="source lang-java linenums">package security.service;
+
+import edu.fudan.common.entity.OrderSecurity;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import security.entity.SecurityConfig;
+import security.repository.SecurityRepository;
+
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L33">public class SecurityServiceImpl implements SecurityService {</span>
+
+    @Autowired
+    private SecurityRepository securityRepository;
+
+    @Autowired
+    RestTemplate restTemplate;
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+<span class="fc" id="L44">    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityServiceImpl.class);</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L47">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+<span class="fc" id="L50">    String success = &quot;Success&quot;;</span>
+
+    @Override
+    public Response findAllSecurityConfig(HttpHeaders headers) {
+<span class="nc" id="L54">        ArrayList&lt;SecurityConfig&gt; securityConfigs = securityRepository.findAll();</span>
+<span class="nc bnc" id="L55" title="All 4 branches missed.">        if (securityConfigs != null &amp;&amp; !securityConfigs.isEmpty()) {</span>
+<span class="nc" id="L56">            return new Response&lt;&gt;(1, success, securityConfigs);</span>
+        }
+<span class="nc" id="L58">        SecurityServiceImpl.LOGGER.warn(&quot;[findAllSecurityConfig][Find all security config warn][{}]&quot;,&quot;No content&quot;);</span>
+<span class="nc" id="L59">        return new Response&lt;&gt;(0, &quot;No Content&quot;, null);</span>
+    }
+
+    @Override
+    public Response addNewSecurityConfig(SecurityConfig info, HttpHeaders headers) {
+<span class="fc" id="L64">        SecurityConfig sc = securityRepository.findByName(info.getName());</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        if (sc != null) {</span>
+<span class="fc" id="L66">            SecurityServiceImpl.LOGGER.warn(&quot;[addNewSecurityConfig][Add new Security config warn][Security config already exist][SecurityConfigId: {},Name: {}]&quot;,sc.getId(),info.getName());</span>
+<span class="fc" id="L67">            return new Response&lt;&gt;(0, &quot;Security Config Already Exist&quot;, null);</span>
+        } else {
+<span class="nc" id="L69">            SecurityConfig config = new SecurityConfig();</span>
+<span class="nc" id="L70">            config.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L71">            config.setName(info.getName());</span>
+<span class="nc" id="L72">            config.setValue(info.getValue());</span>
+<span class="nc" id="L73">            config.setDescription(info.getDescription());</span>
+<span class="nc" id="L74">            securityRepository.save(config);</span>
+<span class="nc" id="L75">            return new Response&lt;&gt;(1, success, config);</span>
+        }
+    }
+
+    @Override
+    public Response modifySecurityConfig(SecurityConfig info, HttpHeaders headers) {
+<span class="nc" id="L81">        SecurityConfig sc = securityRepository.findById(info.getId()).orElse(null);</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (sc == null) {</span>
+<span class="nc" id="L83">            SecurityServiceImpl.LOGGER.error(&quot;[modifySecurityConfig][Modify Security config error][Security config not found][SecurityConfigId: {},Name: {}]&quot;,info.getId(),info.getName());</span>
+<span class="nc" id="L84">            return new Response&lt;&gt;(0, &quot;Security Config Not Exist&quot;, null);</span>
+        } else {
+<span class="nc" id="L86">            sc.setName(info.getName());</span>
+<span class="nc" id="L87">            sc.setValue(info.getValue());</span>
+<span class="nc" id="L88">            sc.setDescription(info.getDescription());</span>
+<span class="nc" id="L89">            securityRepository.save(sc);</span>
+<span class="nc" id="L90">            return new Response&lt;&gt;(1, success, sc);</span>
+        }
+    }
+
+    @Transactional
+    @Override
+    public Response deleteSecurityConfig(String id, HttpHeaders headers) {
+<span class="nc" id="L97">        securityRepository.deleteById(id);</span>
+<span class="nc" id="L98">        SecurityConfig sc = securityRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (sc == null) {</span>
+<span class="nc" id="L100">            return new Response&lt;&gt;(1, success, id);</span>
+        } else {
+<span class="nc" id="L102">            SecurityServiceImpl.LOGGER.error(&quot;[deleteSecurityConfig][Delete Security config error][Reason not clear][SecurityConfigId: {}]&quot;,id);</span>
+<span class="nc" id="L103">            return new Response&lt;&gt;(0, &quot;Reason Not clear&quot;, id);</span>
+        }
+    }
+
+    @Override
+    public Response check(String accountId, HttpHeaders headers) {
+        //1.Get the orders in the past one hour and the total effective votes
+<span class="nc" id="L110">        SecurityServiceImpl.LOGGER.debug(&quot;[check][Get Order Num Info]&quot;);</span>
+<span class="nc" id="L111">        OrderSecurity orderResult = getSecurityOrderInfoFromOrder(new Date(), accountId, headers);</span>
+<span class="nc" id="L112">        OrderSecurity orderOtherResult = getSecurityOrderOtherInfoFromOrder(new Date(), accountId, headers);</span>
+<span class="nc" id="L113">        int orderInOneHour = orderOtherResult.getOrderNumInLastOneHour() + orderResult.getOrderNumInLastOneHour();</span>
+<span class="nc" id="L114">        int totalValidOrder = orderOtherResult.getOrderNumOfValidOrder() + orderResult.getOrderNumOfValidOrder();</span>
+        //2. get critical configuration information
+<span class="nc" id="L116">        SecurityServiceImpl.LOGGER.debug(&quot;[check][Get Security Config Info]&quot;);</span>
+<span class="nc" id="L117">        SecurityConfig configMaxInHour = securityRepository.findByName(&quot;max_order_1_hour&quot;);</span>
+<span class="nc" id="L118">        SecurityConfig configMaxNotUse = securityRepository.findByName(&quot;max_order_not_use&quot;);</span>
+<span class="nc" id="L119">        SecurityServiceImpl.LOGGER.info(&quot;[check][Max][Max In One Hour: {}  Max Not Use: {}]&quot;, configMaxInHour.getValue(), configMaxNotUse.getValue());</span>
+<span class="nc" id="L120">        int oneHourLine = Integer.parseInt(configMaxInHour.getValue());</span>
+<span class="nc" id="L121">        int totalValidLine = Integer.parseInt(configMaxNotUse.getValue());</span>
+<span class="nc bnc" id="L122" title="All 4 branches missed.">        if (orderInOneHour &gt; oneHourLine || totalValidOrder &gt; totalValidLine) {</span>
+<span class="nc" id="L123">            SecurityServiceImpl.LOGGER.warn(&quot;[check][Check Security config warn][Too much order in last one hour or too much valid order][AccountId: {}]&quot;,accountId);</span>
+<span class="nc" id="L124">            return new Response&lt;&gt;(0, &quot;Too much order in last one hour or too much valid order&quot;, accountId);</span>
+        } else {
+<span class="nc" id="L126">            return new Response&lt;&gt;(1, &quot;Success.r&quot;, accountId);</span>
+        }
+    }
+
+    private OrderSecurity getSecurityOrderInfoFromOrder(Date checkDate, String accountId, HttpHeaders headers) {
+<span class="nc" id="L131">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="nc" id="L132">        String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L133">        ResponseEntity&lt;Response&lt;OrderSecurity&gt;&gt; re = restTemplate.exchange(</span>
+                order_service_url + &quot;/api/v1/orderservice/order/security/&quot; + checkDate + &quot;/&quot; + accountId,
+                HttpMethod.GET,
+                requestEntity,
+<span class="nc" id="L137">                new ParameterizedTypeReference&lt;Response&lt;OrderSecurity&gt;&gt;() {</span>
+                });
+<span class="nc" id="L139">        Response&lt;OrderSecurity&gt; response = re.getBody();</span>
+<span class="nc" id="L140">        OrderSecurity result =  response.getData();</span>
+<span class="nc" id="L141">        SecurityServiceImpl.LOGGER.info(&quot;[getSecurityOrderInfoFromOrder][Get Order Info For Security][Last One Hour: {}  Total Valid Order: {}]&quot;, result.getOrderNumInLastOneHour(), result.getOrderNumOfValidOrder());</span>
+<span class="nc" id="L142">        return result;</span>
+    }
+
+    private OrderSecurity getSecurityOrderOtherInfoFromOrder(Date checkDate, String accountId, HttpHeaders headers) {
+<span class="nc" id="L146">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="nc" id="L147">        String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc" id="L148">        ResponseEntity&lt;Response&lt;OrderSecurity&gt;&gt; re = restTemplate.exchange(</span>
+                order_other_service_url + &quot;/api/v1/orderOtherService/orderOther/security/&quot; + checkDate + &quot;/&quot; + accountId,
+                HttpMethod.GET,
+                requestEntity,
+<span class="nc" id="L152">                new ParameterizedTypeReference&lt;Response&lt;OrderSecurity&gt;&gt;() {</span>
+                });
+<span class="nc" id="L154">        Response&lt;OrderSecurity&gt; response = re.getBody();</span>
+<span class="nc" id="L155">        OrderSecurity result =  response.getData();</span>
+<span class="nc" id="L156">        SecurityServiceImpl.LOGGER.info(&quot;[getSecurityOrderOtherInfoFromOrder][Get Order Other Info For Security][Last One Hour: {}  Total Valid Order: {}]&quot;, result.getOrderNumInLastOneHour(), result.getOrderNumOfValidOrder());</span>
+<span class="nc" id="L157">        return result;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

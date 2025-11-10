@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrainFoodServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">trainFood.service</a> &gt; <span class="el_source">TrainFoodServiceImpl.java</span></div><h1>TrainFoodServiceImpl.java</h1><pre class="source lang-java linenums">package trainFood.service;
+
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import trainFood.entity.*;
+import trainFood.repository.TrainFoodRepository;
+
+import java.util.List;
+
+@Service
+<span class="fc" id="L15">public class TrainFoodServiceImpl implements TrainFoodService{</span>
+
+    @Autowired
+    TrainFoodRepository trainFoodRepository;
+
+<span class="fc" id="L20">    private static final Logger LOGGER = LoggerFactory.getLogger(TrainFoodServiceImpl.class);</span>
+
+<span class="fc" id="L22">    String success = &quot;Success&quot;;</span>
+<span class="fc" id="L23">    String noContent = &quot;No content&quot;;</span>
+
+    @Override
+    public TrainFood createTrainFood(TrainFood tf, HttpHeaders headers) {
+<span class="fc" id="L27">        TrainFood tfTemp = trainFoodRepository.findByTripId(tf.getTripId());</span>
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">        if (tfTemp != null) {</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">            if(tfTemp.getFoodList().equals(tf.getFoodList())){</span>
+<span class="nc" id="L30">                TrainFoodServiceImpl.LOGGER.error(&quot;[Init TrainFood] Already Exists TripId: {}&quot;, tf.getTripId());</span>
+            }else{
+<span class="fc" id="L32">                tfTemp.setFoodList(tf.getFoodList());</span>
+<span class="fc" id="L33">                trainFoodRepository.save(tfTemp);</span>
+            }
+        } else {
+<span class="nc" id="L36">            trainFoodRepository.save(tf);</span>
+        }
+<span class="fc" id="L38">        return tf;</span>
+    }
+
+    @Override
+    public Response listTrainFood(HttpHeaders headers) {
+<span class="fc" id="L43">        List&lt;TrainFood&gt; trainFoodList = trainFoodRepository.findAll();</span>
+<span class="pc bpc" id="L44" title="2 of 4 branches missed.">        if (trainFoodList != null &amp;&amp; !trainFoodList.isEmpty()) {</span>
+<span class="fc" id="L45">            return new Response&lt;&gt;(1, success, trainFoodList);</span>
+        } else {
+<span class="nc" id="L47">            TrainFoodServiceImpl.LOGGER.error(&quot;List train food error: {}&quot;, noContent);</span>
+<span class="nc" id="L48">            return new Response&lt;&gt;(0, noContent, null);</span>
+        }
+    }
+
+    @Override
+    public Response listTrainFoodByTripId(String tripId, HttpHeaders headers) {
+<span class="fc" id="L54">        TrainFood tf = trainFoodRepository.findByTripId(tripId);</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        if(tf == null){</span>
+<span class="fc" id="L56">            return new Response&lt;&gt;(0, noContent, null);</span>
+        }else{
+<span class="nc" id="L58">            return new Response&lt;&gt;(1, success, tf.getFoodList());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

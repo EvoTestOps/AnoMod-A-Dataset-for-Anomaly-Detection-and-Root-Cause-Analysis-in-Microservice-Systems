@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WaitListOrderStatus.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">waitorder.entity</a> &gt; <span class="el_source">WaitListOrderStatus.java</span></div><h1>WaitListOrderStatus.java</h1><pre class="source lang-java linenums">package waitorder.entity;
+
+import edu.fudan.common.entity.OrderStatus;
+
+<span class="fc" id="L5">public enum WaitListOrderStatus {</span>
+    /**
+     * not paid
+     */
+<span class="fc" id="L9">    NOTPAID   (0,&quot;Not Paid&quot;),</span>
+    /**
+     * paid and not collected
+     */
+<span class="fc" id="L13">    PAID      (1,&quot;Paid &amp; Not Collected&quot;),</span>
+    /**
+     * collected
+     */
+<span class="fc" id="L17">    COLLECTED (2,&quot;Collected&quot;),</span>
+    /**
+     * cancel
+     */
+<span class="fc" id="L21">    CANCEL    (3,&quot;Cancel&quot;),</span>
+    /**
+     * refunded
+     */
+<span class="fc" id="L25">    REFUNDS   (4,&quot;Refunded&quot;),</span>
+    /**
+     * expired
+     */
+<span class="fc" id="L29">    EXPIRED   (5, &quot;Expired&quot;);</span>
+
+
+
+    private int code;
+    private String name;
+
+<span class="fc" id="L36">    WaitListOrderStatus(int code, String name){</span>
+<span class="fc" id="L37">        this.code = code;</span>
+<span class="fc" id="L38">        this.name = name;</span>
+<span class="fc" id="L39">    }</span>
+
+    public int getCode(){
+<span class="fc" id="L42">        return code;</span>
+    }
+
+    public String getName() {
+<span class="nc" id="L46">        return name;</span>
+    }
+
+    public static String getNameByCode(int code){
+<span class="nc" id="L50">        OrderStatus[] orderStatusSet = OrderStatus.values();</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        for(OrderStatus orderStatus : orderStatusSet){</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">            if(orderStatus.getCode() == code){</span>
+<span class="nc" id="L53">                return orderStatus.getName();</span>
+            }
+        }
+<span class="nc" id="L56">        return orderStatusSet[0].getName();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

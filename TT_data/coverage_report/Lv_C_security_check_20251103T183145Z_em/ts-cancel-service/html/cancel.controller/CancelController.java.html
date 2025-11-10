@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CancelController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">cancel.controller</a> &gt; <span class="el_source">CancelController.java</span></div><h1>CancelController.java</h1><pre class="source lang-java linenums">package cancel.controller;
+
+import cancel.service.CancelService;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/cancelservice&quot;)
+<span class="fc" id="L20">public class CancelController {</span>
+
+    @Autowired
+    CancelService cancelService;
+
+<span class="fc" id="L25">    private static final Logger LOGGER = LoggerFactory.getLogger(CancelController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L29">        return &quot;Welcome to [ Cancel Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/cancel/refound/{orderId}&quot;)
+    public HttpEntity calculate(@PathVariable String orderId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L35">        CancelController.LOGGER.info(&quot;[calculate][Calculate Cancel Refund][OrderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L36">        return ok(cancelService.calculateRefund(orderId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/cancel/{orderId}/{loginId}&quot;)
+    public HttpEntity cancelTicket(@PathVariable String orderId, @PathVariable String loginId,
+                                   @RequestHeader HttpHeaders headers) {
+
+<span class="nc" id="L44">        CancelController.LOGGER.info(&quot;[cancelTicket][Cancel Ticket][info: {}]&quot;, orderId);</span>
+        try {
+<span class="nc" id="L46">            CancelController.LOGGER.info(&quot;[cancelTicket][Cancel Ticket, Verify Success]&quot;);</span>
+<span class="nc" id="L47">            return ok(cancelService.cancelOrder(orderId, loginId, headers));</span>
+<span class="nc" id="L48">        } catch (Exception e) {</span>
+<span class="nc" id="L49">            CancelController.LOGGER.error(e.getMessage());</span>
+<span class="nc" id="L50">            return ok(new Response&lt;&gt;(1, &quot;error&quot;, null));</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

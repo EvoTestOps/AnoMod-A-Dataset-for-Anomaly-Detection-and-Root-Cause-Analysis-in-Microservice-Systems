@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">fdse.microservice.controller</a> &gt; <span class="el_source">StationController.java</span></div><h1>StationController.java</h1><pre class="source lang-java linenums">package fdse.microservice.controller;
+
+import edu.fudan.common.util.Response;
+import fdse.microservice.entity.*;
+import fdse.microservice.service.StationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+@RestController
+@RequestMapping(&quot;/api/v1/stationservice&quot;)
+<span class="fc" id="L21">public class StationController {</span>
+
+    @Autowired
+    private StationService stationService;
+
+<span class="fc" id="L26">    private static final Logger LOGGER = LoggerFactory.getLogger(StationController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L30">        return &quot;Welcome to [ Station Service ] !&quot;;</span>
+    }
+
+    @GetMapping(value = &quot;/stations&quot;)
+    public HttpEntity query(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L35">        return ok(stationService.query(headers));</span>
+    }
+
+    @PostMapping(value = &quot;/stations&quot;)
+    public ResponseEntity&lt;Response&gt; create(@RequestBody Station station, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L40">        StationController.LOGGER.info(&quot;[create][Create station][name: {}]&quot;,station.getName());</span>
+<span class="nc" id="L41">        return new ResponseEntity&lt;&gt;(stationService.create(station, headers), HttpStatus.CREATED);</span>
+    }
+
+    @PutMapping(value = &quot;/stations&quot;)
+    public HttpEntity update(@RequestBody Station station, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L46">        StationController.LOGGER.info(&quot;[update][Update station][StationId: {}]&quot;,station.getId());</span>
+<span class="nc" id="L47">        return ok(stationService.update(station, headers));</span>
+    }
+
+    @DeleteMapping(value = &quot;/stations/{stationsId}&quot;)
+    public ResponseEntity&lt;Response&gt; delete(@PathVariable String stationsId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L52">        StationController.LOGGER.info(&quot;[delete][Delete station][StationId: {}]&quot;,stationsId);</span>
+<span class="nc" id="L53">        return ok(stationService.delete(stationsId, headers));</span>
+    }
+
+
+
+    // according to station name ---&gt; query station id
+    @GetMapping(value = &quot;/stations/id/{stationNameForId}&quot;)
+    public HttpEntity queryForStationId(@PathVariable(value = &quot;stationNameForId&quot;)
+                                                String stationName, @RequestHeader HttpHeaders headers) {
+        // string
+<span class="fc" id="L63">        StationController.LOGGER.info(&quot;[queryForId][Query for station id][StationName: {}]&quot;,stationName);</span>
+<span class="fc" id="L64">        return ok(stationService.queryForId(stationName, headers));</span>
+    }
+
+    // according to station name list ---&gt;  query all station ids
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/stations/idlist&quot;)
+    public HttpEntity queryForIdBatch(@RequestBody List&lt;String&gt; stationNameList, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L71">        StationController.LOGGER.info(&quot;[queryForIdBatch][Query stations for id batch][StationNameNumbers: {}]&quot;,stationNameList.size());</span>
+<span class="fc" id="L72">        return ok(stationService.queryForIdBatch(stationNameList, headers));</span>
+    }
+
+    // according to station id ---&gt; query station name
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(value = &quot;/stations/name/{stationIdForName}&quot;)
+    public HttpEntity queryById(@PathVariable(value = &quot;stationIdForName&quot;)
+                                        String stationId, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L80">        StationController.LOGGER.info(&quot;[queryById][Query stations By Id][Id: {}]&quot;, stationId);</span>
+        // string
+<span class="fc" id="L82">        return ok(stationService.queryById(stationId, headers));</span>
+    }
+
+    // according to station id list  ---&gt; query all station names
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/stations/namelist&quot;)
+    public HttpEntity queryForNameBatch(@RequestBody List&lt;String&gt; stationIdList, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L89">        StationController.LOGGER.info(&quot;[queryByIdBatch][Query stations for name batch][StationIdNumbers: {}]&quot;,stationIdList.size());</span>
+<span class="fc" id="L90">        return ok(stationService.queryByIdBatch(stationIdList, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

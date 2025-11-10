@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Order.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">order.entity</a> &gt; <span class="el_source">Order.java</span></div><h1>Order.java</h1><pre class="source lang-java linenums">package order.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import edu.fudan.common.entity.OrderStatus;
+import edu.fudan.common.entity.SeatClass;
+import edu.fudan.common.util.StringUtils;
+import lombok.Data;
+import lombok.ToString;
+import org.hibernate.annotations.GenericGenerator;
+
+import javax.persistence.*;
+import java.util.Date;
+
+import edu.fudan.common.entity.SeatClass;
+
+/**
+ * @author fdse
+ */
+<span class="pc" id="L19">@Data</span>
+@Table(name = &quot;orders&quot;)
+@Entity
+@GenericGenerator(name = &quot;jpa-uuid&quot;, strategy = &quot;org.hibernate.id.UUIDGenerator&quot;)
+<span class="nc" id="L23">@ToString</span>
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Order {
+
+    @Id
+    @Column(length = 36)
+    @GeneratedValue(generator = &quot;jpa-uuid&quot;)
+<span class="fc" id="L30">    private String id;</span>
+
+<span class="fc" id="L32">    private String boughtDate;</span>
+
+
+<span class="fc" id="L35">    private String travelDate;</span>
+
+
+<span class="fc" id="L38">    private String travelTime;</span>
+
+    /**
+     * Which Account Bought it
+     */
+    @Column(length = 36)
+<span class="fc" id="L44">    private String accountId;</span>
+
+    /**
+     * Tickets bought for whom....
+     */
+<span class="fc" id="L49">    private String contactsName;</span>
+
+<span class="fc" id="L51">    private int documentType;</span>
+
+<span class="fc" id="L53">    private String contactsDocumentNumber;</span>
+
+<span class="fc" id="L55">    private String trainNumber;</span>
+
+<span class="fc" id="L57">    private int coachNumber;</span>
+
+<span class="fc" id="L59">    private int seatClass;</span>
+
+<span class="fc" id="L61">    private String seatNumber;</span>
+
+    @Column(name = &quot;from_station&quot;)
+<span class="fc" id="L64">    private String from;</span>
+
+    @Column(name = &quot;to_station&quot;)
+<span class="fc" id="L67">    private String to;</span>
+
+<span class="fc" id="L69">    private int status;</span>
+
+<span class="fc" id="L71">    private String price;</span>
+
+
+
+<span class="fc" id="L75">    public Order(){</span>
+<span class="fc" id="L76">        boughtDate = StringUtils.Date2String(new Date(System.currentTimeMillis()));</span>
+<span class="fc" id="L77">        travelDate = StringUtils.Date2String(new Date(123456789));</span>
+<span class="fc" id="L78">        trainNumber = &quot;G1235&quot;;</span>
+<span class="fc" id="L79">        coachNumber = 5;</span>
+<span class="fc" id="L80">        seatClass = SeatClass.FIRSTCLASS.getCode();</span>
+<span class="fc" id="L81">        seatNumber = &quot;1&quot;;</span>
+<span class="fc" id="L82">        from = &quot;shanghai&quot;;</span>
+<span class="fc" id="L83">        to = &quot;taiyuan&quot;;</span>
+<span class="fc" id="L84">        status = OrderStatus.PAID.getCode();</span>
+<span class="fc" id="L85">        price = &quot;0.0&quot;;</span>
+<span class="fc" id="L86">    }</span>
+
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (this == obj) {</span>
+<span class="nc" id="L91">            return true;</span>
+        }
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (obj == null) {</span>
+<span class="nc" id="L94">            return false;</span>
+        }
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (getClass() != obj.getClass()) {</span>
+<span class="nc" id="L97">            return false;</span>
+        }
+<span class="nc" id="L99">        Order other = (Order) obj;</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        return getBoughtDate().equals(other.getBoughtDate())</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">                &amp;&amp; getBoughtDate().equals(other.getTravelDate())</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">                &amp;&amp; getTravelTime().equals(other.getTravelTime())</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">                &amp;&amp; accountId .equals( other.getAccountId() )</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">                &amp;&amp; contactsName.equals(other.getContactsName())</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">                &amp;&amp; contactsDocumentNumber.equals(other.getContactsDocumentNumber())</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">                &amp;&amp; documentType == other.getDocumentType()</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">                &amp;&amp; trainNumber.equals(other.getTrainNumber())</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">                &amp;&amp; coachNumber == other.getCoachNumber()</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">                &amp;&amp; seatClass == other.getSeatClass()</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">                &amp;&amp; seatNumber .equals(other.getSeatNumber())</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">                &amp;&amp; from.equals(other.getFrom())</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">                &amp;&amp; to.equals(other.getTo())</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                &amp;&amp; status == other.getStatus()</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">                &amp;&amp; price.equals(other.price);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L119">        int result = 17;</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        result = 31 * result + (id == null ? 0 : id.hashCode());</span>
+<span class="nc" id="L121">        return result;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

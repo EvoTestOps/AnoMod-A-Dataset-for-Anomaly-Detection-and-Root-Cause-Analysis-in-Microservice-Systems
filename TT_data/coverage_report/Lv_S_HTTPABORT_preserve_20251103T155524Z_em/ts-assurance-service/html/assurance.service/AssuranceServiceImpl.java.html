@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssuranceServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">assurance.service</a> &gt; <span class="el_source">AssuranceServiceImpl.java</span></div><h1>AssuranceServiceImpl.java</h1><pre class="source lang-java linenums">package assurance.service;
+
+import assurance.entity.*;
+import assurance.repository.AssuranceRepository;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L21">public class AssuranceServiceImpl implements AssuranceService {</span>
+
+    @Autowired
+    private AssuranceRepository assuranceRepository;
+
+<span class="fc" id="L26">    private static final Logger LOGGER = LoggerFactory.getLogger(AssuranceServiceImpl.class);</span>
+
+    @Override
+    public Response findAssuranceById(UUID id, HttpHeaders headers) {
+<span class="nc" id="L30">        Optional&lt;Assurance&gt; assurance = assuranceRepository.findById(id.toString());</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">        if (assurance == null) {</span>
+<span class="nc" id="L32">            AssuranceServiceImpl.LOGGER.warn(&quot;[findAssuranceById][find assurance][No content][assurance id: {}]&quot;, id);</span>
+<span class="nc" id="L33">            return new Response&lt;&gt;(0, &quot;No Content by this id&quot;, null);</span>
+        } else {
+<span class="nc" id="L35">            AssuranceServiceImpl.LOGGER.info(&quot;[findAssuranceById][Find Assurance][assurance id: {}]&quot;, id);</span>
+<span class="nc" id="L36">            return new Response&lt;&gt;(1, &quot;Find Assurance Success&quot;, assurance);</span>
+        }
+    }
+
+    @Override
+    public Response findAssuranceByOrderId(UUID orderId, HttpHeaders headers) {
+<span class="nc" id="L42">        Assurance assurance = assuranceRepository.findByOrderId(orderId.toString());</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        if (assurance == null) {</span>
+<span class="nc" id="L44">            AssuranceServiceImpl.LOGGER.warn(&quot;[findAssuranceByOrderId][find assurance][No content][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L45">            return new Response&lt;&gt;(0, &quot;No Content by this orderId&quot;, null);</span>
+        } else {
+<span class="nc" id="L47">            AssuranceServiceImpl.LOGGER.info(&quot;[findAssuranceByOrderId][find assurance success][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L48">            return new Response&lt;&gt;(1, &quot;Find Assurance Success&quot;, assurance);</span>
+        }
+    }
+
+    @Override
+    public Response create(int typeIndex, String orderId, HttpHeaders headers) {
+<span class="nc" id="L54">        Assurance a = assuranceRepository.findByOrderId(orderId);</span>
+<span class="nc" id="L55">        AssuranceType at = AssuranceType.getTypeByIndex(typeIndex);</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (a != null) {</span>
+<span class="nc" id="L57">            AssuranceServiceImpl.LOGGER.error(&quot;[create][AddAssurance Fail][Assurance already exists][typeIndex: {}, orderId: {}]&quot;, typeIndex, orderId);</span>
+<span class="nc" id="L58">            return new Response&lt;&gt;(0, &quot;Fail.Assurance already exists&quot;, null);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        } else if (at == null) {</span>
+<span class="nc" id="L60">            AssuranceServiceImpl.LOGGER.warn(&quot;[create][AddAssurance Fail][Assurance type doesn't exist][typeIndex: {}, orderId: {}]&quot;, typeIndex, orderId);</span>
+<span class="nc" id="L61">            return new Response&lt;&gt;(0, &quot;Fail.Assurance type doesn't exist&quot;, null);</span>
+        } else {
+<span class="nc" id="L63">            Assurance assurance = new Assurance(UUID.randomUUID().toString(), UUID.fromString(orderId).toString(), at);</span>
+<span class="nc" id="L64">            assuranceRepository.save(assurance);</span>
+<span class="nc" id="L65">            AssuranceServiceImpl.LOGGER.info(&quot;[create][AddAssurance][Success]&quot;);</span>
+<span class="nc" id="L66">            return new Response&lt;&gt;(1, &quot;Success&quot;, assurance);</span>
+        }
+    }
+
+    @Override
+    public Response deleteById(UUID assuranceId, HttpHeaders headers) {
+<span class="nc" id="L72">        assuranceRepository.deleteById(assuranceId.toString());</span>
+<span class="nc" id="L73">        Optional&lt;Assurance&gt; a = assuranceRepository.findById(assuranceId.toString());</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (a == null) {</span>
+<span class="nc" id="L75">            AssuranceServiceImpl.LOGGER.info(&quot;[deleteById][DeleteAssurance success][assuranceId: {}]&quot;, assuranceId);</span>
+<span class="nc" id="L76">            return new Response&lt;&gt;(1, &quot;Delete Success with Assurance id&quot;, null);</span>
+        } else {
+<span class="nc" id="L78">            AssuranceServiceImpl.LOGGER.error(&quot;[deleteById][DeleteAssurance Fail][Assurance not clear][assuranceId: {}]&quot;, assuranceId);</span>
+<span class="nc" id="L79">            return new Response&lt;&gt;(0, &quot;Fail.Assurance not clear&quot;, assuranceId);</span>
+        }
+    }
+
+    @Override
+    public Response deleteByOrderId(UUID orderId, HttpHeaders headers) {
+<span class="nc" id="L85">        assuranceRepository.removeAssuranceByOrderId(orderId.toString());</span>
+<span class="nc" id="L86">        Assurance isExistAssurace = assuranceRepository.findByOrderId(orderId.toString());</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (isExistAssurace == null) {</span>
+<span class="nc" id="L88">            AssuranceServiceImpl.LOGGER.info(&quot;[deleteByOrderId][DeleteAssurance Success][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L89">            return new Response&lt;&gt;(1, &quot;Delete Success with Order Id&quot;, null);</span>
+        } else {
+<span class="nc" id="L91">            AssuranceServiceImpl.LOGGER.error(&quot;[deleteByOrderId][DeleteAssurance Fail][Assurance not clear][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L92">            return new Response&lt;&gt;(0, &quot;Fail.Assurance not clear&quot;, orderId);</span>
+        }
+    }
+
+    @Override
+    public Response modify(String assuranceId, String orderId, int typeIndex, HttpHeaders headers) {
+<span class="nc" id="L98">        Response oldAssuranceResponse = findAssuranceById(UUID.fromString(assuranceId), headers);</span>
+<span class="nc" id="L99">        Assurance oldAssurance =  ((Optional&lt;Assurance&gt;)oldAssuranceResponse.getData()).get();</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (oldAssurance == null) {</span>
+<span class="nc" id="L101">            AssuranceServiceImpl.LOGGER.error(&quot;[modify][ModifyAssurance Fail][Assurance not found][assuranceId: {}, orderId: {}, typeIndex: {}]&quot;, assuranceId, orderId, typeIndex);</span>
+<span class="nc" id="L102">            return new Response&lt;&gt;(0, &quot;Fail.Assurance not found.&quot;, null);</span>
+        } else {
+<span class="nc" id="L104">            AssuranceType at = AssuranceType.getTypeByIndex(typeIndex);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            if (at != null) {</span>
+<span class="nc" id="L106">                oldAssurance.setType(at);</span>
+<span class="nc" id="L107">                assuranceRepository.save(oldAssurance);</span>
+<span class="nc" id="L108">                AssuranceServiceImpl.LOGGER.info(&quot;[modify][ModifyAssurance Success][assuranceId: {}, orderId: {}, typeIndex: {}]&quot;, assuranceId, orderId, typeIndex);</span>
+<span class="nc" id="L109">                return new Response&lt;&gt;(1, &quot;Modify Success&quot;, oldAssurance);</span>
+            } else {
+<span class="nc" id="L111">                AssuranceServiceImpl.LOGGER.error(&quot;[modify][ModifyAssurance Fail][Assurance Type not exist][assuranceId: {}, orderId: {}, typeIndex: {}]&quot;, assuranceId, orderId, typeIndex);</span>
+<span class="nc" id="L112">                return new Response&lt;&gt;(0, &quot;Assurance Type not exist&quot;, null);</span>
+            }
+        }
+    }
+
+    @Override
+    public Response getAllAssurances(HttpHeaders headers) {
+<span class="nc" id="L119">        List&lt;Assurance&gt; as = assuranceRepository.findAll();</span>
+<span class="nc bnc" id="L120" title="All 4 branches missed.">        if (as != null &amp;&amp; !as.isEmpty()) {</span>
+<span class="nc" id="L121">            ArrayList&lt;PlainAssurance&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">            for (Assurance a : as) {</span>
+<span class="nc" id="L123">                PlainAssurance pa = new PlainAssurance();</span>
+<span class="nc" id="L124">                pa.setId(a.getId());</span>
+<span class="nc" id="L125">                pa.setOrderId(a.getOrderId());</span>
+<span class="nc" id="L126">                pa.setTypeIndex(a.getType().getIndex());</span>
+<span class="nc" id="L127">                pa.setTypeName(a.getType().getName());</span>
+<span class="nc" id="L128">                pa.setTypePrice(a.getType().getPrice());</span>
+<span class="nc" id="L129">                result.add(pa);</span>
+<span class="nc" id="L130">            }</span>
+<span class="nc" id="L131">            AssuranceServiceImpl.LOGGER.info(&quot;[getAllAssurances][find all assurance success][list size: {}]&quot;, as.size());</span>
+<span class="nc" id="L132">            return new Response&lt;&gt;(1, &quot;Success&quot;, result);</span>
+        } else {
+<span class="nc" id="L134">            AssuranceServiceImpl.LOGGER.warn(&quot;[getAllAssurances][find all assurance][No content]&quot;);</span>
+<span class="nc" id="L135">            return new Response&lt;&gt;(0, &quot;No Content, Assurance is empty&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response getAllAssuranceTypes(HttpHeaders headers) {
+
+<span class="nc" id="L142">        List&lt;AssuranceTypeBean&gt; atlist = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        for (AssuranceType at : AssuranceType.values()) {</span>
+<span class="nc" id="L144">            AssuranceTypeBean atb = new AssuranceTypeBean();</span>
+<span class="nc" id="L145">            atb.setIndex(at.getIndex());</span>
+<span class="nc" id="L146">            atb.setName(at.getName());</span>
+<span class="nc" id="L147">            atb.setPrice(at.getPrice());</span>
+<span class="nc" id="L148">            atlist.add(atb);</span>
+        }
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (!atlist.isEmpty()) {</span>
+<span class="nc" id="L151">            AssuranceServiceImpl.LOGGER.info(&quot;[getAllAssuranceTypes][find all assurance type success][list size: {}]&quot;, atlist.size());</span>
+<span class="nc" id="L152">            return new Response&lt;&gt;(1, &quot;Find All Assurance&quot;, atlist);</span>
+        } else {
+<span class="nc" id="L154">            AssuranceServiceImpl.LOGGER.warn(&quot;[getAllAssuranceTypes][find all assurance type][No content]&quot;);</span>
+<span class="nc" id="L155">            return new Response&lt;&gt;(0, &quot;Assurance is Empty&quot;, null);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

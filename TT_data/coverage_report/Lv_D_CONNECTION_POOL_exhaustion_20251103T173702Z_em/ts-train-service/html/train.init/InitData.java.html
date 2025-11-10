@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InitData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">train.init</a> &gt; <span class="el_source">InitData.java</span></div><h1>InitData.java</h1><pre class="source lang-java linenums">package train.init;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import train.entity.TrainType;
+import train.service.TrainService;
+
+
+@Component
+<span class="fc" id="L11">public class InitData implements CommandLineRunner {</span>
+
+    @Autowired
+    TrainService service;
+
+    @Override
+    public void run(String... args) throws Exception {
+<span class="fc" id="L18">        TrainType info = new TrainType();</span>
+
+<span class="fc" id="L20">        info.setName(&quot;GaoTieOne&quot;);</span>
+<span class="fc" id="L21">        info.setConfortClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L22">        info.setEconomyClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L23">        info.setAverageSpeed(250);</span>
+<span class="fc" id="L24">        service.create(info, null);</span>
+
+<span class="fc" id="L26">        info = new TrainType();</span>
+<span class="fc" id="L27">        info.setName(&quot;GaoTieTwo&quot;);</span>
+<span class="fc" id="L28">        info.setConfortClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L29">        info.setEconomyClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L30">        info.setAverageSpeed(200);</span>
+<span class="fc" id="L31">        service.create(info, null);</span>
+
+<span class="fc" id="L33">        info = new TrainType();</span>
+<span class="fc" id="L34">        info.setName(&quot;DongCheOne&quot;);</span>
+<span class="fc" id="L35">        info.setConfortClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L36">        info.setEconomyClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L37">        info.setAverageSpeed(180);</span>
+<span class="fc" id="L38">        service.create(info, null);</span>
+
+<span class="fc" id="L40">        info = new TrainType();</span>
+<span class="fc" id="L41">        info.setName(&quot;ZhiDa&quot;);</span>
+<span class="fc" id="L42">        info.setConfortClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L43">        info.setEconomyClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L44">        info.setAverageSpeed(120);</span>
+<span class="fc" id="L45">        service.create(info, null);</span>
+
+<span class="fc" id="L47">        info = new TrainType();</span>
+<span class="fc" id="L48">        info.setName(&quot;TeKuai&quot;);</span>
+<span class="fc" id="L49">        info.setConfortClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L50">        info.setEconomyClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L51">        info.setAverageSpeed(120);</span>
+<span class="fc" id="L52">        service.create(info, null);</span>
+
+<span class="fc" id="L54">        info = new TrainType();</span>
+<span class="fc" id="L55">        info.setName(&quot;KuaiSu&quot;);</span>
+<span class="fc" id="L56">        info.setConfortClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L57">        info.setEconomyClass(Integer.MAX_VALUE);</span>
+<span class="fc" id="L58">        info.setAverageSpeed(90);</span>
+<span class="fc" id="L59">        service.create(info, null);</span>
+<span class="fc" id="L60">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

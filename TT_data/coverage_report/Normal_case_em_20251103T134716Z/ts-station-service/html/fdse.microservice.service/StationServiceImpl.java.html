@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StationServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">fdse.microservice.service</a> &gt; <span class="el_source">StationServiceImpl.java</span></div><h1>StationServiceImpl.java</h1><pre class="source lang-java linenums">package fdse.microservice.service;
+
+import edu.fudan.common.util.Response;
+import fdse.microservice.entity.*;
+import fdse.microservice.repository.StationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+
+@Service
+<span class="fc" id="L16">public class StationServiceImpl implements StationService {</span>
+
+    @Autowired
+    private StationRepository repository;
+
+<span class="fc" id="L21">    String success = &quot;Success&quot;;</span>
+
+<span class="fc" id="L23">    private static final Logger LOGGER = LoggerFactory.getLogger(StationServiceImpl.class);</span>
+
+    @Override
+    public Response create(Station station, HttpHeaders headers) {
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        if(station.getName().isEmpty()) {</span>
+<span class="nc" id="L28">            StationServiceImpl.LOGGER.error(&quot;[create][Create station error][Name not specify]&quot;);</span>
+<span class="nc" id="L29">            return new Response&lt;&gt;(0, &quot;Name not specify&quot;, station);</span>
+        }
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">        if (repository.findByName(station.getName()) == null) {</span>
+<span class="nc" id="L32">            station.setStayTime(station.getStayTime());</span>
+<span class="nc" id="L33">            repository.save(station);</span>
+<span class="nc" id="L34">            return new Response&lt;&gt;(1, &quot;Create success&quot;, station);</span>
+        }
+<span class="fc" id="L36">        StationServiceImpl.LOGGER.error(&quot;[create][Create station error][Already exists][StationId: {}]&quot;,station.getId());</span>
+<span class="fc" id="L37">        return new Response&lt;&gt;(0, &quot;Already exists&quot;, station);</span>
+    }
+
+
+    @Override
+    public boolean exist(String stationName, HttpHeaders headers) {
+<span class="nc" id="L43">        boolean result = false;</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        if (repository.findByName(stationName) != null) {</span>
+<span class="nc" id="L45">            result = true;</span>
+        }
+<span class="nc" id="L47">        return result;</span>
+    }
+
+    @Override
+    public Response update(Station info, HttpHeaders headers) {
+
+<span class="nc" id="L53">        Optional&lt;Station&gt; op = repository.findById(info.getId());</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="nc" id="L55">            StationServiceImpl.LOGGER.error(&quot;[update][Update station error][Station not found][StationId: {}]&quot;,info.getId());</span>
+<span class="nc" id="L56">            return new Response&lt;&gt;(0, &quot;Station not exist&quot;, null);</span>
+        } else {
+<span class="nc" id="L58">            Station station = op.get();</span>
+<span class="nc" id="L59">            station.setName(info.getName());</span>
+<span class="nc" id="L60">            station.setStayTime(info.getStayTime());</span>
+<span class="nc" id="L61">            repository.save(station);</span>
+<span class="nc" id="L62">            return new Response&lt;&gt;(1, &quot;Update success&quot;, station);</span>
+        }
+    }
+
+    @Override
+    public Response delete(String stationsId, HttpHeaders headers) {
+<span class="nc" id="L68">        Optional&lt;Station&gt; op = repository.findById(stationsId);</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (op.isPresent()) {</span>
+<span class="nc" id="L70">            Station station = op.get();</span>
+<span class="nc" id="L71">            repository.delete(station);</span>
+<span class="nc" id="L72">            return new Response&lt;&gt;(1, &quot;Delete success&quot;, station);</span>
+        }
+<span class="nc" id="L74">        StationServiceImpl.LOGGER.error(&quot;[delete][Delete station error][Station not found][StationId: {}]&quot;,stationsId);</span>
+<span class="nc" id="L75">        return new Response&lt;&gt;(0, &quot;Station not exist&quot;, null);</span>
+    }
+
+    @Override
+    public Response query(HttpHeaders headers) {
+<span class="fc" id="L80">        List&lt;Station&gt; stations = repository.findAll();</span>
+<span class="pc bpc" id="L81" title="2 of 4 branches missed.">        if (stations != null &amp;&amp; !stations.isEmpty()) {</span>
+<span class="fc" id="L82">            return new Response&lt;&gt;(1, &quot;Find all content&quot;, stations);</span>
+        } else {
+<span class="nc" id="L84">            StationServiceImpl.LOGGER.warn(&quot;[query][Query stations warn][Find all stations: {}]&quot;,&quot;No content&quot;);</span>
+<span class="nc" id="L85">            return new Response&lt;&gt;(0, &quot;No content&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response queryForId(String stationName, HttpHeaders headers) {
+<span class="fc" id="L91">        Station station = repository.findByName(stationName);</span>
+
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        if (station  != null) {</span>
+<span class="nc" id="L94">            return new Response&lt;&gt;(1, success, station.getId());</span>
+        } else {
+<span class="fc" id="L96">            StationServiceImpl.LOGGER.warn(&quot;[queryForId][Find station id warn][Station not found][StationName: {}]&quot;,stationName);</span>
+<span class="fc" id="L97">            return new Response&lt;&gt;(0, &quot;Not exists&quot;, stationName);</span>
+        }
+    }
+
+
+    @Override
+    public Response queryForIdBatch(List&lt;String&gt; nameList, HttpHeaders headers) {
+<span class="fc" id="L104">        Map&lt;String, String&gt; result = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L105">        List&lt;Station&gt; stations = repository.findByNames(nameList);</span>
+<span class="fc" id="L106">        Map&lt;String, String&gt; stationMap = new HashMap&lt;&gt;();</span>
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        for(Station s: stations) {</span>
+<span class="nc" id="L108">            stationMap.put(s.getName(), s.getId());</span>
+<span class="nc" id="L109">        }</span>
+
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        for(String name: nameList){</span>
+<span class="fc" id="L112">            result.put(name, stationMap.get(name));</span>
+<span class="fc" id="L113">        }</span>
+
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">        if (!result.isEmpty()) {</span>
+<span class="fc" id="L116">            return new Response&lt;&gt;(1, success, result);</span>
+        } else {
+<span class="nc" id="L118">            StationServiceImpl.LOGGER.warn(&quot;[queryForIdBatch][Find station ids warn][Stations not found][StationNameNumber: {}]&quot;,nameList.size());</span>
+<span class="nc" id="L119">            return new Response&lt;&gt;(0, &quot;No content according to name list&quot;, null);</span>
+        }
+
+    }
+
+    @Override
+    public Response queryById(String stationId, HttpHeaders headers) {
+<span class="fc" id="L126">        Optional&lt;Station&gt; station = repository.findById(stationId);</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        if (station.isPresent()) {</span>
+<span class="nc" id="L128">            return new Response&lt;&gt;(1, success, station.get().getName());</span>
+        } else {
+<span class="fc" id="L130">            StationServiceImpl.LOGGER.error(&quot;[queryById][Find station name error][Station not found][StationId: {}]&quot;,stationId);</span>
+<span class="fc" id="L131">            return new Response&lt;&gt;(0, &quot;No that stationId&quot;, stationId);</span>
+        }
+    }
+
+    @Override
+    public Response queryByIdBatch(List&lt;String&gt; idList, HttpHeaders headers) {
+<span class="fc" id="L137">        ArrayList&lt;String&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        for (int i = 0; i &lt; idList.size(); i++) {</span>
+<span class="fc" id="L139">            Optional&lt;Station&gt; stationOld = repository.findById(idList.get(i));</span>
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">            if(stationOld.isPresent()){</span>
+<span class="nc" id="L141">                Station station=stationOld.get();</span>
+<span class="nc" id="L142">                result.add(station.getName());</span>
+            }
+        }
+
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (!result.isEmpty()) {</span>
+<span class="nc" id="L147">            return new Response&lt;&gt;(1, success, result);</span>
+        } else {
+<span class="fc" id="L149">            StationServiceImpl.LOGGER.error(&quot;[queryByIdBatch][Find station names error][Stations not found][StationIdNumber: {}]&quot;,idList.size());</span>
+<span class="fc" id="L150">            return new Response&lt;&gt;(0, &quot;No stationNamelist according to stationIdList&quot;, result);</span>
+        }
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PriceServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">price.service</a> &gt; <span class="el_source">PriceServiceImpl.java</span></div><h1>PriceServiceImpl.java</h1><pre class="source lang-java linenums">package price.service;
+
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import price.entity.PriceConfig;
+import price.repository.PriceConfigRepository;
+
+import java.util.*;
+
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L19">public class PriceServiceImpl implements PriceService {</span>
+
+    @Autowired(required=true)
+    private PriceConfigRepository priceConfigRepository;
+
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(PriceServiceImpl.class);</span>
+
+<span class="fc" id="L26">    String noThatConfig = &quot;No that config&quot;;</span>
+
+    @Override
+    public Response createNewPriceConfig(PriceConfig createAndModifyPriceConfig, HttpHeaders headers) {
+<span class="fc" id="L30">        PriceServiceImpl.LOGGER.info(&quot;[createNewPriceConfig]&quot;);</span>
+<span class="fc" id="L31">        PriceConfig priceConfig = null;</span>
+        // create
+<span class="pc bpc" id="L33" title="2 of 4 branches missed.">        if (createAndModifyPriceConfig.getId() == null || createAndModifyPriceConfig.getId().toString().length() &lt; 10) {</span>
+<span class="nc" id="L34">            priceConfig = new PriceConfig();</span>
+<span class="nc" id="L35">            priceConfig.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L36">            priceConfig.setBasicPriceRate(createAndModifyPriceConfig.getBasicPriceRate());</span>
+<span class="nc" id="L37">            priceConfig.setFirstClassPriceRate(createAndModifyPriceConfig.getFirstClassPriceRate());</span>
+<span class="nc" id="L38">            priceConfig.setRouteId(createAndModifyPriceConfig.getRouteId());</span>
+<span class="nc" id="L39">            priceConfig.setTrainType(createAndModifyPriceConfig.getTrainType());</span>
+<span class="nc" id="L40">            priceConfigRepository.save(priceConfig);</span>
+        } else {
+            // modify
+<span class="fc" id="L43">            Optional&lt;PriceConfig&gt; op = priceConfigRepository.findById(createAndModifyPriceConfig.getId());</span>
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">            if (!op.isPresent()) {</span>
+<span class="nc" id="L45">                priceConfig = new PriceConfig();</span>
+<span class="nc" id="L46">                priceConfig.setId(createAndModifyPriceConfig.getId());</span>
+            }else{
+<span class="fc" id="L48">                priceConfig = op.get();</span>
+            }
+<span class="fc" id="L50">            priceConfig.setBasicPriceRate(createAndModifyPriceConfig.getBasicPriceRate());</span>
+<span class="fc" id="L51">            priceConfig.setFirstClassPriceRate(createAndModifyPriceConfig.getFirstClassPriceRate());</span>
+<span class="fc" id="L52">            priceConfig.setRouteId(createAndModifyPriceConfig.getRouteId());</span>
+<span class="fc" id="L53">            priceConfig.setTrainType(createAndModifyPriceConfig.getTrainType());</span>
+<span class="fc" id="L54">            priceConfigRepository.save(priceConfig);</span>
+        }
+<span class="fc" id="L56">        return new Response&lt;&gt;(1, &quot;Create success&quot;, priceConfig);</span>
+    }
+
+    @Override
+    public PriceConfig findById(String id, HttpHeaders headers) {
+<span class="nc" id="L61">        PriceServiceImpl.LOGGER.info(&quot;[findById][ID: {}]&quot;, id);</span>
+<span class="nc" id="L62">        Optional&lt;PriceConfig&gt; op = priceConfigRepository.findById(UUID.fromString(id).toString());</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        if(op.isPresent()){</span>
+<span class="nc" id="L64">            return op.get();</span>
+        }
+<span class="nc" id="L66">        return null;</span>
+    }
+
+    @Override
+    public Response findByRouteIdAndTrainType(String routeId, String trainType, HttpHeaders headers) {
+<span class="fc" id="L71">        PriceServiceImpl.LOGGER.info(&quot;[findByRouteIdAndTrainType][Route: {} , Train Type: {}]&quot;, routeId, trainType);</span>
+<span class="fc" id="L72">        PriceConfig priceConfig = priceConfigRepository.findByRouteIdAndTrainType(routeId, trainType);</span>
+        //PriceServiceImpl.LOGGER.info(&quot;[findByRouteIdAndTrainType]&quot;);
+
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">        if (priceConfig == null) {</span>
+<span class="fc" id="L76">            PriceServiceImpl.LOGGER.warn(&quot;[findByRouteIdAndTrainType][Find by route and train type warn][PricrConfig not found][RouteId: {}, TrainType: {}]&quot;,routeId,trainType);</span>
+<span class="fc" id="L77">            return new Response&lt;&gt;(0, noThatConfig, null);</span>
+        } else {
+<span class="nc" id="L79">            return new Response&lt;&gt;(1, &quot;Success&quot;, priceConfig);</span>
+        }
+    }
+
+    @Override
+    public Response findByRouteIdsAndTrainTypes(List&lt;String&gt; ridsAndTts, HttpHeaders headers){
+<span class="nc" id="L85">        List&lt;String&gt; routeIds = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L86">        List&lt;String&gt; trainTypes = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        for(String rts: ridsAndTts){</span>
+<span class="nc" id="L88">            List&lt;String&gt; r_t  = Arrays.asList(rts.split(&quot;:&quot;));</span>
+<span class="nc" id="L89">            routeIds.add(r_t.get(0));</span>
+<span class="nc" id="L90">            trainTypes.add(r_t.get(1));</span>
+<span class="nc" id="L91">        }</span>
+<span class="nc" id="L92">        List&lt;PriceConfig&gt; pcs = priceConfigRepository.findByRouteIdsAndTrainTypes(routeIds, trainTypes);</span>
+<span class="nc" id="L93">        Map&lt;String, PriceConfig&gt; pcMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        for(PriceConfig pc: pcs){</span>
+<span class="nc" id="L95">            String key = pc.getRouteId() + &quot;:&quot; + pc.getTrainType();</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">            if(ridsAndTts.contains(key)){</span>
+<span class="nc" id="L97">                pcMap.put(key, pc);</span>
+            }
+<span class="nc" id="L99">        }</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (pcMap == null) {</span>
+<span class="nc" id="L101">            PriceServiceImpl.LOGGER.warn(&quot;[findByRouteIdsAndTrainTypes][Find by routes and train types warn][PricrConfig not found][RouteIds: {}, TrainTypes: {}]&quot;,routeIds,trainTypes);</span>
+<span class="nc" id="L102">            return new Response&lt;&gt;(0, noThatConfig, null);</span>
+        } else {
+<span class="nc" id="L104">            return new Response&lt;&gt;(1, &quot;Success&quot;, pcMap);</span>
+        }
+    }
+
+
+    @Override
+    public Response findAllPriceConfig(HttpHeaders headers) {
+<span class="fc" id="L111">        List&lt;PriceConfig&gt; list = priceConfigRepository.findAll();</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (list == null) {</span>
+<span class="nc" id="L113">            list = new ArrayList&lt;&gt;();</span>
+        }
+
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (!list.isEmpty()) {</span>
+<span class="fc" id="L117">            PriceServiceImpl.LOGGER.warn(&quot;[findAllPriceConfig][Find all price config warn][{}]&quot;,&quot;No Content&quot;);</span>
+<span class="fc" id="L118">            return new Response&lt;&gt;(1, &quot;Success&quot;, list);</span>
+        } else {
+<span class="nc" id="L120">            return new Response&lt;&gt;(0, &quot;No price config&quot;, null);</span>
+        }
+
+    }
+
+    @Override
+    public Response deletePriceConfig(String pcId, HttpHeaders headers) {
+<span class="fc" id="L127">        Optional&lt;PriceConfig&gt; op = priceConfigRepository.findById(pcId);</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="fc" id="L129">            PriceServiceImpl.LOGGER.error(&quot;[deletePriceConfig][Delete price config error][Price config not found][PriceConfigId: {}]&quot;,pcId);</span>
+<span class="fc" id="L130">            return new Response&lt;&gt;(0, noThatConfig, null);</span>
+        } else {
+<span class="nc" id="L132">            PriceConfig pc = op.get();</span>
+<span class="nc" id="L133">            priceConfigRepository.delete(pc);</span>
+<span class="nc" id="L134">            return new Response&lt;&gt;(1, &quot;Delete success&quot;, pc);</span>
+        }
+    }
+
+    @Override
+    public Response updatePriceConfig(PriceConfig c, HttpHeaders headers) {
+<span class="fc" id="L140">        Optional&lt;PriceConfig&gt; op = priceConfigRepository.findById(c.getId());</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="fc" id="L142">            PriceServiceImpl.LOGGER.error(&quot;[updatePriceConfig][Update price config error][Price config not found][PriceConfigId: {}]&quot;,c.getId());</span>
+<span class="fc" id="L143">            return new Response&lt;&gt;(0, noThatConfig, null);</span>
+        } else {
+<span class="nc" id="L145">            PriceConfig priceConfig = op.get();</span>
+<span class="nc" id="L146">            priceConfig.setId(c.getId());</span>
+<span class="nc" id="L147">            priceConfig.setBasicPriceRate(c.getBasicPriceRate());</span>
+<span class="nc" id="L148">            priceConfig.setFirstClassPriceRate(c.getFirstClassPriceRate());</span>
+<span class="nc" id="L149">            priceConfig.setRouteId(c.getRouteId());</span>
+<span class="nc" id="L150">            priceConfig.setTrainType(c.getTrainType());</span>
+<span class="nc" id="L151">            priceConfigRepository.save(priceConfig);</span>
+<span class="nc" id="L152">            return new Response&lt;&gt;(1, &quot;Update success&quot;, priceConfig);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

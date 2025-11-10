@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StationFoodServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">food.service</a> &gt; <span class="el_source">StationFoodServiceImpl.java</span></div><h1>StationFoodServiceImpl.java</h1><pre class="source lang-java linenums">package food.service;
+
+import edu.fudan.common.util.Response;
+import food.entity.StationFoodStore;
+import food.repository.StationFoodRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+
+@Service
+<span class="fc" id="L16">public class StationFoodServiceImpl implements StationFoodService {</span>
+
+    @Autowired
+    StationFoodRepository stationFoodRepository;
+
+//    @Autowired
+//    TrainFoodRepository trainFoodRepository;
+
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(StationFoodServiceImpl.class);</span>
+
+<span class="fc" id="L26">    String success = &quot;Success&quot;;</span>
+<span class="fc" id="L27">    String noContent = &quot;No content&quot;;</span>
+
+    @Override
+    public Response createFoodStore(StationFoodStore fs, HttpHeaders headers) {
+<span class="fc" id="L31">        StationFoodStore fsTemp = stationFoodRepository.findById(fs.getId()).orElse(null);</span>
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">        if (fsTemp != null) {</span>
+<span class="nc" id="L33">            StationFoodServiceImpl.LOGGER.error(&quot;[Init FoodStore] Already Exists Id: {}&quot;, fs.getId());</span>
+<span class="nc" id="L34">            return new Response&lt;&gt;(0, &quot;Already Exists Id&quot;, null);</span>
+        } else {
+            try{
+<span class="nc" id="L37">                stationFoodRepository.save(fs);</span>
+<span class="nc" id="L38">                return new Response&lt;&gt;(1, &quot;Save Success&quot;, fs);</span>
+<span class="fc" id="L39">            }catch(Exception e){</span>
+<span class="fc" id="L40">                return new Response&lt;&gt;(0, &quot;Save failed&quot;, e.getMessage());</span>
+            }
+        }
+    }
+
+//    @Override
+//    public TrainFood createTrainFood(TrainFood tf, HttpHeaders headers) {
+//        TrainFood tfTemp = trainFoodRepository.findById(tf.getId());
+//        if (tfTemp != null) {
+//            StationFoodServiceImpl.LOGGER.error(&quot;[Init TrainFood] Already Exists Id: {}&quot;, tf.getId());
+//        } else {
+//            trainFoodRepository.save(tf);
+//        }
+//        return tf;
+//    }
+
+    @Override
+    public Response listFoodStores(HttpHeaders headers) {
+<span class="fc" id="L58">        List&lt;StationFoodStore&gt; stationFoodStores = stationFoodRepository.findAll();</span>
+<span class="pc bpc" id="L59" title="2 of 4 branches missed.">        if (stationFoodStores != null &amp;&amp; !stationFoodStores.isEmpty()) {</span>
+<span class="fc" id="L60">            return new Response&lt;&gt;(1, success, stationFoodStores);</span>
+        } else {
+<span class="nc" id="L62">            StationFoodServiceImpl.LOGGER.error(&quot;List food stores error: {}&quot;, &quot;Food store is empty&quot;);</span>
+<span class="nc" id="L63">            return new Response&lt;&gt;(0, &quot;Food store is empty&quot;, null);</span>
+        }
+    }
+
+//    @Override
+//    public Response listTrainFood(HttpHeaders headers) {
+//        List&lt;TrainFood&gt; trainFoodList = trainFoodRepository.findAll();
+//        if (trainFoodList != null &amp;&amp; !trainFoodList.isEmpty()) {
+//            return new Response&lt;&gt;(1, success, trainFoodList);
+//        } else {
+//            StationFoodServiceImpl.LOGGER.error(&quot;List train food error: {}&quot;, noContent);
+//            return new Response&lt;&gt;(0, noContent, null);
+//        }
+//    }
+
+    @Override
+    public Response listFoodStoresByStationName(String stationName, HttpHeaders headers) {
+<span class="nc" id="L80">        List&lt;StationFoodStore&gt; stationFoodStoreList = stationFoodRepository.findByStationName(stationName);</span>
+<span class="nc bnc" id="L81" title="All 4 branches missed.">        if (stationFoodStoreList != null &amp;&amp; !stationFoodStoreList.isEmpty()) {</span>
+<span class="nc" id="L82">            return new Response&lt;&gt;(1, success, stationFoodStoreList);</span>
+        } else {
+<span class="nc" id="L84">            StationFoodServiceImpl.LOGGER.error(&quot;List food stores by station id error: {}, stationName: {}&quot;, &quot;Food store is empty&quot;, stationName);</span>
+<span class="nc" id="L85">            return new Response&lt;&gt;(0, &quot;Food store is empty&quot;, null);</span>
+        }
+    }
+
+//    @Override
+//    public Response listTrainFoodByTripId(String tripId, HttpHeaders headers) {
+//        List&lt;TrainFood&gt; trainFoodList = trainFoodRepository.findByTripId(tripId);
+//        if (trainFoodList != null) {
+//            return new Response&lt;&gt;(1, success, trainFoodList);
+//        } else {
+//            StationFoodServiceImpl.LOGGER.error(&quot;List train food by trip id error: {}, tripId: {}&quot;, noContent, tripId);
+//            return new Response&lt;&gt;(0, noContent, null);
+//        }
+//    }
+
+    @Override
+    public Response getFoodStoresByStationNames(List&lt;String&gt; stationNames) {
+<span class="fc" id="L102">        List&lt;StationFoodStore&gt; stationFoodStoreList = stationFoodRepository.findByStationNameIn(stationNames);</span>
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">        if (stationFoodStoreList != null) {</span>
+<span class="fc" id="L104">            return new Response&lt;&gt;(1, success, stationFoodStoreList);</span>
+        } else {
+<span class="nc" id="L106">            StationFoodServiceImpl.LOGGER.error(&quot;List food stores by station ids error: {}, stationName list: {}&quot;, &quot;Food store is empty&quot;, stationNames);</span>
+<span class="nc" id="L107">            return new Response&lt;&gt;(0, noContent, null);</span>
+        }
+    }
+
+    @Override
+    public Response getStaionFoodStoreById(String id) {
+<span class="fc" id="L113">        StationFoodStore stationFoodStore = stationFoodRepository.findById(id).orElse(null);</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        if (stationFoodStore == null) {</span>
+<span class="fc" id="L115">            LOGGER.error(&quot;no such staionFoodStoreId: {}&quot;, id);</span>
+<span class="fc" id="L116">            return new Response&lt;&gt;(0, noContent, null);</span>
+        } else {
+<span class="nc" id="L118">            return new Response&lt;&gt;(1, success, stationFoodStore);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

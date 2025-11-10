@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConsignRecord.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">consign.entity</a> &gt; <span class="el_source">ConsignRecord.java</span></div><h1>ConsignRecord.java</h1><pre class="source lang-java linenums">package consign.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.*;
+
+/**
+ * @author fdse
+ */
+<span class="nc bnc" id="L13" title="All 82 branches missed.">@Data</span>
+<span class="nc" id="L14">@AllArgsConstructor</span>
+<span class="nc" id="L15">@NoArgsConstructor</span>
+@Entity
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Table(schema = &quot;ts-consign-mysql&quot;)
+public class ConsignRecord {
+
+    @Id
+    @Column(name = &quot;consign_record_id&quot;)
+<span class="nc" id="L23">    private String id;</span>
+<span class="nc" id="L24">    private String orderId;</span>
+    @Column(name = &quot;user_id&quot;)
+<span class="nc" id="L26">    private String accountId;</span>
+<span class="nc" id="L27">    private String handleDate;</span>
+<span class="nc" id="L28">    private String targetDate;</span>
+    @Column(name = &quot;from_place&quot;)
+<span class="nc" id="L30">    private String from;</span>
+    @Column(name = &quot;to_place&quot;)
+<span class="nc" id="L32">    private String to;</span>
+<span class="nc" id="L33">    private String consignee;</span>
+    @Column(name = &quot;consign_record_phone&quot;)
+<span class="nc" id="L35">    private String phone;</span>
+<span class="nc" id="L36">    private double weight;</span>
+    @Column(name = &quot;consign_record_price&quot;)
+<span class="nc" id="L38">    private double price;</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InsidePaymentServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">inside_payment.service</a> &gt; <span class="el_source">InsidePaymentServiceImpl.java</span></div><h1>InsidePaymentServiceImpl.java</h1><pre class="source lang-java linenums">package inside_payment.service;
+
+import edu.fudan.common.entity.OrderStatus;
+import edu.fudan.common.entity.Order;
+import edu.fudan.common.util.Response;
+import inside_payment.entity.*;
+import inside_payment.repository.AddMoneyRepository;
+import inside_payment.repository.PaymentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.math.BigDecimal;
+import java.util.*;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L28">public class InsidePaymentServiceImpl implements InsidePaymentService {</span>
+
+    @Autowired
+    public AddMoneyRepository addMoneyRepository;
+
+    @Autowired
+    public PaymentRepository paymentRepository;
+
+    @Autowired
+    public RestTemplate restTemplate;
+
+<span class="fc" id="L39">    private static final Logger LOGGER = LoggerFactory.getLogger(InsidePaymentServiceImpl.class);</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L42">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+    @Override
+    public Response pay(PaymentInfo info, HttpHeaders headers) {
+
+<span class="nc" id="L48">        String userId = info.getUserId();</span>
+
+<span class="nc" id="L50">        String requestOrderURL = &quot;&quot;;</span>
+<span class="nc" id="L51">        String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L52">        String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc bnc" id="L53" title="All 4 branches missed.">        if (info.getTripId().startsWith(&quot;G&quot;) || info.getTripId().startsWith(&quot;D&quot;)) {</span>
+<span class="nc" id="L54">            requestOrderURL =  order_service_url + &quot;/api/v1/orderservice/order/&quot; + info.getOrderId();</span>
+        } else {
+<span class="nc" id="L56">            requestOrderURL = order_other_service_url + &quot;/api/v1/orderOtherService/orderOther/&quot; + info.getOrderId();</span>
+        }
+<span class="nc" id="L58">        HttpEntity requestGetOrderResults = new HttpEntity(headers);</span>
+<span class="nc" id="L59">        ResponseEntity&lt;Response&lt;Order&gt;&gt; reGetOrderResults = restTemplate.exchange(</span>
+                requestOrderURL,
+                HttpMethod.GET,
+                requestGetOrderResults,
+<span class="nc" id="L63">                new ParameterizedTypeReference&lt;Response&lt;Order&gt;&gt;() {</span>
+                });
+<span class="nc" id="L65">        Response&lt;Order&gt; result = reGetOrderResults.getBody();</span>
+
+
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (result.getStatus() == 1) {</span>
+<span class="nc" id="L69">            Order order = result.getData();</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">            if (order.getStatus() != OrderStatus.NOTPAID.getCode()) {</span>
+<span class="nc" id="L71">                InsidePaymentServiceImpl.LOGGER.warn(&quot;[Inside Payment Service.pay][Order status Not allowed to Pay]&quot;);</span>
+<span class="nc" id="L72">                return new Response&lt;&gt;(0, &quot;Error. Order status Not allowed to Pay.&quot;, null);</span>
+            }
+
+<span class="nc" id="L75">            Payment payment = new Payment();</span>
+<span class="nc" id="L76">            payment.setOrderId(info.getOrderId());</span>
+<span class="nc" id="L77">            payment.setPrice(order.getPrice());</span>
+<span class="nc" id="L78">            payment.setUserId(userId);</span>
+
+            //判断一下账户余额够不够，不够要去站外支付
+<span class="nc" id="L81">            List&lt;Payment&gt; payments = paymentRepository.findByUserId(userId);</span>
+<span class="nc" id="L82">            List&lt;Money&gt; addMonies = addMoneyRepository.findByUserId(userId);</span>
+<span class="nc" id="L83">            Iterator&lt;Payment&gt; paymentsIterator = payments.iterator();</span>
+<span class="nc" id="L84">            Iterator&lt;Money&gt; addMoniesIterator = addMonies.iterator();</span>
+
+<span class="nc" id="L86">            BigDecimal totalExpand = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            while (paymentsIterator.hasNext()) {</span>
+<span class="nc" id="L88">                Payment p = paymentsIterator.next();</span>
+<span class="nc" id="L89">                totalExpand = totalExpand.add(new BigDecimal(p.getPrice()));</span>
+<span class="nc" id="L90">            }</span>
+<span class="nc" id="L91">            totalExpand = totalExpand.add(new BigDecimal(order.getPrice()));</span>
+
+<span class="nc" id="L93">            BigDecimal money = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">            while (addMoniesIterator.hasNext()) {</span>
+<span class="nc" id="L95">                Money addMoney = addMoniesIterator.next();</span>
+<span class="nc" id="L96">                money = money.add(new BigDecimal(addMoney.getMoney()));</span>
+<span class="nc" id="L97">            }</span>
+
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            if (totalExpand.compareTo(money) &gt; 0) {</span>
+                //站外支付
+<span class="nc" id="L101">                Payment outsidePaymentInfo = new Payment();</span>
+<span class="nc" id="L102">                outsidePaymentInfo.setOrderId(info.getOrderId());</span>
+<span class="nc" id="L103">                outsidePaymentInfo.setUserId(userId);</span>
+<span class="nc" id="L104">                outsidePaymentInfo.setPrice(order.getPrice());</span>
+
+                /****这里调用第三方支付***/
+
+<span class="nc" id="L108">                HttpEntity requestEntityOutsidePaySuccess = new HttpEntity(outsidePaymentInfo, headers);</span>
+<span class="nc" id="L109">                String payment_service_url = getServiceUrl(&quot;ts-payment-service&quot;);</span>
+<span class="nc" id="L110">                ResponseEntity&lt;Response&gt; reOutsidePaySuccess = restTemplate.exchange(</span>
+                        payment_service_url + &quot;/api/v1/paymentservice/payment&quot;,
+                        HttpMethod.POST,
+                        requestEntityOutsidePaySuccess,
+                        Response.class);
+<span class="nc" id="L115">                Response outsidePaySuccess = reOutsidePaySuccess.getBody();</span>
+
+<span class="nc" id="L117">                InsidePaymentServiceImpl.LOGGER.info(&quot;[Inside Payment Service.pay][outside Pay][Out pay result: {}]&quot;, outsidePaySuccess.toString());</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">                if (outsidePaySuccess.getStatus() == 1) {</span>
+<span class="nc" id="L119">                    payment.setType(PaymentType.O);</span>
+<span class="nc" id="L120">                    paymentRepository.save(payment);</span>
+<span class="nc" id="L121">                    setOrderStatus(info.getTripId(), info.getOrderId(), headers);</span>
+<span class="nc" id="L122">                    return new Response&lt;&gt;(1, &quot;Payment Success &quot; +    outsidePaySuccess.getMsg(), null);</span>
+                } else {
+<span class="nc" id="L124">                    LOGGER.error(&quot;Payment failed: {}&quot;, outsidePaySuccess.getMsg());</span>
+<span class="nc" id="L125">                    return new Response&lt;&gt;(0, &quot;Payment Failed:  &quot; +  outsidePaySuccess.getMsg(), null);</span>
+                }
+            } else {
+<span class="nc" id="L128">                setOrderStatus(info.getTripId(), info.getOrderId(), headers);</span>
+<span class="nc" id="L129">                payment.setType(PaymentType.P);</span>
+<span class="nc" id="L130">                paymentRepository.save(payment);</span>
+            }
+<span class="nc" id="L132">            LOGGER.info(&quot;[Inside Payment Service.pay][Payment success][orderId: {}]&quot;, info.getOrderId());</span>
+<span class="nc" id="L133">            return new Response&lt;&gt;(1, &quot;Payment Success&quot;, null);</span>
+
+        } else {
+<span class="nc" id="L136">            LOGGER.error(&quot;[Inside Payment Service.pay][Payment failed][Order not exists][orderId: {}]&quot;, info.getOrderId());</span>
+<span class="nc" id="L137">            return new Response&lt;&gt;(0, &quot;Payment Failed, Order Not Exists&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response createAccount(AccountInfo info, HttpHeaders headers) {
+<span class="fc" id="L143">        List&lt;Money&gt; list = addMoneyRepository.findByUserId(info.getUserId());</span>
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">        if (list.isEmpty()) {</span>
+<span class="nc" id="L145">            Money addMoney = new Money();</span>
+<span class="nc" id="L146">            addMoney.setMoney(info.getMoney());</span>
+<span class="nc" id="L147">            addMoney.setUserId(info.getUserId());</span>
+<span class="nc" id="L148">            addMoney.setType(MoneyType.A);</span>
+<span class="nc" id="L149">            addMoneyRepository.save(addMoney);</span>
+<span class="nc" id="L150">            return new Response&lt;&gt;(1, &quot;Create Account Success&quot;, null);</span>
+        } else {
+<span class="fc" id="L152">            LOGGER.error(&quot;[createAccount][Create Account Failed][Account already Exists][userId: {}]&quot;, info.getUserId());</span>
+<span class="fc" id="L153">            return new Response&lt;&gt;(0, &quot;Create Account Failed, Account already Exists&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response addMoney(String userId, String money, HttpHeaders headers) {
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (addMoneyRepository.findByUserId(userId) != null) {</span>
+<span class="nc" id="L160">            Money addMoney = new Money();</span>
+<span class="nc" id="L161">            addMoney.setUserId(userId);</span>
+<span class="nc" id="L162">            addMoney.setMoney(money);</span>
+<span class="nc" id="L163">            addMoney.setType(MoneyType.A);</span>
+<span class="nc" id="L164">            addMoneyRepository.save(addMoney);</span>
+<span class="nc" id="L165">            return new Response&lt;&gt;(1, &quot;Add Money Success&quot;, null);</span>
+        } else {
+<span class="nc" id="L167">            LOGGER.error(&quot;Add Money Failed, userId: {}&quot;, userId);</span>
+<span class="nc" id="L168">            return new Response&lt;&gt;(0, &quot;Add Money Failed&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response queryAccount(HttpHeaders headers) {
+<span class="nc" id="L174">        List&lt;Balance&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L175">        List&lt;Money&gt; list = addMoneyRepository.findAll();</span>
+<span class="nc" id="L176">        Iterator&lt;Money&gt; ite = list.iterator();</span>
+<span class="nc" id="L177">        HashMap&lt;String, String&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        while (ite.hasNext()) {</span>
+<span class="nc" id="L179">            Money addMoney = ite.next();</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">            if (map.containsKey(addMoney.getUserId())) {</span>
+<span class="nc" id="L181">                BigDecimal money = new BigDecimal(map.get(addMoney.getUserId()));</span>
+<span class="nc" id="L182">                map.put(addMoney.getUserId(), money.add(new BigDecimal(addMoney.getMoney())).toString());</span>
+<span class="nc" id="L183">            } else {</span>
+<span class="nc" id="L184">                map.put(addMoney.getUserId(), addMoney.getMoney());</span>
+            }
+<span class="nc" id="L186">        }</span>
+
+<span class="nc" id="L188">        Iterator ite1 = map.entrySet().iterator();</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        while (ite1.hasNext()) {</span>
+<span class="nc" id="L190">            Map.Entry entry = (Map.Entry) ite1.next();</span>
+<span class="nc" id="L191">            String userId = (String) entry.getKey();</span>
+<span class="nc" id="L192">            String money = (String) entry.getValue();</span>
+
+<span class="nc" id="L194">            List&lt;Payment&gt; payments = paymentRepository.findByUserId(userId);</span>
+<span class="nc" id="L195">            Iterator&lt;Payment&gt; iterator = payments.iterator();</span>
+<span class="nc" id="L196">            String totalExpand = &quot;0&quot;;</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">            while (iterator.hasNext()) {</span>
+<span class="nc" id="L198">                Payment p = iterator.next();</span>
+<span class="nc" id="L199">                BigDecimal expand = new BigDecimal(totalExpand);</span>
+<span class="nc" id="L200">                totalExpand = expand.add(new BigDecimal(p.getPrice())).toString();</span>
+<span class="nc" id="L201">            }</span>
+<span class="nc" id="L202">            String balanceMoney = new BigDecimal(money).subtract(new BigDecimal(totalExpand)).toString();</span>
+<span class="nc" id="L203">            Balance balance = new Balance();</span>
+<span class="nc" id="L204">            balance.setUserId(userId);</span>
+<span class="nc" id="L205">            balance.setBalance(balanceMoney);</span>
+<span class="nc" id="L206">            result.add(balance);</span>
+<span class="nc" id="L207">        }</span>
+
+<span class="nc" id="L209">        return new Response&lt;&gt;(1, &quot;Success&quot;, result);</span>
+    }
+
+    public String queryAccount(String userId, HttpHeaders headers) {
+<span class="nc" id="L213">        List&lt;Payment&gt; payments = paymentRepository.findByUserId(userId);</span>
+<span class="nc" id="L214">        List&lt;Money&gt; addMonies = addMoneyRepository.findByUserId(userId);</span>
+<span class="nc" id="L215">        Iterator&lt;Payment&gt; paymentsIterator = payments.iterator();</span>
+<span class="nc" id="L216">        Iterator&lt;Money&gt; addMoniesIterator = addMonies.iterator();</span>
+
+<span class="nc" id="L218">        BigDecimal totalExpand = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        while (paymentsIterator.hasNext()) {</span>
+<span class="nc" id="L220">            Payment p = paymentsIterator.next();</span>
+<span class="nc" id="L221">            totalExpand.add(new BigDecimal(p.getPrice()));</span>
+<span class="nc" id="L222">        }</span>
+
+<span class="nc" id="L224">        BigDecimal money = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">        while (addMoniesIterator.hasNext()) {</span>
+<span class="nc" id="L226">            Money addMoney = addMoniesIterator.next();</span>
+<span class="nc" id="L227">            money.add(new BigDecimal(addMoney.getMoney()));</span>
+<span class="nc" id="L228">        }</span>
+
+<span class="nc" id="L230">        return money.subtract(totalExpand).toString();</span>
+    }
+
+    @Override
+    public Response queryPayment(HttpHeaders headers) {
+<span class="nc" id="L235">        List&lt;Payment&gt; payments = paymentRepository.findAll();</span>
+<span class="nc bnc" id="L236" title="All 4 branches missed.">        if (payments != null &amp;&amp; !payments.isEmpty()) {</span>
+<span class="nc" id="L237">            return new Response&lt;&gt;(1, &quot;Query Payment Success&quot;, payments);</span>
+        }else {
+<span class="nc" id="L239">            LOGGER.error(&quot;[queryPayment][Query payment failed][payment is null]&quot;);</span>
+<span class="nc" id="L240">            return new Response&lt;&gt;(0, &quot;Query Payment Failed&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response drawBack(String userId, String money, HttpHeaders headers) {
+<span class="nc bnc" id="L246" title="All 2 branches missed.">        if (addMoneyRepository.findByUserId(userId) != null) {</span>
+<span class="nc" id="L247">            Money addMoney = new Money();</span>
+<span class="nc" id="L248">            addMoney.setUserId(userId);</span>
+<span class="nc" id="L249">            addMoney.setMoney(money);</span>
+<span class="nc" id="L250">            addMoney.setType(MoneyType.D);</span>
+<span class="nc" id="L251">            addMoneyRepository.save(addMoney);</span>
+<span class="nc" id="L252">            return new Response&lt;&gt;(1, &quot;Draw Back Money Success&quot;, null);</span>
+        } else {
+<span class="nc" id="L254">            LOGGER.error(&quot;[drawBack][Draw Back Money Failed][addMoneyRepository.findByUserId null][userId: {}]&quot;, userId);</span>
+<span class="nc" id="L255">            return new Response&lt;&gt;(0, &quot;Draw Back Money Failed&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response payDifference(PaymentInfo info, HttpHeaders headers) {
+
+<span class="nc" id="L262">        String userId = info.getUserId();</span>
+
+<span class="nc" id="L264">        Payment payment = new Payment();</span>
+<span class="nc" id="L265">        payment.setOrderId(info.getOrderId());</span>
+<span class="nc" id="L266">        payment.setPrice(info.getPrice());</span>
+<span class="nc" id="L267">        payment.setUserId(info.getUserId());</span>
+
+
+<span class="nc" id="L270">        List&lt;Payment&gt; payments = paymentRepository.findByUserId(userId);</span>
+<span class="nc" id="L271">        List&lt;Money&gt; addMonies = addMoneyRepository.findByUserId(userId);</span>
+<span class="nc" id="L272">        Iterator&lt;Payment&gt; paymentsIterator = payments.iterator();</span>
+<span class="nc" id="L273">        Iterator&lt;Money&gt; addMoniesIterator = addMonies.iterator();</span>
+
+<span class="nc" id="L275">        BigDecimal totalExpand = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">        while (paymentsIterator.hasNext()) {</span>
+<span class="nc" id="L277">            Payment p = paymentsIterator.next();</span>
+<span class="nc" id="L278">            totalExpand.add(new BigDecimal(p.getPrice()));</span>
+<span class="nc" id="L279">        }</span>
+<span class="nc" id="L280">        totalExpand.add(new BigDecimal(info.getPrice()));</span>
+
+<span class="nc" id="L282">        BigDecimal money = new BigDecimal(&quot;0&quot;);</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">        while (addMoniesIterator.hasNext()) {</span>
+<span class="nc" id="L284">            Money addMoney = addMoniesIterator.next();</span>
+<span class="nc" id="L285">            money.add(new BigDecimal(addMoney.getMoney()));</span>
+<span class="nc" id="L286">        }</span>
+
+<span class="nc bnc" id="L288" title="All 2 branches missed.">        if (totalExpand.compareTo(money) &gt; 0) {</span>
+            //站外支付
+<span class="nc" id="L290">            Payment outsidePaymentInfo = new Payment();</span>
+<span class="nc" id="L291">            outsidePaymentInfo.setOrderId(info.getOrderId());</span>
+<span class="nc" id="L292">            outsidePaymentInfo.setUserId(userId);</span>
+<span class="nc" id="L293">            outsidePaymentInfo.setPrice(info.getPrice());</span>
+
+<span class="nc" id="L295">            HttpEntity requestEntityOutsidePaySuccess = new HttpEntity(outsidePaymentInfo, headers);</span>
+<span class="nc" id="L296">            String payment_service_url = getServiceUrl(&quot;ts-payment-service&quot;);</span>
+<span class="nc" id="L297">            ResponseEntity&lt;Response&gt; reOutsidePaySuccess = restTemplate.exchange(</span>
+                    payment_service_url + &quot;/api/v1/paymentservice/payment&quot;,
+                    HttpMethod.POST,
+                    requestEntityOutsidePaySuccess,
+                    Response.class);
+<span class="nc" id="L302">            Response outsidePaySuccess = reOutsidePaySuccess.getBody();</span>
+
+<span class="nc bnc" id="L304" title="All 2 branches missed.">            if (outsidePaySuccess.getStatus() == 1) {</span>
+<span class="nc" id="L305">                payment.setType(PaymentType.E);</span>
+<span class="nc" id="L306">                paymentRepository.save(payment);</span>
+<span class="nc" id="L307">                return new Response&lt;&gt;(1, &quot;Pay Difference Success&quot;, null);</span>
+            } else {
+<span class="nc" id="L309">                LOGGER.error(&quot;[payDifference][Pay Difference Failed][outsidePaySuccess status not 1][orderId: {}]&quot;, info.getOrderId());</span>
+<span class="nc" id="L310">                return new Response&lt;&gt;(0, &quot;Pay Difference Failed&quot;, null);</span>
+            }
+        } else {
+<span class="nc" id="L313">            payment.setType(PaymentType.E);</span>
+<span class="nc" id="L314">            paymentRepository.save(payment);</span>
+        }
+<span class="nc" id="L316">        return new Response&lt;&gt;(1, &quot;Pay Difference Success&quot;, null);</span>
+    }
+
+    @Override
+    public Response queryAddMoney(HttpHeaders headers) {
+<span class="nc" id="L321">        List&lt;Money&gt; monies = addMoneyRepository.findAll();</span>
+<span class="nc bnc" id="L322" title="All 4 branches missed.">        if (monies != null &amp;&amp; !monies.isEmpty()) {</span>
+<span class="nc" id="L323">            return new Response&lt;&gt;(1, &quot;Query Money Success&quot;, null);</span>
+        } else {
+<span class="nc" id="L325">            LOGGER.error(&quot;[queryAddMoney][Query money failed][addMoneyRepository.findAll null]&quot;);</span>
+<span class="nc" id="L326">            return new Response&lt;&gt;(0, &quot;Query money failed&quot;, null);</span>
+        }
+    }
+
+    private Response setOrderStatus(String tripId, String orderId, HttpHeaders headers) {
+
+        //order paid and not collected
+<span class="nc" id="L333">        int orderStatus = 1;</span>
+        Response result;
+<span class="nc bnc" id="L335" title="All 4 branches missed.">        if (tripId.startsWith(&quot;G&quot;) || tripId.startsWith(&quot;D&quot;)) {</span>
+
+<span class="nc" id="L337">            HttpEntity requestEntityModifyOrderStatusResult = new HttpEntity(headers);</span>
+<span class="nc" id="L338">            String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L339">            ResponseEntity&lt;Response&gt; reModifyOrderStatusResult = restTemplate.exchange(</span>
+                    order_service_url + &quot;/api/v1/orderservice/order/status/&quot; + orderId + &quot;/&quot; + orderStatus,
+                    HttpMethod.GET,
+                    requestEntityModifyOrderStatusResult,
+                    Response.class);
+<span class="nc" id="L344">            result = reModifyOrderStatusResult.getBody();</span>
+
+<span class="nc" id="L346">        } else {</span>
+<span class="nc" id="L347">            HttpEntity requestEntityModifyOrderStatusResult = new HttpEntity(headers);</span>
+<span class="nc" id="L348">            String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc" id="L349">            ResponseEntity&lt;Response&gt; reModifyOrderStatusResult = restTemplate.exchange(</span>
+                    order_other_service_url + &quot;/api/v1/orderOtherService/orderOther/status/&quot; + orderId + &quot;/&quot; + orderStatus,
+                    HttpMethod.GET,
+                    requestEntityModifyOrderStatusResult,
+                    Response.class);
+<span class="nc" id="L354">            result = reModifyOrderStatusResult.getBody();</span>
+
+        }
+<span class="nc" id="L357">        return result;</span>
+    }
+
+    @Override
+    public void initPayment(Payment payment, HttpHeaders headers) {
+<span class="fc" id="L362">        Optional&lt;Payment&gt; paymentTemp = paymentRepository.findById(payment.getId());</span>
+<span class="pc bpc" id="L363" title="1 of 2 branches missed.">        if (paymentTemp == null) {</span>
+<span class="nc" id="L364">            paymentRepository.save(payment);</span>
+        } else {
+<span class="fc" id="L366">            InsidePaymentServiceImpl.LOGGER.error(&quot;[initPayment][paymentTemp Already Exists][paymentId: {}, orderId: {}]&quot;, payment.getId(), payment.getOrderId());</span>
+        }
+<span class="fc" id="L368">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QueryInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">other.entity</a> &gt; <span class="el_source">QueryInfo.java</span></div><h1>QueryInfo.java</h1><pre class="source lang-java linenums">package other.entity;
+
+import edu.fudan.common.util.StringUtils;
+import lombok.Data;
+
+import java.util.Date;
+
+/**
+ * @author fdse
+ */
+<span class="pc bnc" id="L11" title="All 60 branches missed.">@Data</span>
+public class QueryInfo {
+
+    /**
+     * account id
+     */
+<span class="fc" id="L17">    private String loginId;</span>
+
+<span class="nc" id="L19">    private String travelDateStart;</span>
+
+<span class="nc" id="L21">    private String travelDateEnd;</span>
+
+<span class="nc" id="L23">    private String boughtDateStart;</span>
+
+<span class="nc" id="L25">    private String boughtDateEnd;</span>
+
+<span class="nc" id="L27">    private int state;</span>
+
+<span class="fc" id="L29">    private boolean enableTravelDateQuery;</span>
+
+<span class="fc" id="L31">    private boolean enableBoughtDateQuery;</span>
+
+<span class="fc" id="L33">    private boolean enableStateQuery;</span>
+
+<span class="fc" id="L35">    public QueryInfo() {</span>
+        //Default Constructor
+<span class="fc" id="L37">    }</span>
+
+    public void enableTravelDateQuery(String startTime, String endTime) {
+<span class="nc" id="L40">        enableTravelDateQuery = true;</span>
+<span class="nc" id="L41">        travelDateStart = startTime;</span>
+<span class="nc" id="L42">        travelDateEnd = endTime;</span>
+<span class="nc" id="L43">    }</span>
+
+    public void disableTravelDateQuery() {
+<span class="nc" id="L46">        enableTravelDateQuery = false;</span>
+<span class="nc" id="L47">        travelDateStart = null;</span>
+<span class="nc" id="L48">        travelDateEnd = null;</span>
+<span class="nc" id="L49">    }</span>
+
+    public void enableBoughtDateQuery(String startTime, String endTime) {
+<span class="nc" id="L52">        enableBoughtDateQuery = true;</span>
+<span class="nc" id="L53">        boughtDateStart = startTime;</span>
+<span class="nc" id="L54">        boughtDateEnd = endTime;</span>
+<span class="nc" id="L55">    }</span>
+
+    public void disableBoughtDateQuery() {
+<span class="nc" id="L58">        enableBoughtDateQuery = false;</span>
+<span class="nc" id="L59">        boughtDateStart = null;</span>
+<span class="nc" id="L60">        boughtDateEnd = null;</span>
+<span class="nc" id="L61">    }</span>
+
+    public void enableStateQuery(int targetStatus) {
+<span class="nc" id="L64">        enableStateQuery = true;</span>
+<span class="nc" id="L65">        state = targetStatus;</span>
+<span class="nc" id="L66">    }</span>
+
+    public void disableStateQuery() {
+<span class="nc" id="L69">        enableTravelDateQuery = false;</span>
+<span class="nc" id="L70">        state = -1;</span>
+<span class="nc" id="L71">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

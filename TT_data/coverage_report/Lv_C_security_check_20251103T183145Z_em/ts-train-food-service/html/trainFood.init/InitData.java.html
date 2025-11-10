@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InitData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">trainFood.init</a> &gt; <span class="el_source">InitData.java</span></div><h1>InitData.java</h1><pre class="source lang-java linenums">package trainFood.init;
+
+import edu.fudan.common.entity.Food;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import trainFood.entity.TrainFood;
+import trainFood.service.TrainFoodService;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Component
+<span class="fc" id="L19">public class InitData implements CommandLineRunner{</span>
+
+    @Autowired
+    TrainFoodService trainFoodService;
+
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(InitData.class);</span>
+
+
+    @Override
+    public void run(String... args) throws Exception {
+<span class="fc" id="L29">        BufferedReader br2 = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(&quot;/trainfood.txt&quot;)));</span>
+        try{
+<span class="fc" id="L31">            String line2 = br2.readLine();</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">            while( line2 != null ){</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">                if( !line2.trim().equals(&quot;&quot;) ){</span>
+<span class="fc" id="L34">                    TrainFood tf = new TrainFood();</span>
+<span class="fc" id="L35">                    tf.setId(UUID.randomUUID().toString());</span>
+<span class="fc" id="L36">                    String[] lineTemp = line2.trim().split(&quot;=&quot;);</span>
+<span class="fc" id="L37">                    tf.setTripId(lineTemp[1]);</span>
+<span class="fc" id="L38">                    lineTemp = br2.readLine().trim().split(&quot;=&quot;);</span>
+<span class="fc" id="L39">                    tf.setFoodList(toFoodList(lineTemp[1]));</span>
+<span class="fc" id="L40">                    trainFoodService.createTrainFood(tf,null);</span>
+                }
+<span class="fc" id="L42">                line2 = br2.readLine();</span>
+            }
+
+<span class="nc" id="L45">        } catch(Exception e){</span>
+<span class="nc" id="L46">            InitData.LOGGER.info(&quot;the trainfood.txt has format error!&quot;);</span>
+<span class="nc" id="L47">            InitData.LOGGER.error(e.getMessage());</span>
+<span class="nc" id="L48">            System.exit(1);</span>
+<span class="fc" id="L49">        }</span>
+<span class="fc" id="L50">    }</span>
+
+    private List&lt;Food&gt; toFoodList(String s){
+<span class="fc" id="L53">        InitData.LOGGER.info(&quot;s= {}&quot;, s);</span>
+<span class="fc" id="L54">        String[] foodstring = s.split(&quot;_&quot;);</span>
+<span class="fc" id="L55">        List&lt;Food&gt; foodList = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        for(int i = 0; i&lt; foodstring.length; i++){</span>
+<span class="fc" id="L57">            String[] foodTemp = foodstring[i].split(&quot;,&quot;);</span>
+<span class="fc" id="L58">            Food food = new Food();</span>
+<span class="fc" id="L59">            food.setFoodName(foodTemp[0]);</span>
+
+<span class="fc" id="L61">            food.setPrice(Double.parseDouble(foodTemp[1]));</span>
+
+<span class="fc" id="L63">            foodList.add(food);</span>
+        }
+<span class="fc" id="L65">        return foodList;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FoodServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">foodsearch.service</a> &gt; <span class="el_source">FoodServiceImpl.java</span></div><h1>FoodServiceImpl.java</h1><pre class="source lang-java linenums">package foodsearch.service;
+
+import edu.fudan.common.entity.Food;
+import edu.fudan.common.entity.StationFoodStore;
+import edu.fudan.common.entity.TrainFood;
+import edu.fudan.common.util.JsonUtils;
+import edu.fudan.common.util.Response;
+import edu.fudan.common.entity.Route;
+import foodsearch.entity.*;
+import foodsearch.mq.RabbitSend;
+import foodsearch.repository.FoodOrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L33">public class FoodServiceImpl implements FoodService {</span>
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private FoodOrderRepository foodOrderRepository;
+
+    @Autowired
+    private RabbitSend sender;
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+<span class="fc" id="L47">    private static final Logger LOGGER = LoggerFactory.getLogger(FoodServiceImpl.class);</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L50">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+<span class="fc" id="L53">    String success = &quot;Success.&quot;;</span>
+<span class="fc" id="L54">    String orderIdNotExist = &quot;Order Id Is Non-Existent.&quot;;</span>
+
+    @Override
+    public Response createFoodOrdersInBatch(List&lt;FoodOrder&gt; orders, HttpHeaders headers) {
+<span class="nc" id="L58">        boolean error = false;</span>
+<span class="nc" id="L59">        String errorOrderId = &quot;&quot;;</span>
+
+        // Check if foodOrder exists
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        for (FoodOrder addFoodOrder : orders) {</span>
+<span class="nc" id="L63">            FoodOrder fo = foodOrderRepository.findByOrderId(addFoodOrder.getOrderId());</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">            if (fo != null) {</span>
+<span class="nc" id="L65">                LOGGER.error(&quot;[createFoodOrdersInBatch][AddFoodOrder][Order Id Has Existed][OrderId: {}]&quot;, addFoodOrder.getOrderId());</span>
+<span class="nc" id="L66">                error = true;</span>
+<span class="nc" id="L67">                errorOrderId = addFoodOrder.getOrderId().toString();</span>
+<span class="nc" id="L68">                break;</span>
+            }
+<span class="nc" id="L70">        }</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        if (error) {</span>
+<span class="nc" id="L72">            return new Response&lt;&gt;(0, &quot;Order Id &quot; + errorOrderId + &quot;Existed&quot;, null);</span>
+        }
+
+<span class="nc" id="L75">        List&lt;String&gt; deliveryJsons = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        for (FoodOrder addFoodOrder : orders) {</span>
+<span class="nc" id="L77">            FoodOrder fo = new FoodOrder();</span>
+<span class="nc" id="L78">            fo.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L79">            fo.setOrderId(addFoodOrder.getOrderId());</span>
+<span class="nc" id="L80">            fo.setFoodType(addFoodOrder.getFoodType());</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            if (addFoodOrder.getFoodType() == 2) {</span>
+<span class="nc" id="L82">                fo.setStationName(addFoodOrder.getStationName());</span>
+<span class="nc" id="L83">                fo.setStoreName(addFoodOrder.getStoreName());</span>
+            }
+<span class="nc" id="L85">            fo.setFoodName(addFoodOrder.getFoodName());</span>
+<span class="nc" id="L86">            fo.setPrice(addFoodOrder.getPrice());</span>
+<span class="nc" id="L87">            foodOrderRepository.save(fo);</span>
+<span class="nc" id="L88">            LOGGER.info(&quot;[createFoodOrdersInBatch][AddFoodOrderBatch][Success Save One Order][FoodOrderId: {}]&quot;, fo.getOrderId());</span>
+
+<span class="nc" id="L90">            Delivery delivery = new Delivery();</span>
+<span class="nc" id="L91">            delivery.setFoodName(addFoodOrder.getFoodName());</span>
+<span class="nc" id="L92">            delivery.setOrderId(UUID.fromString(addFoodOrder.getOrderId()));</span>
+<span class="nc" id="L93">            delivery.setStationName(addFoodOrder.getStationName());</span>
+<span class="nc" id="L94">            delivery.setStoreName(addFoodOrder.getStoreName());</span>
+
+<span class="nc" id="L96">            String deliveryJson = JsonUtils.object2Json(delivery);</span>
+<span class="nc" id="L97">            deliveryJsons.add(deliveryJson);</span>
+<span class="nc" id="L98">        }</span>
+
+        // 批量发送消息
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        for(String deliveryJson: deliveryJsons) {</span>
+<span class="nc" id="L102">            LOGGER.info(&quot;[createFoodOrdersInBatch][AddFoodOrder][delivery info send to mq][delivery info: {}]&quot;, deliveryJson);</span>
+            try {
+<span class="nc" id="L104">                sender.send(deliveryJson);</span>
+<span class="nc" id="L105">            } catch (Exception e) {</span>
+<span class="nc" id="L106">                LOGGER.error(&quot;[createFoodOrdersInBatch][AddFoodOrder][send delivery info to mq error][exception: {}]&quot;, e.toString());</span>
+<span class="nc" id="L107">            }</span>
+<span class="nc" id="L108">        }</span>
+
+<span class="nc" id="L110">        return new Response&lt;&gt;(1, success, null);</span>
+    }
+
+    @Override
+    public Response createFoodOrder(FoodOrder addFoodOrder, HttpHeaders headers) {
+
+<span class="nc" id="L116">        FoodOrder fo = foodOrderRepository.findByOrderId(addFoodOrder.getOrderId());</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (fo != null) {</span>
+<span class="nc" id="L118">            FoodServiceImpl.LOGGER.error(&quot;[createFoodOrder][AddFoodOrder][Order Id Has Existed][OrderId: {}]&quot;, addFoodOrder.getOrderId());</span>
+<span class="nc" id="L119">            return new Response&lt;&gt;(0, &quot;Order Id Has Existed.&quot;, null);</span>
+        } else {
+<span class="nc" id="L121">            fo = new FoodOrder();</span>
+<span class="nc" id="L122">            fo.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L123">            fo.setOrderId(addFoodOrder.getOrderId());</span>
+<span class="nc" id="L124">            fo.setFoodType(addFoodOrder.getFoodType());</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">            if (addFoodOrder.getFoodType() == 2) {</span>
+<span class="nc" id="L126">                fo.setStationName(addFoodOrder.getStationName());</span>
+<span class="nc" id="L127">                fo.setStoreName(addFoodOrder.getStoreName());</span>
+            }
+<span class="nc" id="L129">            fo.setFoodName(addFoodOrder.getFoodName());</span>
+<span class="nc" id="L130">            fo.setPrice(addFoodOrder.getPrice());</span>
+<span class="nc" id="L131">            foodOrderRepository.save(fo);</span>
+<span class="nc" id="L132">            FoodServiceImpl.LOGGER.info(&quot;[createFoodOrder][AddFoodOrder Success]&quot;);</span>
+
+<span class="nc" id="L134">            Delivery delivery = new Delivery();</span>
+<span class="nc" id="L135">            delivery.setFoodName(addFoodOrder.getFoodName());</span>
+<span class="nc" id="L136">            delivery.setOrderId(UUID.fromString(addFoodOrder.getOrderId()));</span>
+<span class="nc" id="L137">            delivery.setStationName(addFoodOrder.getStationName());</span>
+<span class="nc" id="L138">            delivery.setStoreName(addFoodOrder.getStoreName());</span>
+
+<span class="nc" id="L140">            String deliveryJson = JsonUtils.object2Json(delivery);</span>
+<span class="nc" id="L141">            LOGGER.info(&quot;[createFoodOrder][AddFoodOrder, delivery info send to mq][delivery info: {}]&quot;, deliveryJson);</span>
+            try {
+<span class="nc" id="L143">                sender.send(deliveryJson);</span>
+<span class="nc" id="L144">            } catch (Exception e) {</span>
+<span class="nc" id="L145">                LOGGER.error(&quot;[createFoodOrder][AddFoodOrder][send delivery info to mq error][exception: {}]&quot;, e.toString());</span>
+<span class="nc" id="L146">            }</span>
+
+<span class="nc" id="L148">            return new Response&lt;&gt;(1, success, fo);</span>
+        }
+    }
+
+    @Transactional
+    @Override
+    public Response deleteFoodOrder(String orderId, HttpHeaders headers) {
+<span class="nc" id="L155">        FoodOrder foodOrder = foodOrderRepository.findByOrderId(UUID.fromString(orderId).toString());</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        if (foodOrder == null) {</span>
+<span class="nc" id="L157">            FoodServiceImpl.LOGGER.error(&quot;[deleteFoodOrder][Cancel FoodOrder][Order Id Is Non-Existent][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L158">            return new Response&lt;&gt;(0, orderIdNotExist, null);</span>
+        } else {
+//            foodOrderRepository.deleteFoodOrderByOrderId(UUID.fromString(orderId));
+<span class="nc" id="L161">            foodOrderRepository.deleteFoodOrderByOrderId(orderId);</span>
+<span class="nc" id="L162">            FoodServiceImpl.LOGGER.info(&quot;[deleteFoodOrder][Cancel FoodOrder Success]&quot;);</span>
+<span class="nc" id="L163">            return new Response&lt;&gt;(1, success, null);</span>
+        }
+    }
+
+    @Override
+    public Response findAllFoodOrder(HttpHeaders headers) {
+<span class="fc" id="L169">        List&lt;FoodOrder&gt; foodOrders = foodOrderRepository.findAll();</span>
+<span class="pc bpc" id="L170" title="2 of 4 branches missed.">        if (foodOrders != null &amp;&amp; !foodOrders.isEmpty()) {</span>
+<span class="nc" id="L171">            return new Response&lt;&gt;(1, success, foodOrders);</span>
+        } else {
+<span class="fc" id="L173">            FoodServiceImpl.LOGGER.error(&quot;[findAllFoodOrder][Find all food order error: {}]&quot;, &quot;No Content&quot;);</span>
+<span class="fc" id="L174">            return new Response&lt;&gt;(0, &quot;No Content&quot;, null);</span>
+        }
+    }
+
+
+    @Override
+    public Response updateFoodOrder(FoodOrder updateFoodOrder, HttpHeaders headers) {
+<span class="nc" id="L181">        FoodOrder fo = foodOrderRepository.findById(updateFoodOrder.getId()).orElse(null);</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        if (fo == null) {</span>
+<span class="nc" id="L183">            FoodServiceImpl.LOGGER.info(&quot;[updateFoodOrder][Update FoodOrder][Order Id Is Non-Existent][orderId: {}]&quot;, updateFoodOrder.getOrderId());</span>
+<span class="nc" id="L184">            return new Response&lt;&gt;(0, orderIdNotExist, null);</span>
+        } else {
+<span class="nc" id="L186">            fo.setFoodType(updateFoodOrder.getFoodType());</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">            if (updateFoodOrder.getFoodType() == 1) {</span>
+<span class="nc" id="L188">                fo.setStationName(updateFoodOrder.getStationName());</span>
+<span class="nc" id="L189">                fo.setStoreName(updateFoodOrder.getStoreName());</span>
+            }
+<span class="nc" id="L191">            fo.setFoodName(updateFoodOrder.getFoodName());</span>
+<span class="nc" id="L192">            fo.setPrice(updateFoodOrder.getPrice());</span>
+<span class="nc" id="L193">            foodOrderRepository.save(fo);</span>
+<span class="nc" id="L194">            FoodServiceImpl.LOGGER.info(&quot;[updateFoodOrder][Update FoodOrder Success]&quot;);</span>
+<span class="nc" id="L195">            return new Response&lt;&gt;(1, &quot;Success&quot;, fo);</span>
+        }
+    }
+
+    @Override
+    public Response findByOrderId(String orderId, HttpHeaders headers) {
+<span class="fc" id="L201">        FoodOrder fo = foodOrderRepository.findByOrderId(UUID.fromString(orderId).toString());</span>
+<span class="pc bpc" id="L202" title="1 of 2 branches missed.">        if (fo != null) {</span>
+<span class="nc" id="L203">            FoodServiceImpl.LOGGER.info(&quot;[findByOrderId][Find Order by id Success][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L204">            return new Response&lt;&gt;(1, success, fo);</span>
+        } else {
+<span class="fc" id="L206">            FoodServiceImpl.LOGGER.warn(&quot;[findByOrderId][Find Order by id][Order Id Is Non-Existent][orderId: {}]&quot;, orderId);</span>
+<span class="fc" id="L207">            return new Response&lt;&gt;(0, orderIdNotExist, null);</span>
+        }
+    }
+
+
+    @Override
+    public Response getAllFood(String date, String startStation, String endStation, String tripId, HttpHeaders headers) {
+<span class="fc" id="L214">        FoodServiceImpl.LOGGER.info(&quot;[getAllFood][get All Food with info][data:{} start:{} end:{} tripid:{}]&quot;, date, startStation, endStation, tripId);</span>
+<span class="fc" id="L215">        AllTripFood allTripFood = new AllTripFood();</span>
+
+<span class="pc bpc" id="L217" title="2 of 4 branches missed.">        if (null == tripId || tripId.length() &lt;= 2) {</span>
+<span class="fc" id="L218">            FoodServiceImpl.LOGGER.error(&quot;[getAllFood][Get the Get Food Request Failed][Trip id is not suitable][date: {}, tripId: {}]&quot;, date, tripId);</span>
+<span class="fc" id="L219">            return new Response&lt;&gt;(0, &quot;Trip id is not suitable&quot;, null);</span>
+        }
+
+        // need return this tow element
+<span class="nc" id="L223">        List&lt;Food&gt; trainFoodList = null;</span>
+<span class="nc" id="L224">        Map&lt;String, List&lt;StationFoodStore&gt;&gt; foodStoreListMap = new HashMap&lt;&gt;();</span>
+
+        /**--------------------------------------------------------------------------------------*/
+<span class="nc" id="L227">        HttpEntity requestEntityGetTrainFoodListResult = new HttpEntity(null);</span>
+<span class="nc" id="L228">        String train_food_service_url = getServiceUrl(&quot;ts-train-food-service&quot;);</span>
+<span class="nc" id="L229">        ResponseEntity&lt;Response&lt;List&lt;Food&gt;&gt;&gt; reGetTrainFoodListResult = restTemplate.exchange(</span>
+                train_food_service_url + &quot;/api/v1/trainfoodservice/trainfoods/&quot; + tripId,
+                HttpMethod.GET,
+                requestEntityGetTrainFoodListResult,
+<span class="nc" id="L233">                new ParameterizedTypeReference&lt;Response&lt;List&lt;Food&gt;&gt;&gt;() {</span>
+                });
+
+
+
+<span class="nc" id="L238">        List&lt;Food&gt; trainFoodListResult = reGetTrainFoodListResult.getBody().getData();</span>
+
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        if (trainFoodListResult != null) {</span>
+<span class="nc" id="L241">            trainFoodList = trainFoodListResult;</span>
+<span class="nc" id="L242">            FoodServiceImpl.LOGGER.info(&quot;[getAllFood][Get Train Food List!]&quot;);</span>
+        } else {
+<span class="nc" id="L244">            FoodServiceImpl.LOGGER.error(&quot;[getAllFood][reGetTrainFoodListResult][Get the Get Food Request Failed!][date: {}, tripId: {}]&quot;, date, tripId);</span>
+<span class="nc" id="L245">            return new Response&lt;&gt;(0, &quot;Get the Get Food Request Failed!&quot;, null);</span>
+        }
+        //车次途经的车站
+        /**--------------------------------------------------------------------------------------*/
+<span class="nc" id="L249">        HttpEntity requestEntityGetRouteResult = new HttpEntity(null, null);</span>
+<span class="nc" id="L250">        String travel_service_url = getServiceUrl(&quot;ts-travel-service&quot;);</span>
+<span class="nc" id="L251">        ResponseEntity&lt;Response&lt;Route&gt;&gt; reGetRouteResult = restTemplate.exchange(</span>
+                travel_service_url + &quot;/api/v1/travelservice/routes/&quot; + tripId,
+                HttpMethod.GET,
+                requestEntityGetRouteResult,
+<span class="nc" id="L255">                new ParameterizedTypeReference&lt;Response&lt;Route&gt;&gt;() {</span>
+                });
+<span class="nc" id="L257">        Response&lt;Route&gt; stationResult = reGetRouteResult.getBody();</span>
+
+<span class="nc bnc" id="L259" title="All 2 branches missed.">        if (stationResult.getStatus() == 1) {</span>
+<span class="nc" id="L260">            Route route = stationResult.getData();</span>
+<span class="nc" id="L261">            List&lt;String&gt; stations = route.getStations();</span>
+            //去除不经过的站，如果起点终点有的话
+<span class="nc bnc" id="L263" title="All 4 branches missed.">            if (null != startStation &amp;&amp; !&quot;&quot;.equals(startStation)) {</span>
+                /**--------------------------------------------------------------------------------------*/
+<span class="nc bnc" id="L265" title="All 2 branches missed.">                for (int i = 0; i &lt; stations.size(); i++) {</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">                    if (stations.get(i).equals(startStation)) {</span>
+<span class="nc" id="L267">                        break;</span>
+                    } else {
+<span class="nc" id="L269">                        stations.remove(i);</span>
+                    }
+                }
+            }
+<span class="nc bnc" id="L273" title="All 4 branches missed.">            if (null != endStation &amp;&amp; !&quot;&quot;.equals(endStation)) {</span>
+                /**--------------------------------------------------------------------------------------*/
+<span class="nc bnc" id="L275" title="All 2 branches missed.">                for (int i = stations.size() - 1; i &gt;= 0; i--) {</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">                    if (stations.get(i).equals(endStation)) {</span>
+<span class="nc" id="L277">                        break;</span>
+                    } else {
+<span class="nc" id="L279">                        stations.remove(i);</span>
+                    }
+                }
+            }
+
+<span class="nc" id="L284">            HttpEntity requestEntityFoodStoresListResult = new HttpEntity(stations, null);</span>
+<span class="nc" id="L285">            String station_food_service_url = getServiceUrl(&quot;ts-station-food-service&quot;);</span>
+<span class="nc" id="L286">            ResponseEntity&lt;Response&lt;List&lt;StationFoodStore&gt;&gt;&gt; reFoodStoresListResult = restTemplate.exchange(</span>
+                     station_food_service_url + &quot;/api/v1/stationfoodservice/stationfoodstores&quot;,
+                    HttpMethod.POST,
+                    requestEntityFoodStoresListResult,
+<span class="nc" id="L290">                    new ParameterizedTypeReference&lt;Response&lt;List&lt;StationFoodStore&gt;&gt;&gt;() {</span>
+                    });
+<span class="nc" id="L292">            List&lt;StationFoodStore&gt; stationFoodStoresListResult = reFoodStoresListResult.getBody().getData();</span>
+<span class="nc bnc" id="L293" title="All 4 branches missed.">            if (stationFoodStoresListResult != null &amp;&amp; !stationFoodStoresListResult.isEmpty()) {</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">                for (String station : stations) {</span>
+<span class="nc" id="L295">                    List&lt;StationFoodStore&gt; res = stationFoodStoresListResult.stream()</span>
+<span class="nc" id="L296">                            .filter(stationFoodStore -&gt; (stationFoodStore.getStationName().equals(station)))</span>
+<span class="nc" id="L297">                            .collect(Collectors.toList());</span>
+<span class="nc" id="L298">                    foodStoreListMap.put(station, res);</span>
+<span class="nc" id="L299">                }</span>
+            } else {
+<span class="nc" id="L301">                FoodServiceImpl.LOGGER.error(&quot;[getAllFood][Get the Get Food Request Failed!][foodStoresListResult is null][date: {}, tripId: {}]&quot;, date, tripId);</span>
+<span class="nc" id="L302">                return new Response&lt;&gt;(0, &quot;Get All Food Failed&quot;, allTripFood);</span>
+            }
+<span class="nc" id="L304">        } else {</span>
+<span class="nc" id="L305">            FoodServiceImpl.LOGGER.error(&quot;[getAllFood][Get the Get Food Request Failed!][station status error][date: {}, tripId: {}]&quot;, date, tripId);</span>
+<span class="nc" id="L306">            return new Response&lt;&gt;(0, &quot;Get All Food Failed&quot;, allTripFood);</span>
+        }
+<span class="nc" id="L308">        allTripFood.setTrainFoodList(trainFoodList);</span>
+<span class="nc" id="L309">        allTripFood.setFoodStoreListMap(foodStoreListMap);</span>
+<span class="nc" id="L310">        return new Response&lt;&gt;(1, &quot;Get All Food Success&quot;, allTripFood);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WaitListOrderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">waitorder.service.Impl</a> &gt; <span class="el_source">WaitListOrderServiceImpl.java</span></div><h1>WaitListOrderServiceImpl.java</h1><pre class="source lang-java linenums">package waitorder.service.Impl;
+
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import waitorder.entity.WaitListOrder;
+import waitorder.entity.WaitListOrderStatus;
+import waitorder.entity.WaitListOrderVO;
+import waitorder.repository.WaitListOrderRepository;
+import waitorder.service.WaitListOrderService;
+import waitorder.utils.PollThread;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L24">public class WaitListOrderServiceImpl implements WaitListOrderService {</span>
+
+    @Autowired
+    private WaitListOrderRepository waitListOrderRepository;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+<span class="fc" id="L35">    private static final Logger LOGGER = LoggerFactory.getLogger(WaitListOrderServiceImpl.class);</span>
+
+<span class="fc" id="L37">    String success = &quot;Success&quot;;</span>
+
+    @Override
+    public Response findOrderById(String id, HttpHeaders headers) {
+<span class="nc" id="L41">        Optional&lt;WaitListOrder&gt; op = waitListOrderRepository.findById(id);</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        if(!op.isPresent()){</span>
+<span class="nc" id="L43">            LOGGER.warn(&quot;[findWaitOrderById][Find Order By Id Fail][No content][id: {}] &quot;,id);</span>
+<span class="nc" id="L44">            return new Response&lt;&gt;(0, &quot;No Content by this id&quot;, null);</span>
+        } else {
+<span class="nc" id="L46">            WaitListOrder wo = op.get();</span>
+<span class="nc" id="L47">            LOGGER.info(&quot;[findWaitOrderById][Find Order By Id Success][id: {}] &quot;,id);</span>
+<span class="nc" id="L48">            return new Response&lt;&gt;(1, success, wo);</span>
+        }
+    }
+
+    @Transactional
+    @Override
+    public Response create(WaitListOrderVO orderVO, HttpHeaders headers) {
+<span class="nc" id="L55">        LOGGER.info(&quot;[create][Create Wait Order][Ready to Create Wait Order]&quot;);</span>
+<span class="nc" id="L56">        Response&lt;WaitListOrder&gt; response=saveNewOrder(orderVO,headers);</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if(response.getStatus()==0){</span>
+            //未能正常保存到数据库
+<span class="nc" id="L59">            return response;</span>
+        } else {
+            //已保存到数据库 开始轮询
+<span class="nc" id="L62">            return triggerThread(response.getData(),orderVO,headers);</span>
+        }
+    }
+
+    @Override
+    public Response getAllOrders(HttpHeaders headers) {
+<span class="nc" id="L68">        List&lt;WaitListOrder&gt; orderList= waitListOrderRepository.findAll();</span>
+<span class="nc bnc" id="L69" title="All 4 branches missed.">        if (orderList != null &amp;&amp; !orderList.isEmpty()) {</span>
+<span class="nc" id="L70">            WaitListOrderServiceImpl.LOGGER.warn(&quot;[getAllOrders][Find all orders Success][size:{}]&quot;,orderList.size());</span>
+<span class="nc" id="L71">            return new Response&lt;&gt;(1, &quot;Success.&quot;, orderList);</span>
+        } else {
+<span class="nc" id="L73">            LOGGER.warn(&quot;[getAllOrders][Find All Wait List Orders Fail][{}]&quot;,&quot;No content&quot;);</span>
+<span class="nc" id="L74">            return new Response&lt;&gt;(0, &quot;No Content.&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response getAllWaitListOrders(HttpHeaders headers) {
+<span class="nc" id="L80">        List&lt;WaitListOrder&gt; orderList= waitListOrderRepository.findAll();</span>
+<span class="nc bnc" id="L81" title="All 4 branches missed.">        if (orderList != null &amp;&amp; !orderList.isEmpty()) {</span>
+<span class="nc" id="L82">            WaitListOrderServiceImpl.LOGGER.warn(&quot;[getAllWaitListOrders][Find all orders Success][size:{}]&quot;,orderList.size());</span>
+<span class="nc" id="L83">            List&lt;Integer&gt; filterList=new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L84">            filterList.add(WaitListOrderStatus.NOTPAID.getCode());</span>
+<span class="nc" id="L85">            filterList.add(WaitListOrderStatus.PAID.getCode());</span>
+            //Only orders in the wait list will be selected
+<span class="nc" id="L87">            orderList=orderList.stream()</span>
+<span class="nc" id="L88">                    .filter(WaitListOrder -&gt; filterList.contains(WaitListOrder.getStatus()))</span>
+<span class="nc" id="L89">                    .collect(Collectors.toList());</span>
+<span class="nc" id="L90">            return new Response&lt;&gt;(1, &quot;Success.&quot;, orderList);</span>
+        } else {
+<span class="nc" id="L92">            LOGGER.warn(&quot;[getAllWaitListOrders][Find All Wait List Orders Fail][{}]&quot;,&quot;No content&quot;);</span>
+<span class="nc" id="L93">            return new Response&lt;&gt;(0, &quot;No Content.&quot;, null);</span>
+        }
+    }
+
+    @Transactional
+    @Override
+    public Response updateOrder(WaitListOrder order, HttpHeaders headers) {
+<span class="nc" id="L100">        LOGGER.info(&quot;[updateOrder][Update Wait List Order][Order Info:{}] &quot;, order.toString());</span>
+<span class="nc" id="L101">        Optional&lt;WaitListOrder&gt; op = waitListOrderRepository.findById(order.getId());</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if(!op.isPresent()){</span>
+<span class="nc" id="L103">            LOGGER.error(&quot;[updateOrder][Update Order Info Fail][Order not found][OrderId: {}]&quot;,order.getId());</span>
+<span class="nc" id="L104">            return new Response&lt;&gt;(0, &quot;Order Not Found, Can't update&quot;, null);</span>
+        } else {
+<span class="nc" id="L106">            WaitListOrder old = op.get();</span>
+<span class="nc" id="L107">            BeanUtils.copyProperties(old,order);</span>
+<span class="nc" id="L108">            waitListOrderRepository.save(old);</span>
+<span class="nc" id="L109">            LOGGER.info(&quot;[updateOrder][Update Wait List Order Info Success][OrderId: {}]&quot;,order.getId());</span>
+<span class="nc" id="L110">            return new Response&lt;&gt;(1, &quot;Update Wait List Order Success&quot;, old);</span>
+        }
+    }
+
+    @Transactional
+    @Override
+    public Response modifyWaitListOrderStatus(int status, String orderId) {
+<span class="nc" id="L117">        LOGGER.info(&quot;[modifyWaitListOrderStatus][Modify Order Status][OrderId:{}] &quot;, orderId);</span>
+<span class="nc" id="L118">        Optional&lt;WaitListOrder&gt; op = waitListOrderRepository.findById(orderId);</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        if(!op.isPresent()){</span>
+<span class="nc" id="L120">            LOGGER.error(&quot;[modifyWaitListOrderStatus][Modify Order Status Fail][Order not found][OrderId: {}]&quot;,orderId);</span>
+<span class="nc" id="L121">            return new Response&lt;&gt;(0, &quot;Order Not Found, Can't update&quot;, null);</span>
+        } else {
+<span class="nc" id="L123">            WaitListOrder old = op.get();</span>
+<span class="nc" id="L124">            old.setStatus(status);</span>
+<span class="nc" id="L125">            waitListOrderRepository.save(old);</span>
+<span class="nc" id="L126">            LOGGER.info(&quot;[modifyWaitListOrderStatus][Modify Order Status Success][OrderId: {}]&quot;,orderId);</span>
+<span class="nc" id="L127">            return new Response&lt;&gt;(1, &quot;Modify Wait List Order Status Success&quot;, old);</span>
+        }
+    }
+
+    private Response&lt;WaitListOrder&gt; saveNewOrder(WaitListOrderVO orderVO, HttpHeaders headers) {
+<span class="nc" id="L132">        ArrayList&lt;WaitListOrder&gt; accountOrders= waitListOrderRepository.findByAccountId(orderVO.getAccountId());</span>
+        //if the order already exist
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if(WaitListOrderExist(accountOrders,orderVO)){</span>
+<span class="nc" id="L135">            WaitListOrderServiceImpl.LOGGER.error(&quot;[create][Create Wait Order Fail][Order already exists][AccountId: {} , TripId: {}]&quot;, orderVO.getAccountId(),orderVO.getTripId());</span>
+<span class="nc" id="L136">            return new Response&lt;&gt;(0, &quot;Order already exist&quot;, null);</span>
+        } else {
+<span class="nc" id="L138">            WaitListOrder newWaitListOrder=new WaitListOrder();</span>
+<span class="nc" id="L139">            newWaitListOrder.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L140">            BeanUtils.copyProperties(newWaitListOrder,orderVO);</span>
+<span class="nc" id="L141">            newWaitListOrder.setTrainNumber(orderVO.getTripId());</span>
+<span class="nc" id="L142">            waitListOrderRepository.save(newWaitListOrder);</span>
+<span class="nc" id="L143">            WaitListOrderServiceImpl.LOGGER.info(&quot;[create][Create Wait Order Success][Order Price][AccountId: {} , TripId: {}]&quot;, orderVO.getAccountId(),orderVO.getTripId());</span>
+<span class="nc" id="L144">            return new Response&lt;&gt;(1,success,newWaitListOrder);</span>
+        }
+    }
+
+    private Boolean WaitListOrderExist(List&lt;WaitListOrder&gt; orderList,WaitListOrderVO newOrder){
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        for(WaitListOrder order: orderList){</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">            if(Objects.equals(order.getAccountId(), newOrder.getAccountId())</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">                    &amp;&amp; Objects.equals(order.getContactsId(), newOrder.getContactsId())</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                    &amp;&amp; Objects.equals(order.getTrainNumber(), newOrder.getTripId())</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                    &amp;&amp; Objects.equals(order.getTravelTime(),newOrder.getDate())</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                    &amp;&amp; Objects.equals(order.getFrom(),newOrder.getFrom())</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">                    &amp;&amp; Objects.equals(order.getTo(),newOrder.getTo())){</span>
+<span class="nc" id="L156">                return true;</span>
+            }
+<span class="nc" id="L158">        }</span>
+<span class="nc" id="L159">        return false;</span>
+    }
+
+    private Response triggerThread(WaitListOrder orderPO,WaitListOrderVO orderVO,HttpHeaders headers){
+        PollThread pollThread;
+        try{
+<span class="nc" id="L165">            pollThread =new PollThread(orderPO.getWaitUtilTime(),this,orderVO,restTemplate, headers);</span>
+<span class="nc" id="L166">            pollThread.start();</span>
+<span class="nc" id="L167">        } catch (Exception e){</span>
+<span class="nc" id="L168">            return new Response&lt;&gt;(0, &quot;Fail To Run A New Thread&quot;, null);</span>
+<span class="nc" id="L169">        }</span>
+<span class="nc" id="L170">        return new Response&lt;&gt;(1,&quot;Thread Start Success&quot;,null);</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

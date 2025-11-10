@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PriceController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">price.controller</a> &gt; <span class="el_source">PriceController.java</span></div><h1>PriceController.java</h1><pre class="source lang-java linenums">package price.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import price.entity.PriceConfig;
+import price.service.PriceService;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/priceservice&quot;)
+<span class="fc" id="L24">public class PriceController {</span>
+
+    @Autowired
+    PriceService service;
+
+<span class="fc" id="L29">    private static final Logger LOGGER = LoggerFactory.getLogger(PriceController.class);</span>
+
+    @GetMapping(path = &quot;/prices/welcome&quot;)
+    public String home() {
+<span class="fc" id="L33">        return &quot;Welcome to [ Price Service ] !&quot;;</span>
+    }
+
+    @GetMapping(value = &quot;/prices/{routeId}/{trainType}&quot;)
+    public HttpEntity query(@PathVariable String routeId, @PathVariable String trainType,
+                            @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L39">        PriceController.LOGGER.info(&quot;[findByRouteIdAndTrainType][Query price][RouteId: {}, TrainType: {}]&quot;,routeId,trainType);</span>
+<span class="fc" id="L40">        return ok(service.findByRouteIdAndTrainType(routeId, trainType, headers));</span>
+    }
+
+    @PostMapping(value = &quot;/prices/byRouteIdsAndTrainTypes&quot;)
+    public HttpEntity query(@RequestBody List&lt;String&gt; ridsAndTts,
+                            @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L46">        PriceController.LOGGER.info(&quot;[findByRouteIdAndTrainType][Query price][routeId and Train Type: {}]&quot;, ridsAndTts);</span>
+<span class="nc" id="L47">        return ok(service.findByRouteIdsAndTrainTypes(ridsAndTts, headers));</span>
+    }
+
+    @GetMapping(value = &quot;/prices&quot;)
+    public HttpEntity queryAll(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L52">        PriceController.LOGGER.info(&quot;[findAllPriceConfig][Query all prices]&quot;);</span>
+<span class="fc" id="L53">        return ok(service.findAllPriceConfig(headers));</span>
+    }
+
+    @PostMapping(value = &quot;/prices&quot;)
+    public HttpEntity&lt;?&gt; create(@RequestBody PriceConfig info,
+                                @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L59">        PriceController.LOGGER.info(&quot;[createNewPriceConfig][Create price][RouteId: {}, TrainType: {}]&quot;,info.getRouteId(),info.getTrainType());</span>
+<span class="nc" id="L60">        return new ResponseEntity&lt;&gt;(service.createNewPriceConfig(info, headers), HttpStatus.CREATED);</span>
+    }
+
+    @DeleteMapping(value = &quot;/prices/{pricesId}&quot;)
+    public HttpEntity delete(@PathVariable String pricesId, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L65">        PriceController.LOGGER.info(&quot;[deletePriceConfig][Delete price][PriceConfigId: {}]&quot;,pricesId);</span>
+<span class="fc" id="L66">        return ok(service.deletePriceConfig(pricesId, headers));</span>
+    }
+
+    @PutMapping(value = &quot;/prices&quot;)
+    public HttpEntity update(@RequestBody PriceConfig info, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L71">        PriceController.LOGGER.info(&quot;[updatePriceConfig][Update price][PriceConfigId: {}]&quot;,info.getId());</span>
+<span class="fc" id="L72">        return ok(service.updatePriceConfig(info, headers));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

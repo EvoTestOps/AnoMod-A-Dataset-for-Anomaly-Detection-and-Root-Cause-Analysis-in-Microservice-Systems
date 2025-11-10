@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">com.trainticket.service</a> &gt; <span class="el_source">PaymentServiceImpl.java</span></div><h1>PaymentServiceImpl.java</h1><pre class="source lang-java linenums">package com.trainticket.service;
+
+import com.trainticket.entity.Money;
+import com.trainticket.entity.Payment;
+import com.trainticket.repository.AddMoneyRepository;
+import com.trainticket.repository.PaymentRepository;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * @author  Administrator
+ * @date 2017/6/23.
+ */
+@Service
+<span class="fc" id="L22">public class PaymentServiceImpl implements PaymentService{</span>
+
+    @Autowired
+    PaymentRepository paymentRepository;
+
+    @Autowired
+    AddMoneyRepository addMoneyRepository;
+
+<span class="fc" id="L30">    private static final Logger LOGGER = LoggerFactory.getLogger(PaymentServiceImpl.class);</span>
+
+    @Override
+    public Response pay(Payment info, HttpHeaders headers){
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if(paymentRepository.findByOrderId(info.getOrderId()) == null){</span>
+<span class="nc" id="L36">            Payment payment = new Payment();</span>
+<span class="nc" id="L37">            payment.setOrderId(info.getOrderId());</span>
+<span class="nc" id="L38">            payment.setPrice(info.getPrice());</span>
+<span class="nc" id="L39">            payment.setUserId(info.getUserId());</span>
+<span class="nc" id="L40">            paymentRepository.save(payment);</span>
+<span class="nc" id="L41">            return new Response&lt;&gt;(1, &quot;Pay Success&quot;, null);</span>
+        }else{
+<span class="nc" id="L43">            PaymentServiceImpl.LOGGER.warn(&quot;[pay][Pay Failed][Order not found with order id][PaymentId: {}, OrderId: {}]&quot;,info.getId(),info.getOrderId());</span>
+<span class="nc" id="L44">            return new Response&lt;&gt;(0, &quot;Pay Failed, order not found with order id&quot; +info.getOrderId(), null);</span>
+        }
+    }
+
+    @Override
+    public Response addMoney(Payment info, HttpHeaders headers){
+<span class="nc" id="L50">        Money addMoney = new Money();</span>
+<span class="nc" id="L51">        addMoney.setUserId(info.getUserId());</span>
+<span class="nc" id="L52">        addMoney.setMoney(info.getPrice());</span>
+<span class="nc" id="L53">        addMoneyRepository.save(addMoney);</span>
+<span class="nc" id="L54">        return new Response&lt;&gt;(1,&quot;Add Money Success&quot;, addMoney);</span>
+    }
+
+    @Override
+    public Response query(HttpHeaders headers){
+<span class="nc" id="L59">        List&lt;Payment&gt; payments = paymentRepository.findAll();</span>
+<span class="nc bnc" id="L60" title="All 4 branches missed.">        if(payments!= null &amp;&amp; !payments.isEmpty()){</span>
+<span class="nc" id="L61">            PaymentServiceImpl.LOGGER.info(&quot;[query][Find all payment Success][size:{}]&quot;,payments.size());</span>
+<span class="nc" id="L62">            return new Response&lt;&gt;(1,&quot;Query Success&quot;,  payments);</span>
+        }else {
+<span class="nc" id="L64">            PaymentServiceImpl.LOGGER.warn(&quot;[query][Find all payment warn][{}]&quot;,&quot;No content&quot;);</span>
+<span class="nc" id="L65">            return new Response&lt;&gt;(0, &quot;No Content&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public void initPayment(Payment payment, HttpHeaders headers){
+<span class="fc" id="L71">        Optional&lt;Payment&gt; paymentTemp = paymentRepository.findById(payment.getId());</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if(!paymentTemp.isPresent()){</span>
+<span class="fc" id="L73">            paymentRepository.save(payment);</span>
+<span class="fc" id="L74">            PaymentServiceImpl.LOGGER.error(&quot;[initPayment][Init payment error][Payment not found][PaymentId: {}]&quot;,payment.getId());</span>
+        }else{
+<span class="nc" id="L76">            PaymentServiceImpl.LOGGER.info(&quot;[initPayment][Init Payment Already Exists][PaymentId: {}]&quot;, payment.getId());</span>
+        }
+<span class="fc" id="L78">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

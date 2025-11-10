@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminTravelController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">admintravel.controller</a> &gt; <span class="el_source">AdminTravelController.java</span></div><h1>AdminTravelController.java</h1><pre class="source lang-java linenums">package admintravel.controller;
+
+import admintravel.service.AdminTravelService;
+import edu.fudan.common.entity.TravelInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.http.ResponseEntity.*;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/admintravelservice&quot;)
+<span class="fc" id="L19">public class AdminTravelController {</span>
+    @Autowired
+    AdminTravelService adminTravelService;
+
+<span class="fc" id="L23">    private static final Logger logger = LoggerFactory.getLogger(AdminTravelController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L27">        return &quot;Welcome to [ AdminTravel Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/admintravel&quot;)
+    public HttpEntity getAllTravels(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L33">        logger.info(&quot;[getAllTravels][Get all travels]&quot;);</span>
+<span class="nc" id="L34">        return ok(adminTravelService.getAllTravels(headers));</span>
+    }
+
+    @PostMapping(value = &quot;/admintravel&quot;)
+    public HttpEntity addTravel(@RequestBody TravelInfo request, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L39">        logger.info(&quot;[addTravel][Add travel][trip id: {}, train type name: {}, form station {} to station {}, login id: {}]&quot;,</span>
+<span class="nc" id="L40">                request.getTripId(), request.getTrainTypeName(), request.getStartStationName(), request.getStationsName(), request.getLoginId());</span>
+<span class="nc" id="L41">        return ok(adminTravelService.addTravel(request, headers));</span>
+    }
+
+    @PutMapping(value = &quot;/admintravel&quot;)
+    public HttpEntity updateTravel(@RequestBody TravelInfo request, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L46">        logger.info(&quot;[updateTravel][Update travel][trip id: {}, train type id: {}, form station {} to station {}, login id: {}]&quot;,</span>
+<span class="nc" id="L47">                request.getTripId(), request.getTrainTypeName(), request.getStartStationName(), request.getStationsName(), request.getLoginId());</span>
+<span class="nc" id="L48">        return ok(adminTravelService.updateTravel(request, headers));</span>
+    }
+
+    @DeleteMapping(value = &quot;/admintravel/{tripId}&quot;)
+    public HttpEntity deleteTravel(@PathVariable String tripId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L53">        logger.info(&quot;[deleteTravel][Delete travel][trip id: {}]&quot;, tripId);</span>
+<span class="nc" id="L54">        return ok(adminTravelService.deleteTravel(tripId, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

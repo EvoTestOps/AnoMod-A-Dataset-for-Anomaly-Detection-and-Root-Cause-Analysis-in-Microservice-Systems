@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PreserveOtherController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">preserveOther.controller</a> &gt; <span class="el_source">PreserveOtherController.java</span></div><h1>PreserveOtherController.java</h1><pre class="source lang-java linenums">package preserveOther.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+import edu.fudan.common.entity.OrderTicketsInfo;
+import preserveOther.service.PreserveOtherService;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/preserveotherservice&quot;)
+<span class="fc" id="L19">public class PreserveOtherController {</span>
+
+    @Autowired
+    private PreserveOtherService preserveService;
+
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(PreserveOtherController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="nc" id="L28">        return &quot;Welcome to [ PreserveOther Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/preserveOther&quot;)
+    public HttpEntity preserve(@RequestBody OrderTicketsInfo oti,
+                               @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L35">        PreserveOtherController.LOGGER.info(&quot;[preserve][Preserve Account order][from {} to {} at {}]&quot;, oti.getFrom(), oti.getTo(), oti.getDate());</span>
+<span class="nc" id="L36">        return ok(preserveService.preserve(oti, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

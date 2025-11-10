@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminOrderController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">adminorder.controller</a> &gt; <span class="el_source">AdminOrderController.java</span></div><h1>AdminOrderController.java</h1><pre class="source lang-java linenums">package adminorder.controller;
+
+import edu.fudan.common.entity.*;
+import adminorder.service.AdminOrderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/adminorderservice&quot;)
+<span class="fc" id="L19">public class AdminOrderController {</span>
+
+    @Autowired
+    AdminOrderService adminOrderService;
+
+<span class="fc" id="L24">    private static final Logger logger = LoggerFactory.getLogger(AdminOrderController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L28">        return &quot;Welcome to [Admin Order Service] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/adminorder&quot;)
+    public HttpEntity getAllOrders(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L34">        logger.info(&quot;[getAllOrders][Get all orders][getAllOrders]&quot;);</span>
+<span class="nc" id="L35">        return ok(adminOrderService.getAllOrders(headers));</span>
+    }
+
+    @PostMapping(value = &quot;/adminorder&quot;)
+    public HttpEntity addOrder(@RequestBody Order request, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L40">        logger.info(&quot;[addOrder][Add new order][AccountID: {}]&quot;, request.getAccountId());</span>
+<span class="nc" id="L41">        return ok(adminOrderService.addOrder(request, headers));</span>
+    }
+
+    @PutMapping(value = &quot;/adminorder&quot;)
+    public HttpEntity updateOrder(@RequestBody Order request, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L46">        logger.info(&quot;[updateOrder][Update order][AccountID: {}, OrderId: {}]&quot;, request.getAccountId(), request.getId());</span>
+<span class="nc" id="L47">        return ok(adminOrderService.updateOrder(request, headers));</span>
+    }
+
+    @DeleteMapping(value = &quot;/adminorder/{orderId}/{trainNumber}&quot;)
+    public HttpEntity deleteOrder(@PathVariable String orderId, @PathVariable String trainNumber, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L52">        logger.info(&quot;[deleteOrder][Delete order][OrderId: {}, TrainNumber: {}]&quot;, orderId, trainNumber);</span>
+<span class="nc" id="L53">        return ok(adminOrderService.deleteOrder(orderId, trainNumber, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

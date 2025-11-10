@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InitData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">food_delivery.init</a> &gt; <span class="el_source">InitData.java</span></div><h1>InitData.java</h1><pre class="source lang-java linenums">package food_delivery.init;
+
+import food_delivery.service.FoodDeliveryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import edu.fudan.common.entity.Food;
+
+@Component
+<span class="fc" id="L15">public class InitData implements CommandLineRunner {</span>
+
+    @Autowired
+    FoodDeliveryService foodDeliveryService;
+
+<span class="fc" id="L20">    private static final Logger LOGGER = LoggerFactory.getLogger(InitData.class);</span>
+
+
+    @Override
+    public void run(String... args) {
+<span class="fc" id="L25">        BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream(&quot;/food_delivery_orders.txt&quot;)));</span>
+        try {  // 有限制，不能随意init初始化数据，因此先注释掉。
+//            String line;
+//            while ((line = br.readLine()) != null) {
+//                String[] strs = line.trim().split(&quot;\\|&quot;);
+//                String[] foods = strs[1].trim().split(&quot;,&quot;);
+//                List&lt;Food&gt; foodList = new ArrayList&lt;&gt;();
+//                for (String food : foods) {
+//                    String[] food_info = food.trim().split(&quot;_&quot;);
+//                    foodList.add(new Food(food_info[0], Double.parseDouble(food_info[1])));
+//                }
+//                FoodDeliveryOrder foodDeliveryOrder = new FoodDeliveryOrder(
+//                        UUID.randomUUID().toString(),       // id
+//                        strs[0],                            // stationFoodStoreId
+//                        foodList,                           // foodList
+//                        strs[2],                            // tripId
+//                        Integer.parseInt(strs[3]),          // seatNo
+//                        strs[4],                            // createdTime
+//                        strs[5],                            // deliveryTime
+//                        Double.parseDouble(strs[6])         // deliveryFee
+//                );
+//                foodDeliveryService.createFoodDeliveryOrder(foodDeliveryOrder, null);
+//            }
+        } catch(Exception e) {
+            InitData.LOGGER.info(&quot;food_delivery_orders.txt has format error!&quot;);
+            InitData.LOGGER.error(e.getMessage());
+            System.exit(1);
+        }
+<span class="fc" id="L53">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

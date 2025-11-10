@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CancelServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">cancel.service</a> &gt; <span class="el_source">CancelServiceImpl.java</span></div><h1>CancelServiceImpl.java</h1><pre class="source lang-java linenums">package cancel.service;
+
+import edu.fudan.common.entity.NotifyInfo;
+import edu.fudan.common.entity.OrderStatus;
+import edu.fudan.common.entity.Order;
+import edu.fudan.common.entity.SeatClass;
+import edu.fudan.common.entity.User;
+import edu.fudan.common.util.Response;
+import edu.fudan.common.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.text.DecimalFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L30">public class CancelServiceImpl implements CancelService {</span>
+
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+<span class="fc" id="L37">    private static final Logger LOGGER = LoggerFactory.getLogger(CancelServiceImpl.class);</span>
+
+<span class="fc" id="L39">    String orderStatusCancelNotPermitted = &quot;Order Status Cancel Not Permitted&quot;;</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L42">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+    @Override
+    public Response cancelOrder(String orderId, String loginId, HttpHeaders headers) {
+
+<span class="nc" id="L48">        Response&lt;Order&gt; orderResult = getOrderByIdFromOrder(orderId, headers);</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (orderResult.getStatus() == 1) {</span>
+<span class="nc" id="L50">            CancelServiceImpl.LOGGER.info(&quot;[cancelOrder][Cancel Order, Order found G|H]&quot;);</span>
+<span class="nc" id="L51">            Order order =  orderResult.getData();</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">            if (order.getStatus() == OrderStatus.NOTPAID.getCode()</span>
+<span class="nc bnc" id="L53" title="All 4 branches missed.">                    || order.getStatus() == OrderStatus.PAID.getCode() || order.getStatus() == OrderStatus.CHANGE.getCode()) {</span>
+
+                // order.setStatus(OrderStatus.CANCEL.getCode());
+
+<span class="nc" id="L57">                Response changeOrderResult = cancelFromOrder(order, headers);</span>
+                // 0 -- not find order   1 - cancel success
+<span class="nc bnc" id="L59" title="All 2 branches missed.">                if (changeOrderResult.getStatus() == 1) {</span>
+
+<span class="nc" id="L61">                    CancelServiceImpl.LOGGER.info(&quot;[cancelOrder][Cancel Order Success]&quot;);</span>
+                    //Draw back money
+<span class="nc" id="L63">                    String money = calculateRefund(order);</span>
+<span class="nc" id="L64">                    boolean status = drawbackMoney(money, loginId, headers);</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                    if (status) {</span>
+<span class="nc" id="L66">                        CancelServiceImpl.LOGGER.info(&quot;[cancelOrder][Draw Back Money Success]&quot;);</span>
+
+
+
+<span class="nc" id="L70">                        Response&lt;User&gt; result = getAccount(order.getAccountId().toString(), headers);</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">                        if (result.getStatus() == 0) {</span>
+<span class="nc" id="L72">                            return new Response&lt;&gt;(0, &quot;Cann't find userinfo by user id.&quot;, null);</span>
+                        }
+<span class="nc" id="L74">                        NotifyInfo notifyInfo = new NotifyInfo();</span>
+<span class="nc" id="L75">                        notifyInfo.setDate(new Date().toString());</span>
+<span class="nc" id="L76">                        notifyInfo.setEmail(result.getData().getEmail());</span>
+<span class="nc" id="L77">                        notifyInfo.setStartPlace(order.getFrom());</span>
+<span class="nc" id="L78">                        notifyInfo.setEndPlace(order.getTo());</span>
+<span class="nc" id="L79">                        notifyInfo.setUsername(result.getData().getUserName());</span>
+<span class="nc" id="L80">                        notifyInfo.setSeatNumber(order.getSeatNumber());</span>
+<span class="nc" id="L81">                        notifyInfo.setOrderNumber(order.getId().toString());</span>
+<span class="nc" id="L82">                        notifyInfo.setPrice(order.getPrice());</span>
+<span class="nc" id="L83">                        notifyInfo.setSeatClass(SeatClass.getNameByCode(order.getSeatClass()));</span>
+<span class="nc" id="L84">                        notifyInfo.setStartTime(order.getTravelTime().toString());</span>
+
+                        // TODO: change to async message serivce
+                        // sendEmail(notifyInfo, headers);
+
+<span class="nc" id="L89">                    } else {</span>
+<span class="nc" id="L90">                        CancelServiceImpl.LOGGER.error(&quot;[cancelOrder][Draw Back Money Failed][loginId: {}, orderId: {}]&quot;, loginId, orderId);</span>
+                    }
+<span class="nc" id="L92">                    return new Response&lt;&gt;(1, &quot;Success.&quot;, &quot;test not null&quot;);</span>
+                } else {
+<span class="nc" id="L94">                    CancelServiceImpl.LOGGER.error(&quot;[cancelOrder][Cancel Order Failed][orderId: {}, Reason: {}]&quot;, orderId, changeOrderResult.getMsg());</span>
+<span class="nc" id="L95">                    return new Response&lt;&gt;(0, changeOrderResult.getMsg(), null);</span>
+                }
+
+            } else {
+<span class="nc" id="L99">                CancelServiceImpl.LOGGER.info(&quot;[cancelOrder][Cancel Order, Order Status Not Permitted][loginId: {}, orderId: {}]&quot;, loginId, orderId);</span>
+<span class="nc" id="L100">                return new Response&lt;&gt;(0, orderStatusCancelNotPermitted, null);</span>
+            }
+        } else {
+
+<span class="nc" id="L104">            Response&lt;Order&gt; orderOtherResult = getOrderByIdFromOrderOther(orderId, headers);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            if (orderOtherResult.getStatus() == 1) {</span>
+<span class="nc" id="L106">                CancelServiceImpl.LOGGER.info(&quot;[cancelOrder][Cancel Order, Order found Z|K|Other]&quot;);</span>
+
+<span class="nc" id="L108">                Order order =   orderOtherResult.getData();</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">                if (order.getStatus() == OrderStatus.NOTPAID.getCode()</span>
+<span class="nc bnc" id="L110" title="All 4 branches missed.">                        || order.getStatus() == OrderStatus.PAID.getCode() || order.getStatus() == OrderStatus.CHANGE.getCode()) {</span>
+
+<span class="nc" id="L112">                    CancelServiceImpl.LOGGER.info(&quot;[cancelOrder][Cancel Order, Order status ok]&quot;);</span>
+
+//                    order.setStatus(OrderStatus.CANCEL.getCode());
+<span class="nc" id="L115">                    Response changeOrderResult = cancelFromOtherOrder(order, headers);</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">                    if (changeOrderResult.getStatus() == 1) {</span>
+<span class="nc" id="L118">                        CancelServiceImpl.LOGGER.info(&quot;[cancelOrder][Cancel Order Success]&quot;);</span>
+                        //Draw back money
+<span class="nc" id="L120">                        String money = calculateRefund(order);</span>
+<span class="nc" id="L121">                        boolean status = drawbackMoney(money, loginId, headers);</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">                        if (status) {</span>
+<span class="nc" id="L123">                            CancelServiceImpl.LOGGER.info(&quot;[cancelOrder][Draw Back Money Success]&quot;);</span>
+                        } else {
+<span class="nc" id="L125">                            CancelServiceImpl.LOGGER.error(&quot;[cancelOrder][Draw Back Money Failed][loginId: {}, orderId: {}]&quot;, loginId, orderId);</span>
+                        }
+<span class="nc" id="L127">                        return new Response&lt;&gt;(1, &quot;Success.&quot;, null);</span>
+                    } else {
+<span class="nc" id="L129">                        CancelServiceImpl.LOGGER.error(&quot;[cancelOrder][Cancel Order Failed][orderId: {}, Reason: {}]&quot;, orderId, changeOrderResult.getMsg());</span>
+<span class="nc" id="L130">                        return new Response&lt;&gt;(0, &quot;Fail.Reason:&quot; + changeOrderResult.getMsg(), null);</span>
+                    }
+                } else {
+<span class="nc" id="L133">                    CancelServiceImpl.LOGGER.warn(&quot;[cancelOrder][Cancel Order, Order Status Not Permitted][loginId: {}, orderId: {}]&quot;, loginId, orderId);</span>
+<span class="nc" id="L134">                    return new Response&lt;&gt;(0, orderStatusCancelNotPermitted, null);</span>
+                }
+            } else {
+<span class="nc" id="L137">                CancelServiceImpl.LOGGER.warn(&quot;[cancelOrder][Cancel Order, Order Not Found][loginId: {}, orderId: {}]&quot;, loginId, orderId);</span>
+<span class="nc" id="L138">                return new Response&lt;&gt;(0, &quot;Order Not Found.&quot;, null);</span>
+            }
+        }
+    }
+
+    public boolean sendEmail(NotifyInfo notifyInfo, HttpHeaders headers) {
+<span class="nc" id="L144">        CancelServiceImpl.LOGGER.info(&quot;[sendEmail][Send Email]&quot;);</span>
+<span class="nc" id="L145">        HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);</span>
+<span class="nc" id="L146">        HttpEntity requestEntity = new HttpEntity(notifyInfo, newHeaders);</span>
+<span class="nc" id="L147">        String notification_service_url = getServiceUrl(&quot;ts-notification-service&quot;);</span>
+<span class="nc" id="L148">        ResponseEntity&lt;Boolean&gt; re = restTemplate.exchange(</span>
+                notification_service_url + &quot;/api/v1/notifyservice/notification/order_cancel_success&quot;,
+                HttpMethod.POST,
+                requestEntity,
+                Boolean.class);
+<span class="nc" id="L153">        return re.getBody();</span>
+    }
+
+    @Override
+    public Response calculateRefund(String orderId, HttpHeaders headers) {
+
+<span class="nc" id="L159">        Response&lt;Order&gt; orderResult = getOrderByIdFromOrder(orderId, headers);</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (orderResult.getStatus() == 1) {</span>
+<span class="nc" id="L161">            Order order =   orderResult.getData();</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            if (order.getStatus() == OrderStatus.NOTPAID.getCode()</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">                    || order.getStatus() == OrderStatus.PAID.getCode()) {</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">                if (order.getStatus() == OrderStatus.NOTPAID.getCode()) {</span>
+<span class="nc" id="L165">                    CancelServiceImpl.LOGGER.info(&quot;[calculateRefund][Cancel Order, Refund Price From Order Service.Not Paid][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L166">                    return new Response&lt;&gt;(1, &quot;Success. Refoud 0&quot;, &quot;0&quot;);</span>
+                } else {
+<span class="nc" id="L168">                    CancelServiceImpl.LOGGER.info(&quot;[calculateRefund][Cancel Order, Refund Price From Order Service.Paid][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L169">                    return new Response&lt;&gt;(1, &quot;Success. &quot;, calculateRefund(order));</span>
+                }
+            } else {
+<span class="nc" id="L172">                CancelServiceImpl.LOGGER.info(&quot;[calculateRefund][Cancel Order Refund Price Order.Cancel Not Permitted][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L173">                return new Response&lt;&gt;(0, &quot;Order Status Cancel Not Permitted, Refound error&quot;, null);</span>
+            }
+        } else {
+
+<span class="nc" id="L177">            Response&lt;Order&gt; orderOtherResult = getOrderByIdFromOrderOther(orderId, headers);</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">            if (orderOtherResult.getStatus() == 1) {</span>
+<span class="nc" id="L179">                Order order =   orderOtherResult.getData();</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">                if (order.getStatus() == OrderStatus.NOTPAID.getCode()</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">                        || order.getStatus() == OrderStatus.PAID.getCode()) {</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">                    if (order.getStatus() == OrderStatus.NOTPAID.getCode()) {</span>
+<span class="nc" id="L183">                        CancelServiceImpl.LOGGER.info(&quot;[calculateRefund][Cancel Order, Refund Price From Order Other Service.Not Paid][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L184">                        return new Response&lt;&gt;(1, &quot;Success, Refound 0&quot;, &quot;0&quot;);</span>
+                    } else {
+<span class="nc" id="L186">                        CancelServiceImpl.LOGGER.info(&quot;[Cancel Order][Refund Price From Order Other Service.Paid][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L187">                        return new Response&lt;&gt;(1, &quot;Success&quot;, calculateRefund(order));</span>
+                    }
+                } else {
+<span class="nc" id="L190">                    CancelServiceImpl.LOGGER.warn(&quot;[Cancel Order][Refund Price, Order Other. Cancel Not Permitted][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L191">                    return new Response&lt;&gt;(0, orderStatusCancelNotPermitted, null);</span>
+                }
+            } else {
+<span class="nc" id="L194">                CancelServiceImpl.LOGGER.error(&quot;[Cancel Order][Refund Price][Order not found][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L195">                return new Response&lt;&gt;(0, &quot;Order Not Found&quot;, null);</span>
+            }
+        }
+    }
+
+    private String calculateRefund(Order order) {
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (order.getStatus() == OrderStatus.NOTPAID.getCode()) {</span>
+<span class="nc" id="L202">            return &quot;0.00&quot;;</span>
+        }
+<span class="nc" id="L204">        CancelServiceImpl.LOGGER.info(&quot;[calculateRefund][Cancel Order][Order Travel Date: {}]&quot;, order.getTravelDate().toString());</span>
+<span class="nc" id="L205">        Date nowDate = new Date();</span>
+<span class="nc" id="L206">        Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L207">        cal.setTime(StringUtils.String2Date(order.getTravelDate()));</span>
+<span class="nc" id="L208">        int year = cal.get(Calendar.YEAR);</span>
+<span class="nc" id="L209">        int month = cal.get(Calendar.MONTH);</span>
+<span class="nc" id="L210">        int day = cal.get(Calendar.DAY_OF_MONTH);</span>
+<span class="nc" id="L211">        Calendar cal2 = Calendar.getInstance();</span>
+<span class="nc" id="L212">        cal2.setTime(StringUtils.String2Date(order.getTravelTime()));</span>
+<span class="nc" id="L213">        int hour = cal2.get(Calendar.HOUR);</span>
+<span class="nc" id="L214">        int minute = cal2.get(Calendar.MINUTE);</span>
+<span class="nc" id="L215">        int second = cal2.get(Calendar.SECOND);</span>
+<span class="nc" id="L216">        Date startTime = new Date(year,  //NOSONAR</span>
+                month,
+                day,
+                hour,
+                minute,
+                second);
+<span class="nc" id="L222">        CancelServiceImpl.LOGGER.info(&quot;[calculateRefund][Cancel Order][nowDate  : {}]&quot;, nowDate);</span>
+<span class="nc" id="L223">        CancelServiceImpl.LOGGER.info(&quot;[calculateRefund][Cancel Order][startTime: {}]&quot;, startTime);</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">        if (nowDate.after(startTime)) {</span>
+<span class="nc" id="L225">            CancelServiceImpl.LOGGER.warn(&quot;[calculateRefund][Cancel Order, Ticket expire refund 0]&quot;);</span>
+<span class="nc" id="L226">            return &quot;0&quot;;</span>
+        } else {
+<span class="nc" id="L228">            double totalPrice = Double.parseDouble(order.getPrice());</span>
+<span class="nc" id="L229">            double price = totalPrice * 0.8;</span>
+<span class="nc" id="L230">            DecimalFormat priceFormat = new java.text.DecimalFormat(&quot;0.00&quot;);</span>
+<span class="nc" id="L231">            String str = priceFormat.format(price);</span>
+<span class="nc" id="L232">            CancelServiceImpl.LOGGER.info(&quot;[calculateRefund][calculate refund][refund: {}]&quot;, str);</span>
+<span class="nc" id="L233">            return str;</span>
+        }
+    }
+
+
+    private Response cancelFromOrder(Order order, HttpHeaders headers) {
+<span class="nc" id="L239">        CancelServiceImpl.LOGGER.info(&quot;[cancelFromOrder][Change Order Status]&quot;);</span>
+<span class="nc" id="L240">        order.setStatus(OrderStatus.CANCEL.getCode());</span>
+        // add authorization header
+<span class="nc" id="L242">        HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);</span>
+<span class="nc" id="L243">        HttpEntity requestEntity = new HttpEntity(order, newHeaders);</span>
+<span class="nc" id="L244">        String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L245">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                order_service_url + &quot;/api/v1/orderservice/order&quot;,
+                HttpMethod.PUT,
+                requestEntity,
+                Response.class);
+
+<span class="nc" id="L251">        return re.getBody();</span>
+    }
+
+    public static HttpHeaders getAuthorizationHeadersFrom(HttpHeaders oldHeaders) {
+<span class="nc" id="L255">        HttpHeaders newHeaders = new HttpHeaders();</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (oldHeaders.containsKey(HttpHeaders.AUTHORIZATION)) {</span>
+<span class="nc" id="L257">            newHeaders.add(HttpHeaders.AUTHORIZATION, oldHeaders.getFirst(HttpHeaders.AUTHORIZATION));</span>
+        }
+<span class="nc" id="L259">        return newHeaders;</span>
+    }
+
+
+    private Response cancelFromOtherOrder(Order order, HttpHeaders headers) {
+<span class="nc" id="L264">        CancelServiceImpl.LOGGER.info(&quot;[cancelFromOtherOrder][Change Order Status]&quot;);</span>
+<span class="nc" id="L265">        order.setStatus(OrderStatus.CANCEL.getCode());</span>
+<span class="nc" id="L266">        HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);</span>
+<span class="nc" id="L267">        HttpEntity requestEntity = new HttpEntity(order, newHeaders);</span>
+<span class="nc" id="L268">        String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc" id="L269">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                order_other_service_url + &quot;/api/v1/orderOtherService/orderOther&quot;,
+                HttpMethod.PUT,
+                requestEntity,
+                Response.class);
+
+<span class="nc" id="L275">        return re.getBody();</span>
+    }
+
+    public boolean drawbackMoney(String money, String userId, HttpHeaders headers) {
+<span class="nc" id="L279">        CancelServiceImpl.LOGGER.info(&quot;[drawbackMoney][Draw Back Money]&quot;);</span>
+
+<span class="nc" id="L281">        HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);</span>
+<span class="nc" id="L282">        HttpEntity requestEntity = new HttpEntity(newHeaders);</span>
+<span class="nc" id="L283">        String inside_payment_service_url = getServiceUrl(&quot;ts-inside-payment-service&quot;);</span>
+<span class="nc" id="L284">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                inside_payment_service_url + &quot;/api/v1/inside_pay_service/inside_payment/drawback/&quot; + userId + &quot;/&quot; + money,
+                HttpMethod.GET,
+                requestEntity,
+                Response.class);
+<span class="nc" id="L289">        Response result = re.getBody();</span>
+
+<span class="nc bnc" id="L291" title="All 2 branches missed.">        return result.getStatus() == 1;</span>
+    }
+
+    public Response&lt;User&gt; getAccount(String orderId, HttpHeaders headers) {
+<span class="nc" id="L295">        CancelServiceImpl.LOGGER.info(&quot;[getAccount][Get By Id][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L296">        HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);</span>
+<span class="nc" id="L297">        HttpEntity requestEntity = new HttpEntity(newHeaders);</span>
+<span class="nc" id="L298">        String user_service_url = getServiceUrl(&quot;ts-user-service&quot;);</span>
+<span class="nc" id="L299">        ResponseEntity&lt;Response&lt;User&gt;&gt; re = restTemplate.exchange(</span>
+                user_service_url + &quot;/api/v1/userservice/users/id/&quot; + orderId,
+                HttpMethod.GET,
+                requestEntity,
+<span class="nc" id="L303">                new ParameterizedTypeReference&lt;Response&lt;User&gt;&gt;() {</span>
+                });
+<span class="nc" id="L305">        return re.getBody();</span>
+    }
+
+    private Response&lt;Order&gt; getOrderByIdFromOrder(String orderId, HttpHeaders headers) {
+<span class="nc" id="L309">        CancelServiceImpl.LOGGER.info(&quot;[getOrderByIdFromOrder][Get Order][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L310">        HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);</span>
+<span class="nc" id="L311">        HttpEntity requestEntity = new HttpEntity(newHeaders);</span>
+<span class="nc" id="L312">        String order_service_url = getServiceUrl(&quot;ts-order-service&quot;);</span>
+<span class="nc" id="L313">        ResponseEntity&lt;Response&lt;Order&gt;&gt; re = restTemplate.exchange(</span>
+                order_service_url + &quot;/api/v1/orderservice/order/&quot; + orderId,
+                HttpMethod.GET,
+                requestEntity,
+<span class="nc" id="L317">                new ParameterizedTypeReference&lt;Response&lt;Order&gt;&gt;() {</span>
+                });
+<span class="nc" id="L319">        return re.getBody();</span>
+    }
+
+    private Response&lt;Order&gt; getOrderByIdFromOrderOther(String orderId, HttpHeaders headers) {
+<span class="nc" id="L323">        CancelServiceImpl.LOGGER.info(&quot;[getOrderByIdFromOrderOther][Get Order][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L324">        HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);</span>
+<span class="nc" id="L325">        HttpEntity requestEntity = new HttpEntity(newHeaders);</span>
+<span class="nc" id="L326">        String order_other_service_url = getServiceUrl(&quot;ts-order-other-service&quot;);</span>
+<span class="nc" id="L327">        ResponseEntity&lt;Response&lt;Order&gt;&gt; re = restTemplate.exchange(</span>
+                order_other_service_url + &quot;/api/v1/orderOtherService/orderOther/&quot; + orderId,
+                HttpMethod.GET,
+                requestEntity,
+<span class="nc" id="L331">                new ParameterizedTypeReference&lt;Response&lt;Order&gt;&gt;() {</span>
+                });
+<span class="nc" id="L333">        return re.getBody();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

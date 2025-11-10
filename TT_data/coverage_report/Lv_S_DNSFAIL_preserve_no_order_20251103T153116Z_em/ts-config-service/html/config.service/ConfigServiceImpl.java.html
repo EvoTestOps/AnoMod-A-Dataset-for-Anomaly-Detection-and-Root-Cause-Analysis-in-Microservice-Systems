@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">config.service</a> &gt; <span class="el_source">ConfigServiceImpl.java</span></div><h1>ConfigServiceImpl.java</h1><pre class="source lang-java linenums">package config.service;
+
+import config.entity.Config;
+import config.repository.ConfigRepository;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L20">public class ConfigServiceImpl implements ConfigService {</span>
+
+    @Autowired
+    ConfigRepository repository;
+
+<span class="fc" id="L25">    private static final Logger logger = LoggerFactory.getLogger(ConfigServiceImpl.class);</span>
+
+<span class="fc" id="L27">    String config0 = &quot;Config &quot;;</span>
+
+    @Override
+    public Response create(Config info, HttpHeaders headers) {
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">        if (repository.findByName(info.getName()) != null) {</span>
+<span class="fc" id="L32">            String result = config0 + info.getName() + &quot; already exists.&quot;;</span>
+<span class="fc" id="L33">            logger.warn(&quot;[create][{} already exists][config info: {}]&quot;, config0, info.getName());</span>
+<span class="fc" id="L34">            return new Response&lt;&gt;(0, result, null);</span>
+        } else {
+<span class="nc" id="L36">            Config config = new Config(info.getName(), info.getValue(), info.getDescription());</span>
+<span class="nc" id="L37">            repository.save(config);</span>
+<span class="nc" id="L38">            logger.info(&quot;[create][create success][Config: {}]&quot;, info);</span>
+<span class="nc" id="L39">            return new Response&lt;&gt;(1, &quot;Create success&quot;, config);</span>
+        }
+    }
+
+    @Override
+    public Response update(Config info, HttpHeaders headers) {
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (repository.findByName(info.getName()) == null) {</span>
+<span class="fc" id="L46">            String result = config0 + info.getName() + &quot; doesn't exist.&quot;;</span>
+<span class="fc" id="L47">            logger.warn(result);</span>
+<span class="fc" id="L48">            return new Response&lt;&gt;(0, result, null);</span>
+        } else {
+<span class="nc" id="L50">            Config config = new Config(info.getName(), info.getValue(), info.getDescription());</span>
+<span class="nc" id="L51">            repository.save(config);</span>
+<span class="nc" id="L52">            logger.info(&quot;[update][update success][Config: {}]&quot;, config);</span>
+<span class="nc" id="L53">            return new Response&lt;&gt;(1, &quot;Update success&quot;, config);</span>
+        }
+    }
+
+
+    @Override
+    public Response query(String name, HttpHeaders headers) {
+<span class="fc" id="L60">        Config config = repository.findByName(name);</span>
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        if (config == null) {</span>
+<span class="fc" id="L62">            logger.warn(&quot;[query][Config does not exist][name: {}, message: {}]&quot;, name, &quot;No content&quot;);</span>
+<span class="fc" id="L63">            return new Response&lt;&gt;(0, &quot;No content&quot;, null);</span>
+        } else {
+<span class="nc" id="L65">            logger.info(&quot;[query][Query config success][config name: {}]&quot;, name);</span>
+<span class="nc" id="L66">            return new Response&lt;&gt;(1, &quot;Success&quot;, config);</span>
+        }
+    }
+
+    @Override
+    @Transactional
+    public Response delete(String name, HttpHeaders headers) {
+<span class="fc" id="L73">        Config config = repository.findByName(name);</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (config == null) {</span>
+<span class="fc" id="L75">            String result = config0 + name + &quot; doesn't exist.&quot;;</span>
+<span class="fc" id="L76">            logger.warn(&quot;[delete][config doesn't exist][config name: {}]&quot;, name);</span>
+<span class="fc" id="L77">            return new Response&lt;&gt;(0, result, null);</span>
+        } else {
+<span class="nc" id="L79">            repository.deleteByName(name);</span>
+<span class="nc" id="L80">            logger.info(&quot;[delete][Config delete success][config name: {}]&quot;, name);</span>
+<span class="nc" id="L81">            return new Response&lt;&gt;(1, &quot;Delete success&quot;, config);</span>
+        }
+    }
+
+    @Override
+    public Response queryAll(HttpHeaders headers) {
+<span class="fc" id="L87">        List&lt;Config&gt; configList = repository.findAll();</span>
+
+<span class="pc bpc" id="L89" title="2 of 4 branches missed.">        if (configList != null &amp;&amp; !configList.isEmpty()) {</span>
+<span class="fc" id="L90">            logger.info(&quot;[queryAll][Query all config success]&quot;);</span>
+<span class="fc" id="L91">            return new Response&lt;&gt;(1, &quot;Find all  config success&quot;, configList);</span>
+        } else {
+<span class="nc" id="L93">            logger.warn(&quot;[queryAll][Query config, No content]&quot;);</span>
+<span class="nc" id="L94">            return new Response&lt;&gt;(0, &quot;No content&quot;, null);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

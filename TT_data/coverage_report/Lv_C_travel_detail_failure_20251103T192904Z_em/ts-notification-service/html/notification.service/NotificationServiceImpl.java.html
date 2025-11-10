@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">notification.service</a> &gt; <span class="el_source">NotificationServiceImpl.java</span></div><h1>NotificationServiceImpl.java</h1><pre class="source lang-java linenums">package notification.service;
+
+import notification.entity.Mail;
+import notification.entity.NotifyInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L18">public class NotificationServiceImpl implements NotificationService{</span>
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @Autowired
+    MailService mailService;
+
+<span class="fc" id="L26">    private static final Logger LOGGER = LoggerFactory.getLogger(NotificationServiceImpl.class);</span>
+
+<span class="fc" id="L28">    String email = &quot;trainticket_notify@163.com&quot;;</span>
+<span class="fc" id="L29">    String username = &quot;username&quot;;</span>
+<span class="fc" id="L30">    String startPlace = &quot;startPlace&quot;;</span>
+<span class="fc" id="L31">    String endPlace = &quot;endPlace&quot;;</span>
+<span class="fc" id="L32">    String startTime = &quot;startTime&quot;;</span>
+<span class="fc" id="L33">    String seatClass = &quot;seatClass&quot;;</span>
+<span class="fc" id="L34">    String seatNumber = &quot;seatNumber&quot;;</span>
+
+    @Override
+    public boolean preserveSuccess(NotifyInfo info, HttpHeaders headers){
+<span class="fc" id="L38">        Mail mail = new Mail();</span>
+<span class="fc" id="L39">        mail.setMailFrom(email);</span>
+<span class="fc" id="L40">        mail.setMailTo(info.getEmail());</span>
+<span class="fc" id="L41">        mail.setMailSubject(&quot;Preserve Success&quot;);</span>
+
+<span class="fc" id="L43">        Map&lt;String, Object&gt; model = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L44">        model.put(username, info.getUsername());</span>
+<span class="fc" id="L45">        model.put(startPlace,info.getStartPlace());</span>
+<span class="fc" id="L46">        model.put(endPlace,info.getEndPlace());</span>
+<span class="fc" id="L47">        model.put(startTime,info.getStartTime());</span>
+<span class="fc" id="L48">        model.put(&quot;date&quot;,info.getDate());</span>
+<span class="fc" id="L49">        model.put(seatClass,info.getSeatClass());</span>
+<span class="fc" id="L50">        model.put(seatNumber,info.getSeatNumber());</span>
+<span class="fc" id="L51">        model.put(&quot;price&quot;,info.getPrice());</span>
+<span class="fc" id="L52">        mail.setModel(model);</span>
+
+        try {
+<span class="nc" id="L55">            mailService.sendEmail(mail,&quot;preserve_success.ftl&quot;);</span>
+<span class="nc" id="L56">            return true;</span>
+<span class="fc" id="L57">        } catch (Exception e) {</span>
+<span class="fc" id="L58">            LOGGER.error(&quot;[preserveSuccess][mailService.sendEmai][Exception: {}]&quot;, e.getMessage());</span>
+<span class="fc" id="L59">            return false;</span>
+        }
+    }
+
+    @Override
+    public boolean orderCreateSuccess(NotifyInfo info, HttpHeaders headers){
+<span class="fc" id="L65">        Mail mail = new Mail();</span>
+<span class="fc" id="L66">        mail.setMailFrom(email);</span>
+<span class="fc" id="L67">        mail.setMailTo(info.getEmail());</span>
+<span class="fc" id="L68">        mail.setMailSubject(&quot;Order Create Success&quot;);</span>
+
+<span class="fc" id="L70">        Map&lt;String, Object&gt; model = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L71">        model.put(username, info.getUsername());</span>
+<span class="fc" id="L72">        model.put(startPlace,info.getStartPlace());</span>
+<span class="fc" id="L73">        model.put(endPlace,info.getEndPlace());</span>
+<span class="fc" id="L74">        model.put(startTime,info.getStartTime());</span>
+<span class="fc" id="L75">        model.put(&quot;date&quot;,info.getDate());</span>
+<span class="fc" id="L76">        model.put(seatClass,info.getSeatClass());</span>
+<span class="fc" id="L77">        model.put(seatNumber,info.getSeatNumber());</span>
+<span class="fc" id="L78">        model.put(&quot;orderNumber&quot;, info.getOrderNumber());</span>
+<span class="fc" id="L79">        mail.setModel(model);</span>
+
+        try {
+<span class="nc" id="L82">            mailService.sendEmail(mail,&quot;order_create_success.ftl&quot;);</span>
+<span class="nc" id="L83">            return true;</span>
+<span class="fc" id="L84">        } catch (Exception e) {</span>
+<span class="fc" id="L85">            LOGGER.error(&quot;[orderCreateSuccess][mailService.sendEmai][Exception: {}]&quot;, e.getMessage());</span>
+<span class="fc" id="L86">            return false;</span>
+        }
+    }
+
+    @Override
+    public boolean orderChangedSuccess(NotifyInfo info, HttpHeaders headers){
+<span class="fc" id="L92">        Mail mail = new Mail();</span>
+<span class="fc" id="L93">        mail.setMailFrom(email);</span>
+<span class="fc" id="L94">        mail.setMailTo(info.getEmail());</span>
+<span class="fc" id="L95">        mail.setMailSubject(&quot;Order Changed Success&quot;);</span>
+
+<span class="fc" id="L97">        Map&lt;String, Object&gt; model = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L98">        model.put(username, info.getUsername());</span>
+<span class="fc" id="L99">        model.put(startPlace,info.getStartPlace());</span>
+<span class="fc" id="L100">        model.put(endPlace,info.getEndPlace());</span>
+<span class="fc" id="L101">        model.put(startTime,info.getStartTime());</span>
+<span class="fc" id="L102">        model.put(&quot;date&quot;,info.getDate());</span>
+<span class="fc" id="L103">        model.put(seatClass,info.getSeatClass());</span>
+<span class="fc" id="L104">        model.put(seatNumber,info.getSeatNumber());</span>
+<span class="fc" id="L105">        model.put(&quot;orderNumber&quot;, info.getOrderNumber());</span>
+<span class="fc" id="L106">        mail.setModel(model);</span>
+
+        try {
+<span class="nc" id="L109">            mailService.sendEmail(mail,&quot;order_changed_success.ftl&quot;);</span>
+<span class="nc" id="L110">            return true;</span>
+<span class="fc" id="L111">        } catch (Exception e) {</span>
+<span class="fc" id="L112">            LOGGER.error(&quot;[orderChangedSuccess][mailService.sendEmai][Exception: {}]&quot;, e.getMessage());</span>
+<span class="fc" id="L113">            return false;</span>
+        }
+    }
+
+    @Override
+    public boolean orderCancelSuccess(NotifyInfo info, HttpHeaders headers){
+<span class="fc" id="L119">        Mail mail = new Mail();</span>
+<span class="fc" id="L120">        mail.setMailFrom(email);</span>
+<span class="fc" id="L121">        mail.setMailTo(info.getEmail());</span>
+<span class="fc" id="L122">        mail.setMailSubject(&quot;Order Cancel Success&quot;);</span>
+
+<span class="fc" id="L124">        Map&lt;String, Object&gt; model = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L125">        model.put(username, info.getUsername());</span>
+<span class="fc" id="L126">        model.put(&quot;price&quot;,info.getPrice());</span>
+<span class="fc" id="L127">        mail.setModel(model);</span>
+
+        try {
+<span class="nc" id="L130">            mailService.sendEmail(mail,&quot;order_cancel_success.ftl&quot;);</span>
+<span class="nc" id="L131">            return true;</span>
+<span class="fc" id="L132">        } catch (Exception e) {</span>
+<span class="fc" id="L133">            LOGGER.error(&quot;[orderCancelSuccess][mailService.sendEmai][Exception: {}]&quot;, e.getMessage());</span>
+<span class="fc" id="L134">            return false;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

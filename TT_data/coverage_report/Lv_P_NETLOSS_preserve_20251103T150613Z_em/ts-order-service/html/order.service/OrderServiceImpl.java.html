@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">order.service</a> &gt; <span class="el_source">OrderServiceImpl.java</span></div><h1>OrderServiceImpl.java</h1><pre class="source lang-java linenums">package order.service;
+
+import edu.fudan.common.entity.*;
+import edu.fudan.common.util.Response;
+import edu.fudan.common.util.StringUtils;
+import order.entity.OrderAlterInfo;
+import order.entity.Order;
+import order.entity.OrderInfo;
+import order.repository.OrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.*;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L30">public class OrderServiceImpl implements OrderService {</span>
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+<span class="fc" id="L38">    private static final Logger LOGGER = LoggerFactory.getLogger(OrderServiceImpl.class);</span>
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L44">        return &quot;http://&quot; + serviceName; }</span>
+
+//    @Value(&quot;${station-service.url}&quot;)
+//    String station_service_url;
+
+<span class="fc" id="L49">    String success = &quot;Success&quot;;</span>
+<span class="fc" id="L50">    String orderNotFound = &quot;Order Not Found&quot;;</span>
+
+
+    @Override
+    public Response getSoldTickets(Seat seatRequest, HttpHeaders headers) {
+<span class="fc" id="L55">        ArrayList&lt;Order&gt; list = orderRepository.findByTravelDateAndTrainNumber(seatRequest.getTravelDate(),</span>
+<span class="fc" id="L56">                seatRequest.getTrainNumber());</span>
+<span class="pc bpc" id="L57" title="2 of 4 branches missed.">        if (list != null &amp;&amp; !list.isEmpty()) {</span>
+<span class="nc" id="L58">            Set ticketSet = new HashSet();</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">            for (Order tempOrder : list) {</span>
+<span class="nc" id="L60">                ticketSet.add(new Ticket(Integer.parseInt(tempOrder.getSeatNumber()),</span>
+<span class="nc" id="L61">                        tempOrder.getFrom(), tempOrder.getTo()));</span>
+<span class="nc" id="L62">            }</span>
+<span class="nc" id="L63">            LeftTicketInfo leftTicketInfo = new LeftTicketInfo();</span>
+<span class="nc" id="L64">            leftTicketInfo.setSoldTickets(ticketSet);</span>
+<span class="nc" id="L65">            OrderServiceImpl.LOGGER.info(&quot;[getSoldTickets][Left ticket info][info is: {}]&quot;, leftTicketInfo.toString());</span>
+<span class="nc" id="L66">            return new Response&lt;&gt;(1, success, leftTicketInfo);</span>
+        } else {
+<span class="fc" id="L68">            OrderServiceImpl.LOGGER.warn(&quot;[getSoldTickets][Seat][Left ticket info is empty][seat from date: {}, train number: {}]&quot;,seatRequest.getTravelDate(),seatRequest.getTrainNumber()); //warn级别，获取资源但资源为空</span>
+<span class="fc" id="L69">            return new Response&lt;&gt;(0, &quot;Order is Null.&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response findOrderById(String id, HttpHeaders headers) {
+<span class="nc" id="L75">        Optional&lt;Order&gt; op = orderRepository.findById(id);</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="nc" id="L77">            OrderServiceImpl.LOGGER.warn(&quot;[findOrderById][Find Order By Id Fail][No content][id: {}] &quot;,id);  //获取资源但资源为空</span>
+<span class="nc" id="L78">            return new Response&lt;&gt;(0, &quot;No Content by this id&quot;, null);</span>
+        } else {
+<span class="nc" id="L80">            Order order = op.get();</span>
+<span class="nc" id="L81">            OrderServiceImpl.LOGGER.warn(&quot;[findOrderById][Find Order By Id Success][id: {}] &quot;,id);  //获取资源但资源为空</span>
+<span class="nc" id="L82">            return new Response&lt;&gt;(1, success, order);</span>
+        }
+    }
+
+    @Override
+    public Response create(Order order, HttpHeaders headers) {
+<span class="nc" id="L88">        OrderServiceImpl.LOGGER.info(&quot;[create][Create Order][Ready to Create Order]&quot;);</span>
+<span class="nc" id="L89">        ArrayList&lt;Order&gt; accountOrders = orderRepository.findByAccountId(order.getAccountId());</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (accountOrders.contains(order)) {</span>
+<span class="nc" id="L91">            OrderServiceImpl.LOGGER.error(&quot;[create][Order Create Fail][Order already exists][OrderId: {}]&quot;, order.getId());</span>
+<span class="nc" id="L92">            return new Response&lt;&gt;(0, &quot;Order already exist&quot;, null);</span>
+        } else {
+<span class="nc" id="L94">            order.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L95">            order=orderRepository.save(order);</span>
+<span class="nc" id="L96">            OrderServiceImpl.LOGGER.info(&quot;[create][Order Create Success][Order Price][OrderId:{} , Price: {}]&quot;,order.getId(),order.getPrice());</span>
+<span class="nc" id="L97">            return new Response&lt;&gt;(1, success, order);</span>
+        }
+    }
+
+    @Override
+    public Response alterOrder(OrderAlterInfo oai, HttpHeaders headers) {
+
+<span class="nc" id="L104">        String oldOrderId = oai.getPreviousOrderId();</span>
+<span class="nc" id="L105">        Optional&lt;Order&gt; op = orderRepository.findById(oldOrderId);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="nc" id="L107">            OrderServiceImpl.LOGGER.error(&quot;[alterOrder][Alter Order Fail][Order do not exist][OrderId: {}]&quot;, oldOrderId);</span>
+<span class="nc" id="L108">            return new Response&lt;&gt;(0, &quot;Old Order Does Not Exists&quot;, null);</span>
+        }
+<span class="nc" id="L110">        Order oldOrder = op.get();</span>
+<span class="nc" id="L111">        oldOrder.setStatus(OrderStatus.CANCEL.getCode());</span>
+<span class="nc" id="L112">        saveChanges(oldOrder, headers);</span>
+<span class="nc" id="L113">        Order newOrder = oai.getNewOrderInfo();</span>
+<span class="nc" id="L114">        newOrder.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L115">        Response cor = create(oai.getNewOrderInfo(), headers);</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (cor.getStatus() == 1) {</span>
+<span class="nc" id="L117">            OrderServiceImpl.LOGGER.info(&quot;[alterOrder][Alter Order Success][newOrderId: {}]&quot;,newOrder.getId());</span>
+<span class="nc" id="L118">            return new Response&lt;&gt;(1, success, newOrder);</span>
+        } else {
+<span class="nc" id="L120">            OrderServiceImpl.LOGGER.error(&quot;[alterOrder][Alter Order Fail][Create new order fail][newOrderId: {}]&quot;, newOrder.getId());</span>
+<span class="nc" id="L121">            return new Response&lt;&gt;(0, cor.getMsg(), null);</span>
+        }
+    }
+
+    @Override
+    public Response&lt;ArrayList&lt;Order&gt;&gt; queryOrders(OrderInfo qi, String accountId, HttpHeaders headers) {
+        //1.Get all orders of the user
+<span class="fc" id="L128">        ArrayList&lt;Order&gt; list = orderRepository.findByAccountId(accountId);</span>
+<span class="fc" id="L129">        OrderServiceImpl.LOGGER.info(&quot;[queryOrders][Step 1][Get Orders Number of Account][size: {}]&quot;, list.size());</span>
+        //2.Check is these orders fit the requirement/
+<span class="pc bpc" id="L131" title="3 of 6 branches missed.">        if (qi.isEnableStateQuery() || qi.isEnableBoughtDateQuery() || qi.isEnableTravelDateQuery()) {</span>
+<span class="nc" id="L132">            ArrayList&lt;Order&gt; finalList = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">            for (Order tempOrder : list) {</span>
+<span class="nc" id="L134">                boolean statePassFlag = false;</span>
+<span class="nc" id="L135">                boolean boughtDatePassFlag = false;</span>
+<span class="nc" id="L136">                boolean travelDatePassFlag = false;</span>
+                //3.Check order state requirement.
+<span class="nc bnc" id="L138" title="All 2 branches missed.">                if (qi.isEnableStateQuery()) {</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">                    if (tempOrder.getStatus() != qi.getState()) {</span>
+<span class="nc" id="L140">                        statePassFlag = false;</span>
+                    } else {
+<span class="nc" id="L142">                        statePassFlag = true;</span>
+                    }
+                } else {
+<span class="nc" id="L145">                    statePassFlag = true;</span>
+                }
+<span class="nc" id="L147">                OrderServiceImpl.LOGGER.info(&quot;[queryOrders][Step 2][Check Status Fits End]&quot;);</span>
+                //4.Check order travel date requirement.
+<span class="nc" id="L149">                Date boughtDate = StringUtils.String2Date(tempOrder.getBoughtDate());</span>
+<span class="nc" id="L150">                Date travelDate = StringUtils.String2Date(tempOrder.getTravelDate());</span>
+<span class="nc" id="L151">                Date travelDateEnd = StringUtils.String2Date(qi.getTravelDateEnd());</span>
+<span class="nc" id="L152">                Date boughtDateStart = StringUtils.String2Date(qi.getBoughtDateStart());</span>
+<span class="nc" id="L153">                Date boughtDateEnd = StringUtils.String2Date(qi.getBoughtDateEnd());</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                if (qi.isEnableTravelDateQuery()) {</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">                    if (travelDate.before(travelDateEnd) &amp;&amp;</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">                            travelDate.after(boughtDateStart)) {</span>
+<span class="nc" id="L157">                        travelDatePassFlag = true;</span>
+                    } else {
+<span class="nc" id="L159">                        travelDatePassFlag = false;</span>
+                    }
+                } else {
+<span class="nc" id="L162">                    travelDatePassFlag = true;</span>
+                }
+<span class="nc" id="L164">                OrderServiceImpl.LOGGER.info(&quot;[queryOrders][Step 2][Check Travel Date End]&quot;);</span>
+                //5.Check order bought date requirement.
+<span class="nc bnc" id="L166" title="All 2 branches missed.">                if (qi.isEnableBoughtDateQuery()) {</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">                    if (boughtDate.before(boughtDateEnd) &amp;&amp;</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">                            boughtDate.after(boughtDateStart)) {</span>
+<span class="nc" id="L169">                        boughtDatePassFlag = true;</span>
+                    } else {
+<span class="nc" id="L171">                        boughtDatePassFlag = false;</span>
+                    }
+                } else {
+<span class="nc" id="L174">                    boughtDatePassFlag = true;</span>
+                }
+<span class="nc" id="L176">                OrderServiceImpl.LOGGER.info(&quot;[queryOrders][Step 2][Check Bought Date End]&quot;);</span>
+                //6.check if all requirement fits.
+<span class="nc bnc" id="L178" title="All 6 branches missed.">                if (statePassFlag &amp;&amp; boughtDatePassFlag &amp;&amp; travelDatePassFlag) {</span>
+<span class="nc" id="L179">                    finalList.add(tempOrder);</span>
+                }
+<span class="nc" id="L181">                OrderServiceImpl.LOGGER.info(&quot;[queryOrders][Step 2][Check All Requirement End]&quot;);</span>
+<span class="nc" id="L182">            }</span>
+<span class="nc" id="L183">            OrderServiceImpl.LOGGER.info(&quot;[queryOrders][Get order num][size:{}]&quot;, finalList.size());</span>
+<span class="nc" id="L184">            return new Response&lt;&gt;(1, &quot;Get order num&quot;, finalList);</span>
+        } else {
+<span class="fc" id="L186">            OrderServiceImpl.LOGGER.warn(&quot;[queryOrders][Orders don't fit the requirement][loginId: {}]&quot;, qi.getLoginId());</span>
+<span class="fc" id="L187">            return new Response&lt;&gt;(1, &quot;Get order num&quot;, list);</span>
+        }
+    }
+
+    @Override
+    public Response queryOrdersForRefresh(OrderInfo qi, String accountId, HttpHeaders headers) {
+<span class="fc" id="L193">        ArrayList&lt;Order&gt; orders =   queryOrders(qi, accountId, headers).getData();</span>
+<span class="fc" id="L194">        ArrayList&lt;String&gt; stationIds = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        for (Order order : orders) {</span>
+<span class="nc" id="L196">            stationIds.add(order.getFrom());</span>
+<span class="nc" id="L197">            stationIds.add(order.getTo());</span>
+<span class="nc" id="L198">        }</span>
+
+        // List&lt;String&gt; names = queryForStationId(stationIds, headers);
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        for (int i = 0; i &lt; orders.size(); i++) {</span>
+<span class="nc" id="L202">            orders.get(i).setFrom(stationIds.get(i * 2));</span>
+<span class="nc" id="L203">            orders.get(i).setTo(stationIds.get(i * 2 + 1));</span>
+        }
+<span class="fc" id="L205">        return new Response&lt;&gt;(1, &quot;Query Orders For Refresh Success&quot;, orders);</span>
+    }
+
+    public List&lt;String&gt; queryForStationId(List&lt;String&gt; ids, HttpHeaders headers) {
+
+<span class="nc" id="L210">        HttpEntity requestEntity = new HttpEntity(ids, null);</span>
+<span class="nc" id="L211">        String station_service_url=getServiceUrl(&quot;ts-station-service&quot;);</span>
+<span class="nc" id="L212">        ResponseEntity&lt;Response&lt;List&lt;String&gt;&gt;&gt; re = restTemplate.exchange(</span>
+                station_service_url + &quot;/api/v1/stationservice/stations/namelist&quot;,
+                HttpMethod.POST,
+                requestEntity,
+<span class="nc" id="L216">                new ParameterizedTypeReference&lt;Response&lt;List&lt;String&gt;&gt;&gt;() {</span>
+                });
+<span class="nc" id="L218">        OrderServiceImpl.LOGGER.info(&quot;[queryForStationId][Station Name List][Name List is: {}]&quot;, re.getBody().toString());</span>
+<span class="nc" id="L219">        return re.getBody().getData();</span>
+    }
+
+    @Override
+    public Response saveChanges(Order order, HttpHeaders headers) {
+<span class="nc" id="L224">        Optional&lt;Order&gt; op = orderRepository.findById(order.getId());</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="nc" id="L226">            OrderServiceImpl.LOGGER.error(&quot;[saveChanges][Modify Order Fail][Order not found][OrderId: {}]&quot;, order.getId());</span>
+<span class="nc" id="L227">            return new Response&lt;&gt;(0, orderNotFound, null);</span>
+        } else {
+<span class="nc" id="L229">            Order oldOrder = op.get();</span>
+<span class="nc" id="L230">            oldOrder.setAccountId(order.getAccountId());</span>
+<span class="nc" id="L231">            oldOrder.setBoughtDate(order.getBoughtDate());</span>
+<span class="nc" id="L232">            oldOrder.setTravelDate(order.getTravelDate());</span>
+<span class="nc" id="L233">            oldOrder.setTravelTime(order.getTravelTime());</span>
+<span class="nc" id="L234">            oldOrder.setCoachNumber(order.getCoachNumber());</span>
+<span class="nc" id="L235">            oldOrder.setSeatClass(order.getSeatClass());</span>
+<span class="nc" id="L236">            oldOrder.setSeatNumber(order.getSeatNumber());</span>
+<span class="nc" id="L237">            oldOrder.setFrom(order.getFrom());</span>
+<span class="nc" id="L238">            oldOrder.setTo(order.getTo());</span>
+<span class="nc" id="L239">            oldOrder.setStatus(order.getStatus());</span>
+<span class="nc" id="L240">            oldOrder.setTrainNumber(order.getTrainNumber());</span>
+<span class="nc" id="L241">            oldOrder.setPrice(order.getPrice());</span>
+<span class="nc" id="L242">            oldOrder.setContactsName(order.getContactsName());</span>
+<span class="nc" id="L243">            oldOrder.setContactsDocumentNumber(order.getContactsDocumentNumber());</span>
+<span class="nc" id="L244">            oldOrder.setDocumentType(order.getDocumentType());</span>
+<span class="nc" id="L245">            orderRepository.save(oldOrder);</span>
+<span class="nc" id="L246">            OrderServiceImpl.LOGGER.info(&quot;[saveChanges][Modify Order Success][OrderId: {}]&quot;, order.getId());</span>
+<span class="nc" id="L247">            return new Response&lt;&gt;(1, success, oldOrder);</span>
+        }
+    }
+
+    @Override
+    public Response cancelOrder(String accountId, String orderId, HttpHeaders headers) {
+<span class="nc" id="L253">        Optional&lt;Order&gt; op = orderRepository.findById(orderId);</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="nc" id="L255">            OrderServiceImpl.LOGGER.error(&quot;[cancelOrder][Cancel Order Fail][Order not found][OrderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L256">            return new Response&lt;&gt;(0, orderNotFound, null);</span>
+        } else {
+<span class="nc" id="L258">            Order oldOrder = op.get();</span>
+<span class="nc" id="L259">            oldOrder.setStatus(OrderStatus.CANCEL.getCode());</span>
+<span class="nc" id="L260">            orderRepository.save(oldOrder);</span>
+<span class="nc" id="L261">            OrderServiceImpl.LOGGER.info(&quot;[cancelOrder][Cancel Order Success][OrderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L262">            return new Response&lt;&gt;(1, success, oldOrder);</span>
+        }
+    }
+
+    @Override
+    public Response queryAlreadySoldOrders(Date travelDate, String trainNumber, HttpHeaders headers) {
+<span class="fc" id="L268">        ArrayList&lt;Order&gt; orders = orderRepository.findByTravelDateAndTrainNumber(StringUtils.Date2String(travelDate), trainNumber);</span>
+<span class="fc" id="L269">        SoldTicket cstr = new SoldTicket();</span>
+<span class="fc" id="L270">        cstr.setTravelDate(travelDate);</span>
+<span class="fc" id="L271">        cstr.setTrainNumber(trainNumber);</span>
+<span class="fc" id="L272">        OrderServiceImpl.LOGGER.info(&quot;[queryAlreadySoldOrders][Calculate Sold Ticket][Get Orders Number: {}]&quot;, orders.size());</span>
+<span class="pc bpc" id="L273" title="1 of 2 branches missed.">        for (Order order : orders) {</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">            if (order.getStatus() &gt;= OrderStatus.CHANGE.getCode()) {</span>
+<span class="nc" id="L275">                continue;</span>
+            }
+<span class="nc bnc" id="L277" title="All 2 branches missed.">            if (order.getSeatClass() == SeatClass.NONE.getCode()) {</span>
+<span class="nc" id="L278">                cstr.setNoSeat(cstr.getNoSeat() + 1);</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">            } else if (order.getSeatClass() == SeatClass.BUSINESS.getCode()) {</span>
+<span class="nc" id="L280">                cstr.setBusinessSeat(cstr.getBusinessSeat() + 1);</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">            } else if (order.getSeatClass() == SeatClass.FIRSTCLASS.getCode()) {</span>
+<span class="nc" id="L282">                cstr.setFirstClassSeat(cstr.getFirstClassSeat() + 1);</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">            } else if (order.getSeatClass() == SeatClass.SECONDCLASS.getCode()) {</span>
+<span class="nc" id="L284">                cstr.setSecondClassSeat(cstr.getSecondClassSeat() + 1);</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">            } else if (order.getSeatClass() == SeatClass.HARDSEAT.getCode()) {</span>
+<span class="nc" id="L286">                cstr.setHardSeat(cstr.getHardSeat() + 1);</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">            } else if (order.getSeatClass() == SeatClass.SOFTSEAT.getCode()) {</span>
+<span class="nc" id="L288">                cstr.setSoftSeat(cstr.getSoftSeat() + 1);</span>
+<span class="nc bnc" id="L289" title="All 2 branches missed.">            } else if (order.getSeatClass() == SeatClass.HARDBED.getCode()) {</span>
+<span class="nc" id="L290">                cstr.setHardBed(cstr.getHardBed() + 1);</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">            } else if (order.getSeatClass() == SeatClass.SOFTBED.getCode()) {</span>
+<span class="nc" id="L292">                cstr.setSoftBed(cstr.getSoftBed() + 1);</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">            } else if (order.getSeatClass() == SeatClass.HIGHSOFTBED.getCode()) {</span>
+<span class="nc" id="L294">                cstr.setHighSoftBed(cstr.getHighSoftBed() + 1);</span>
+            } else {
+<span class="nc" id="L296">                OrderServiceImpl.LOGGER.info(&quot;[queryAlreadySoldOrders][Calculate Sold Tickets][Seat class not exists][Order ID: {}]&quot;, order.getId());</span>
+            }
+<span class="nc" id="L298">        }</span>
+<span class="fc" id="L299">        return new Response&lt;&gt;(1, success, cstr);</span>
+    }
+
+    @Override
+    public Response getAllOrders(HttpHeaders headers) {
+<span class="fc" id="L304">        ArrayList&lt;Order&gt; orders = orderRepository.findAll();</span>
+<span class="pc bpc" id="L305" title="2 of 4 branches missed.">        if (orders != null &amp;&amp; !orders.isEmpty()) {</span>
+<span class="fc" id="L306">            OrderServiceImpl.LOGGER.warn(&quot;[getAllOrders][Find all orders Success][size:{}]&quot;,orders.size());</span>
+<span class="fc" id="L307">            return new Response&lt;&gt;(1, &quot;Success.&quot;, orders);</span>
+        } else {
+<span class="nc" id="L309">            OrderServiceImpl.LOGGER.warn(&quot;[getAllOrders][Find all orders Fail][{}]&quot;,&quot;No content&quot;);</span>
+<span class="nc" id="L310">            return new Response&lt;&gt;(0, &quot;No Content.&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response modifyOrder(String orderId, int status, HttpHeaders headers) {
+<span class="fc" id="L316">        Optional&lt;Order&gt; op = orderRepository.findById(orderId);</span>
+<span class="pc bpc" id="L317" title="1 of 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="fc" id="L318">            OrderServiceImpl.LOGGER.error(&quot;[modifyOrder][Modify order Fail][Order not found][OrderId: {}]&quot;,orderId);</span>
+<span class="fc" id="L319">            return new Response&lt;&gt;(0, orderNotFound, null);</span>
+        } else {
+<span class="nc" id="L321">            Order order = op.get();</span>
+<span class="nc" id="L322">            order.setStatus(status);</span>
+<span class="nc" id="L323">            orderRepository.save(order);</span>
+<span class="nc" id="L324">            OrderServiceImpl.LOGGER.info(&quot;[modifyOrder][Modify order Success][OrderId: {}]&quot;,orderId);</span>
+<span class="nc" id="L325">            return new Response&lt;&gt;(1, &quot;Modify Order Success&quot;, order);</span>
+        }
+    }
+
+    @Override
+    public Response getOrderPrice(String orderId, HttpHeaders headers) {
+<span class="fc" id="L331">        Optional&lt;Order&gt; op = orderRepository.findById(orderId);</span>
+<span class="pc bpc" id="L332" title="1 of 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="fc" id="L333">            OrderServiceImpl.LOGGER.error(&quot;[getOrderPrice][Get order price Fail][Order not found][OrderId: {}]&quot;,orderId);</span>
+<span class="fc" id="L334">            return new Response&lt;&gt;(0, orderNotFound, &quot;-1.0&quot;);</span>
+        } else {
+<span class="nc" id="L336">            Order order = op.get();</span>
+<span class="nc" id="L337">            OrderServiceImpl.LOGGER.info(&quot;[getOrderPrice][Get Order Price Success][OrderId: {} , Price: {}]&quot;,orderId ,order.getPrice());</span>
+<span class="nc" id="L338">            return new Response&lt;&gt;(1, success, order.getPrice());</span>
+        }
+    }
+
+    @Override
+    public Response payOrder(String orderId, HttpHeaders headers) {
+<span class="fc" id="L344">        Optional&lt;Order&gt; op = orderRepository.findById(orderId);</span>
+<span class="pc bpc" id="L345" title="1 of 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="fc" id="L346">            OrderServiceImpl.LOGGER.error(&quot;[payOrder][Pay order Fail][Order not found][OrderId: {}]&quot;,orderId);</span>
+<span class="fc" id="L347">            return new Response&lt;&gt;(0, orderNotFound, null);</span>
+        } else {
+<span class="nc" id="L349">            Order order = op.get();</span>
+<span class="nc" id="L350">            order.setStatus(OrderStatus.PAID.getCode());</span>
+<span class="nc" id="L351">            orderRepository.save(order);</span>
+<span class="nc" id="L352">            OrderServiceImpl.LOGGER.info(&quot;[payOrder][Pay order Success][OrderId: {}]&quot;,orderId);</span>
+<span class="nc" id="L353">            return new Response&lt;&gt;(1, &quot;Pay Order Success.&quot;, order);</span>
+        }
+    }
+
+    @Override
+    public Response getOrderById(String orderId, HttpHeaders headers) {
+<span class="fc" id="L359">        Optional&lt;Order&gt; op = orderRepository.findById(orderId);</span>
+<span class="pc bpc" id="L360" title="1 of 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="fc" id="L361">            OrderServiceImpl.LOGGER.warn(&quot;[getOrderById][Get Order By ID Fail][Order not found][OrderId: {}]&quot;,orderId);</span>
+<span class="fc" id="L362">            return new Response&lt;&gt;(0, orderNotFound, null);</span>
+        } else {
+<span class="nc" id="L364">            Order order = op.get();</span>
+<span class="nc" id="L365">            OrderServiceImpl.LOGGER.info(&quot;[getOrderById][Get Order By ID Success][OrderId: {}]&quot;,orderId);</span>
+<span class="nc" id="L366">            return new Response&lt;&gt;(1, &quot;Success.&quot;, order);</span>
+        }
+    }
+
+    @Override
+    public void initOrder(Order order, HttpHeaders headers) {
+<span class="fc" id="L372">        Optional&lt;Order&gt; op = orderRepository.findById(order.getId());</span>
+<span class="pc bpc" id="L373" title="1 of 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="fc" id="L374">            orderRepository.save(order);</span>
+<span class="fc" id="L375">            OrderServiceImpl.LOGGER.info(&quot;[initOrder][Init Order Success][OrderId: {}]&quot;, order.getId());</span>
+        } else {
+<span class="nc" id="L377">            Order orderTemp = op.get();</span>
+<span class="nc" id="L378">            OrderServiceImpl.LOGGER.error(&quot;[initOrder][Init Order Fail][Order Already Exists][OrderId: {}]&quot;, order.getId());</span>
+        }
+<span class="fc" id="L380">    }</span>
+
+    @Override
+    public Response checkSecurityAboutOrder(Date dateFrom, String accountId, HttpHeaders headers) {
+<span class="fc" id="L384">        OrderSecurity result = new OrderSecurity();</span>
+<span class="fc" id="L385">        ArrayList&lt;Order&gt; orders = orderRepository.findByAccountId(accountId);</span>
+<span class="fc" id="L386">        int countOrderInOneHour = 0;</span>
+<span class="fc" id="L387">        int countTotalValidOrder = 0;</span>
+<span class="fc" id="L388">        Calendar ca = Calendar.getInstance();</span>
+<span class="fc" id="L389">        ca.setTime(dateFrom);</span>
+<span class="fc" id="L390">        ca.add(Calendar.HOUR_OF_DAY, -1);</span>
+<span class="fc" id="L391">        dateFrom = ca.getTime();</span>
+<span class="pc bpc" id="L392" title="1 of 2 branches missed.">        for (Order order : orders) {</span>
+<span class="nc bnc" id="L393" title="All 2 branches missed.">            if (order.getStatus() == OrderStatus.NOTPAID.getCode() ||</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">                    order.getStatus() == OrderStatus.PAID.getCode() ||</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">                    order.getStatus() == OrderStatus.COLLECTED.getCode()) {</span>
+<span class="nc" id="L396">                countTotalValidOrder += 1;</span>
+            }
+<span class="nc" id="L398">            Date boughtDate = StringUtils.String2Date(order.getBoughtDate());</span>
+<span class="nc bnc" id="L399" title="All 2 branches missed.">            if (boughtDate.after(dateFrom)) {</span>
+<span class="nc" id="L400">                countOrderInOneHour += 1;</span>
+            }
+<span class="nc" id="L402">        }</span>
+<span class="fc" id="L403">        result.setOrderNumInLastOneHour(countOrderInOneHour);</span>
+<span class="fc" id="L404">        result.setOrderNumOfValidOrder(countTotalValidOrder);</span>
+<span class="fc" id="L405">        return new Response&lt;&gt;(1, &quot;Check Security Success . &quot;, result);</span>
+    }
+
+    @Override
+    public Response deleteOrder(String orderId, HttpHeaders headers) {
+<span class="nc" id="L410">        String orderUuid = UUID.fromString(orderId).toString();</span>
+
+<span class="nc" id="L412">        Optional&lt;Order&gt; op = orderRepository.findById(orderUuid);</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="nc" id="L414">            OrderServiceImpl.LOGGER.error(&quot;[deleteOrder][Delete order Fail][Order not found][OrderId: {}]&quot;,orderId);</span>
+<span class="nc" id="L415">            return new Response&lt;&gt;(0, &quot;Order Not Exist.&quot;, null);</span>
+        } else {
+<span class="nc" id="L417">            Order order = op.get();</span>
+<span class="nc" id="L418">            orderRepository.deleteById(orderUuid);</span>
+<span class="nc" id="L419">            OrderServiceImpl.LOGGER.info(&quot;[deleteOrder][Delete order Success][OrderId: {}]&quot;,orderId);</span>
+<span class="nc" id="L420">            return new Response&lt;&gt;(1, &quot;Delete Order Success&quot;, order);</span>
+        }
+    }
+
+    @Override
+    public Response addNewOrder(Order order, HttpHeaders headers) {
+<span class="nc" id="L426">        OrderServiceImpl.LOGGER.info(&quot;[addNewOrder][Admin Add Order][Ready to Add Order]&quot;);</span>
+<span class="nc" id="L427">        ArrayList&lt;Order&gt; accountOrders = orderRepository.findByAccountId(order.getAccountId());</span>
+<span class="nc bnc" id="L428" title="All 2 branches missed.">        if (accountOrders.contains(order)) {</span>
+<span class="nc" id="L429">            OrderServiceImpl.LOGGER.error(&quot;[addNewOrder][Admin Add Order Fail][Order already exists][OrderId: {}]&quot;,order.getId());</span>
+<span class="nc" id="L430">            return new Response&lt;&gt;(0, &quot;Order already exist&quot;, null);</span>
+        } else {
+<span class="nc" id="L432">            order.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L433">            orderRepository.save(order);</span>
+<span class="nc" id="L434">            OrderServiceImpl.LOGGER.info(&quot;[addNewOrder][Admin Add Order Success][OrderId: {} , Price: {}]&quot;,order.getId() ,order.getPrice());</span>
+<span class="nc" id="L435">            return new Response&lt;&gt;(1, &quot;Add new Order Success&quot;, order);</span>
+        }
+    }
+
+    @Override
+    public Response updateOrder(Order order, HttpHeaders headers) {
+<span class="nc" id="L441">        LOGGER.info(&quot;[updateOrder][Admin Update Order][Order Info:{}] &quot;, order.toString());</span>
+<span class="nc" id="L442">        Optional&lt;Order&gt; op = orderRepository.findById(order.getId());</span>
+<span class="nc bnc" id="L443" title="All 2 branches missed.">        if (!op.isPresent()) {</span>
+<span class="nc" id="L444">            OrderServiceImpl.LOGGER.error(&quot;[updateOrder][Admin Update Order Fail][Order not found][OrderId: {}]&quot;,order.getId());</span>
+<span class="nc" id="L445">            return new Response&lt;&gt;(0, &quot;Order Not Found, Can't update&quot;, null);</span>
+        } else {
+<span class="nc" id="L447">            Order oldOrder = op.get();</span>
+            //OrderServiceImpl.LOGGER.info(&quot;{}&quot;, oldOrder.toString());
+<span class="nc" id="L449">            oldOrder.setAccountId(order.getAccountId());</span>
+<span class="nc" id="L450">            oldOrder.setBoughtDate(order.getBoughtDate());</span>
+<span class="nc" id="L451">            oldOrder.setTravelDate(order.getTravelDate());</span>
+<span class="nc" id="L452">            oldOrder.setTravelTime(order.getTravelTime());</span>
+<span class="nc" id="L453">            oldOrder.setCoachNumber(order.getCoachNumber());</span>
+<span class="nc" id="L454">            oldOrder.setSeatClass(order.getSeatClass());</span>
+<span class="nc" id="L455">            oldOrder.setSeatNumber(order.getSeatNumber());</span>
+<span class="nc" id="L456">            oldOrder.setFrom(order.getFrom());</span>
+<span class="nc" id="L457">            oldOrder.setTo(order.getTo());</span>
+<span class="nc" id="L458">            oldOrder.setStatus(order.getStatus());</span>
+<span class="nc" id="L459">            oldOrder.setTrainNumber(order.getTrainNumber());</span>
+<span class="nc" id="L460">            oldOrder.setPrice(order.getPrice());</span>
+<span class="nc" id="L461">            oldOrder.setContactsName(order.getContactsName());</span>
+<span class="nc" id="L462">            oldOrder.setContactsDocumentNumber(order.getContactsDocumentNumber());</span>
+<span class="nc" id="L463">            oldOrder.setDocumentType(order.getDocumentType());</span>
+<span class="nc" id="L464">            orderRepository.save(oldOrder);</span>
+<span class="nc" id="L465">            OrderServiceImpl.LOGGER.info(&quot;[updateOrder][Admin Update Order Success][OrderId: {}]&quot;,order.getId());</span>
+<span class="nc" id="L466">            return new Response&lt;&gt;(1, &quot;Admin Update Order Success&quot;, oldOrder);</span>
+        }
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

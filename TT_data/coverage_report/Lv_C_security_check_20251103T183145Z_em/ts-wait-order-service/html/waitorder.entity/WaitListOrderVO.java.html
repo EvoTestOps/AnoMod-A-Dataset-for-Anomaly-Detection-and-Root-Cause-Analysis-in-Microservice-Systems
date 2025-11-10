@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WaitListOrderVO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">waitorder.entity</a> &gt; <span class="el_source">WaitListOrderVO.java</span></div><h1>WaitListOrderVO.java</h1><pre class="source lang-java linenums">package waitorder.entity;
+
+import edu.fudan.common.util.StringUtils;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
+
+/**
+ * @author fdse
+ */
+<span class="nc bnc" id="L14" title="All 64 branches missed.">@Data</span>
+<span class="nc" id="L15">@Builder</span>
+<span class="nc" id="L16">@NoArgsConstructor</span>
+<span class="nc" id="L17">@AllArgsConstructor</span>
+public class WaitListOrderVO {
+<span class="nc" id="L19">    private String accountId;</span>
+
+<span class="nc" id="L21">    private String contactsId;</span>
+
+<span class="nc" id="L23">    private String tripId;</span>
+
+<span class="nc" id="L25">    private int seatType;</span>
+
+    private String date;
+
+<span class="nc" id="L29">    private String from;</span>
+
+<span class="nc" id="L31">    private String to;</span>
+
+<span class="nc" id="L33">    private String price;</span>
+
+
+    public Date getDate(){
+<span class="nc" id="L37">        return StringUtils.String2Date(date);</span>
+    }
+
+    public void setDate(Date date){
+<span class="nc" id="L41">        this.date = StringUtils.Date2String(date);</span>
+<span class="nc" id="L42">    }</span>
+
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

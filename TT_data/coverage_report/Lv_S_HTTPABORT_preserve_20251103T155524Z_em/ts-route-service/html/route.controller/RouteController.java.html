@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RouteController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">route.controller</a> &gt; <span class="el_source">RouteController.java</span></div><h1>RouteController.java</h1><pre class="source lang-java linenums">package route.controller;
+
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import route.entity.RouteInfo;
+import route.service.RouteService;
+
+import java.util.List;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/routeservice&quot;)
+<span class="fc" id="L23">public class RouteController {</span>
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(RouteController.class);</span>
+    @Autowired
+    private RouteService routeService;
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="fc" id="L30">        return &quot;Welcome to [ Route Service ] !&quot;;</span>
+    }
+
+    @PostMapping(path = &quot;/routes&quot;)
+    public ResponseEntity&lt;Response&gt; createAndModifyRoute(@RequestBody RouteInfo createAndModifyRouteInfo, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L35">        RouteController.LOGGER.info(&quot;[createAndModify][Create route][start: {}, end: {}]&quot;, createAndModifyRouteInfo.getStartStation(),createAndModifyRouteInfo.getEndStation());</span>
+<span class="nc" id="L36">        return ok(routeService.createAndModify(createAndModifyRouteInfo, headers));</span>
+    }
+
+    @DeleteMapping(path = &quot;/routes/{routeId}&quot;)
+    public HttpEntity deleteRoute(@PathVariable String routeId, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L41">        RouteController.LOGGER.info(&quot;[deleteRoute][Delete route][RouteId: {}]&quot;, routeId);</span>
+<span class="fc" id="L42">        return ok(routeService.deleteRoute(routeId, headers));</span>
+    }
+
+    @GetMapping(path = &quot;/routes/{routeId}&quot;)
+    public HttpEntity queryById(@PathVariable String routeId, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L47">        RouteController.LOGGER.info(&quot;[getRouteById][Query route by id][RouteId: {}]&quot;, routeId);</span>
+<span class="fc" id="L48">        return ok(routeService.getRouteById(routeId, headers));</span>
+    }
+
+    @PostMapping(path = &quot;/routes/byIds&quot;)
+    public HttpEntity queryByIds(@RequestBody List&lt;String&gt; routeIds, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L53">        RouteController.LOGGER.info(&quot;[getRouteById][Query route by id][RouteId: {}]&quot;, routeIds);</span>
+<span class="fc" id="L54">        return ok(routeService.getRouteByIds(routeIds, headers));</span>
+    }
+
+    @GetMapping(path = &quot;/routes&quot;)
+    public HttpEntity queryAll(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L59">        RouteController.LOGGER.info(&quot;[getAllRoutes][Query all routes]&quot;);</span>
+<span class="fc" id="L60">        return ok(routeService.getAllRoutes(headers));</span>
+    }
+
+    @GetMapping(path = &quot;/routes/{start}/{end}&quot;)
+    public HttpEntity queryByStartAndTerminal(@PathVariable String start,
+                                              @PathVariable String end,
+                                              @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L67">        RouteController.LOGGER.info(&quot;[getRouteByStartAndEnd][Query routes][start: {}, end: {}]&quot;, start, end);</span>
+<span class="fc" id="L68">        return ok(routeService.getRouteByStartAndEnd(start, end, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

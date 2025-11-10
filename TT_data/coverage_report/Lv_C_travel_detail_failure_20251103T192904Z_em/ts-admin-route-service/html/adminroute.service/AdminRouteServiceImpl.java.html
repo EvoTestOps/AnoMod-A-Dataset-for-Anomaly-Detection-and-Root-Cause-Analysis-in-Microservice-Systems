@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminRouteServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">adminroute.service</a> &gt; <span class="el_source">AdminRouteServiceImpl.java</span></div><h1>AdminRouteServiceImpl.java</h1><pre class="source lang-java linenums">package adminroute.service;
+
+import edu.fudan.common.entity.Route;
+import edu.fudan.common.entity.RouteInfo;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L23">public class AdminRouteServiceImpl implements AdminRouteService {</span>
+    @Autowired
+    private RestTemplate restTemplate;
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+<span class="fc" id="L29">    public static final Logger logger = LoggerFactory.getLogger(AdminRouteServiceImpl.class);</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L32">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+    @Override
+    public Response getAllRoutes(HttpHeaders headers) {
+
+<span class="nc" id="L38">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="nc" id="L39">        String route_service_url = getServiceUrl(&quot;ts-route-service&quot;);</span>
+<span class="nc" id="L40">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                 route_service_url + &quot;/api/v1/routeservice/routes&quot;,
+                HttpMethod.GET,
+                requestEntity,
+                Response.class);
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        if (re.getStatusCode() != HttpStatus.ACCEPTED) {</span>
+<span class="nc" id="L46">            logger.error(&quot;[getAllRoutes][receive response][Get routes error][response code: {}]&quot;, re.getStatusCodeValue());</span>
+        }
+<span class="nc" id="L48">        return re.getBody();</span>
+
+    }
+
+    @Override
+    public Response createAndModifyRoute(RouteInfo request, HttpHeaders headers) {
+        // check stations
+<span class="nc" id="L55">        String start = request.getStartStation();</span>
+<span class="nc" id="L56">        String end = request.getEndStation();</span>
+<span class="nc" id="L57">        List&lt;String&gt; stations = request.getStations();</span>
+<span class="nc bnc" id="L58" title="All 4 branches missed.">        if(!stations.contains(start) || !stations.contains(end)){</span>
+<span class="nc" id="L59">            logger.error(&quot;[createAndModifyRoute][check stations][start or end not included in stationList][start: {}, end: {}]&quot;, start, end);</span>
+<span class="nc" id="L60">            return new Response(0, &quot;start or end station not include in stationList.&quot;, null);</span>
+        }
+
+<span class="nc" id="L63">        Response response = checkStationsExists(stations, headers);</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if(response.getStatus() ==0) {</span>
+<span class="nc" id="L65">            return response;</span>
+        }
+
+<span class="nc" id="L68">        HttpEntity requestEntity = new HttpEntity(request, null);</span>
+<span class="nc" id="L69">        String route_service_url = getServiceUrl(&quot;ts-route-service&quot;);</span>
+<span class="nc" id="L70">        ResponseEntity&lt;Response&lt;Route&gt;&gt; re = restTemplate.exchange(</span>
+                route_service_url + &quot;/api/v1/routeservice/routes&quot;,
+                HttpMethod.POST,
+                requestEntity,
+<span class="nc" id="L74">                new ParameterizedTypeReference&lt;Response&lt;Route&gt;&gt;() {</span>
+                });
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (re.getStatusCode() != HttpStatus.ACCEPTED) {</span>
+<span class="nc" id="L77">            logger.error(&quot;[createAndModifyRoute][receive response][Get status error][response code: {}]&quot;, re.getStatusCodeValue());</span>
+        }
+<span class="nc" id="L79">        return re.getBody();</span>
+    }
+
+    @Override
+    public Response deleteRoute(String routeId, HttpHeaders headers) {
+
+<span class="nc" id="L85">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="nc" id="L86">        String route_service_url = getServiceUrl(&quot;ts-route-service&quot;);</span>
+<span class="nc" id="L87">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                route_service_url + &quot;/api/v1/routeservice/routes/&quot; + routeId,
+                HttpMethod.DELETE,
+                requestEntity,
+                Response.class);
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (re.getStatusCode() != HttpStatus.ACCEPTED) {</span>
+<span class="nc" id="L93">            logger.error(&quot;[deleteRoute][response response][Delete error][response code: {}]&quot;, re.getStatusCodeValue());</span>
+        }
+<span class="nc" id="L95">        return re.getBody();</span>
+
+    }
+
+    public Response checkStationsExists(List&lt;String&gt; stationNames, HttpHeaders headers) {
+<span class="nc" id="L100">        logger.info(&quot;[checkStationsExists][Check Stations Exists][stationNames: {}]&quot;, stationNames);</span>
+<span class="nc" id="L101">        HttpEntity requestEntity = new HttpEntity(stationNames, null);</span>
+<span class="nc" id="L102">        String station_service_url=getServiceUrl(&quot;ts-station-service&quot;);</span>
+<span class="nc" id="L103">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                station_service_url + &quot;/api/v1/stationservice/stations/idlist&quot;,
+                HttpMethod.POST,
+                requestEntity,
+                Response.class);
+<span class="nc" id="L108">        Response&lt;Map&lt;String, String&gt;&gt; r = re.getBody();</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if(r.getStatus() == 0) {</span>
+<span class="nc" id="L110">            return r;</span>
+        }
+<span class="nc" id="L112">        Map&lt;String, String&gt; stationMap = r.getData();</span>
+<span class="nc" id="L113">        List&lt;String&gt; notExists = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        for(Map.Entry&lt;String, String&gt; s : stationMap.entrySet()){</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">            if(s.getValue() == null ){</span>
+                // station not exist
+<span class="nc" id="L117">                notExists.add(s.getKey());</span>
+            }
+<span class="nc" id="L119">        }</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">        if(notExists.size() &gt; 0) {</span>
+<span class="nc" id="L121">            return new Response&lt;&gt;(0, &quot;some station not exists&quot;, notExists);</span>
+        }
+<span class="nc" id="L123">        return new Response&lt;&gt;(1, &quot;check stations Exist succeed&quot;, null);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

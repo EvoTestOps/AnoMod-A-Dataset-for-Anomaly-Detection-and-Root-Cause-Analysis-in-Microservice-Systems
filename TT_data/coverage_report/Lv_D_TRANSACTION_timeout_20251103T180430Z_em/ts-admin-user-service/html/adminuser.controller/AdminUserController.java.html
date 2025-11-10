@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminUserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">adminuser.controller</a> &gt; <span class="el_source">AdminUserController.java</span></div><h1>AdminUserController.java</h1><pre class="source lang-java linenums">package adminuser.controller;
+
+import adminuser.dto.UserDto;
+import adminuser.service.AdminUserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/adminuserservice/users&quot;)
+<span class="fc" id="L19">public class AdminUserController {</span>
+
+    @Autowired
+    AdminUserService adminUserService;
+<span class="fc" id="L23">    private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L27">        return &quot;Welcome to [ AdminUser Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping
+    public HttpEntity getAllUsers(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L33">        logger.info(&quot;[getAllUsers][Get all users]&quot;);</span>
+<span class="nc" id="L34">        return ok(adminUserService.getAllUsers(headers));</span>
+    }
+
+    @PutMapping
+    public HttpEntity updateUser(@RequestBody UserDto userDto, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L39">        logger.info(&quot;[updateUser][Update User][userName: {}]&quot;, userDto.getUserName());</span>
+<span class="nc" id="L40">        return ok(adminUserService.updateUser(userDto, headers));</span>
+    }
+
+
+    @PostMapping
+    public HttpEntity addUser(@RequestBody UserDto userDto, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L46">        logger.info(&quot;[addUser][Add user][userName: {}]&quot;, userDto.getUserName());</span>
+<span class="nc" id="L47">        return ok(adminUserService.addUser(userDto, headers));</span>
+    }
+
+    @DeleteMapping(value = &quot;/{userId}&quot;)
+    public HttpEntity deleteUser(@PathVariable String userId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L52">        logger.info(&quot;[deleteUser][Delete user][userId: {}]&quot;, userId);</span>
+<span class="nc" id="L53">        return ok(adminUserService.deleteUser(userId, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

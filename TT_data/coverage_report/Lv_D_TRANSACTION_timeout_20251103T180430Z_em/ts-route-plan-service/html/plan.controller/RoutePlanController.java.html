@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoutePlanController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">plan.controller</a> &gt; <span class="el_source">RoutePlanController.java</span></div><h1>RoutePlanController.java</h1><pre class="source lang-java linenums">package plan.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+import edu.fudan.common.entity.RoutePlanInfo;
+import plan.service.RoutePlanService;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/routeplanservice&quot;)
+<span class="fc" id="L19">public class RoutePlanController {</span>
+
+    @Autowired
+    private RoutePlanService routePlanService;
+<span class="fc" id="L23">    private static final Logger LOGGER = LoggerFactory.getLogger(RoutePlanController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="fc" id="L27">        return &quot;Welcome to [ RoutePlan Service ] !&quot;;</span>
+    }
+
+    @PostMapping(value = &quot;/routePlan/cheapestRoute&quot;)
+    public HttpEntity getCheapestRoutes(@RequestBody RoutePlanInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L32">        RoutePlanController.LOGGER.info(&quot;[searchCheapestResult][Get Cheapest Routes][From: {}, To: {}, Num: {}, Date: {}]&quot;, info.getStartStation(), info.getEndStation(), + info.getNum(), info.getTravelDate());</span>
+<span class="nc" id="L33">        return ok(routePlanService.searchCheapestResult(info, headers));</span>
+    }
+
+    @PostMapping(value = &quot;/routePlan/quickestRoute&quot;)
+    public HttpEntity getQuickestRoutes(@RequestBody RoutePlanInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L38">        RoutePlanController.LOGGER.info(&quot;[searchQuickestResult][Get Quickest Routes][From: {}, To: {}, Num: {}, Date: {}]&quot;, info.getStartStation(), info.getEndStation(), info.getNum(), info.getTravelDate());</span>
+<span class="nc" id="L39">        return ok(routePlanService.searchQuickestResult(info, headers));</span>
+    }
+
+    @PostMapping(value = &quot;/routePlan/minStopStations&quot;)
+    public HttpEntity getMinStopStations(@RequestBody RoutePlanInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L44">        RoutePlanController.LOGGER.info(&quot;[searchMinStopStations][Get Min Stop Stations][From: {}, To: {}, Num: {}, Date: {}]&quot;, info.getStartStation(), info.getEndStation(), info.getNum(), info.getTravelDate());</span>
+<span class="nc" id="L45">        return ok(routePlanService.searchMinStopStations(info, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

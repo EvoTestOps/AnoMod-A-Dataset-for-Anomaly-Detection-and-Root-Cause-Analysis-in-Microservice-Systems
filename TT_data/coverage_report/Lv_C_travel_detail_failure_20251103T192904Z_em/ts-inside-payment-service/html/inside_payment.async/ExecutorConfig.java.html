@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExecutorConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">inside_payment.async</a> &gt; <span class="el_source">ExecutorConfig.java</span></div><h1>ExecutorConfig.java</h1><pre class="source lang-java linenums">package inside_payment.async;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+/**
+ * @author fdse
+ */
+@Configuration  
+@EnableAsync  
+<span class="fc" id="L15">public class ExecutorConfig {  </span>
+  
+
+<span class="fc" id="L18">    private int corePoolSize = 10;  </span>
+
+<span class="fc" id="L20">    private int maxPoolSize = 200;  </span>
+
+<span class="fc" id="L22">    private int queueCapacity = 10;  </span>
+  
+    @Bean  
+    public Executor mySimpleAsync() {  
+<span class="fc" id="L26">        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();  </span>
+<span class="fc" id="L27">        executor.setCorePoolSize(corePoolSize);  </span>
+<span class="fc" id="L28">        executor.setMaxPoolSize(maxPoolSize);  </span>
+<span class="fc" id="L29">        executor.setQueueCapacity(queueCapacity);  </span>
+<span class="fc" id="L30">        executor.setThreadNamePrefix(&quot;MySimpleExecutor-&quot;);  </span>
+<span class="fc" id="L31">        executor.initialize();  </span>
+<span class="fc" id="L32">        return executor;  </span>
+    }  
+      
+    @Bean  
+    public Executor myAsync() {  
+<span class="fc" id="L37">        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();  </span>
+<span class="fc" id="L38">        executor.setCorePoolSize(corePoolSize);  </span>
+<span class="fc" id="L39">        executor.setMaxPoolSize(maxPoolSize);  </span>
+<span class="fc" id="L40">        executor.setQueueCapacity(queueCapacity);  </span>
+<span class="fc" id="L41">        executor.setThreadNamePrefix(&quot;MyExecutor-&quot;);  </span>
+  
+        // rejection-policy：当pool已经达到max size的时候，如何处理新任务  
+        // CALLER_RUNS：不在新线程中执行任务，而是有调用者所在的线程来执行  
+<span class="fc" id="L45">        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());  </span>
+<span class="fc" id="L46">        executor.initialize();  </span>
+<span class="fc" id="L47">        return executor;  </span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

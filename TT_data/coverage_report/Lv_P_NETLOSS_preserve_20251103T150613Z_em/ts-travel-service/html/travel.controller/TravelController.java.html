@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TravelController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">travel.controller</a> &gt; <span class="el_source">TravelController.java</span></div><h1>TravelController.java</h1><pre class="source lang-java linenums">package travel.controller;
+
+import edu.fudan.common.entity.TravelInfo;
+import edu.fudan.common.entity.TripAllDetailInfo;
+import edu.fudan.common.entity.TripInfo;
+import edu.fudan.common.entity.TripResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import edu.fudan.common.entity.TravelInfo;
+import travel.entity.*;
+import travel.service.TravelService;
+
+import java.util.ArrayList;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/travelservice&quot;)
+
+<span class="fc" id="L30">public class TravelController {</span>
+
+    @Autowired
+    private TravelService travelService;
+
+<span class="fc" id="L35">    private static final Logger LOGGER = LoggerFactory.getLogger(TravelController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L39">        return &quot;Welcome to [ Travel Service ] !&quot;;</span>
+    }
+
+    @GetMapping(value = &quot;/train_types/{tripId}&quot;)
+    public HttpEntity getTrainTypeByTripId(@PathVariable String tripId,
+                                           @RequestHeader HttpHeaders headers) {
+        // TrainType
+<span class="fc" id="L46">        TravelController.LOGGER.info(&quot;[getTrainTypeByTripId][Get train Type by Trip id][TripId: {}]&quot;, tripId);</span>
+<span class="fc" id="L47">        return ok(travelService.getTrainTypeByTripId(tripId, headers));</span>
+    }
+
+    @GetMapping(value = &quot;/routes/{tripId}&quot;)
+    public HttpEntity getRouteByTripId(@PathVariable String tripId,
+                                       @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L53">        TravelController.LOGGER.info(&quot;[getRouteByTripId][Get Route By Trip ID][TripId: {}]&quot;, tripId);</span>
+        //Route
+<span class="fc" id="L55">        return ok(travelService.getRouteByTripId(tripId, headers));</span>
+    }
+
+    @PostMapping(value = &quot;/trips/routes&quot;)
+    public HttpEntity getTripsByRouteId(@RequestBody ArrayList&lt;String&gt; routeIds,
+                                        @RequestHeader HttpHeaders headers) {
+        // ArrayList&lt;ArrayList&lt;Trip&gt;&gt;
+<span class="fc" id="L62">        TravelController.LOGGER.info(&quot;[getTripByRoute][Get Trips by Route ids][RouteIds: {}]&quot;, routeIds.size());</span>
+<span class="fc" id="L63">        return ok(travelService.getTripByRoute(routeIds, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/trips&quot;)
+    public HttpEntity&lt;?&gt; createTrip(@RequestBody TravelInfo routeIds, @RequestHeader HttpHeaders headers) {
+        // null
+<span class="nc" id="L70">        TravelController.LOGGER.info(&quot;[create][Create trip][TripId: {}]&quot;, routeIds.getTripId());</span>
+<span class="nc" id="L71">        return new ResponseEntity&lt;&gt;(travelService.create(routeIds, headers), HttpStatus.CREATED);</span>
+    }
+
+    /**
+     * Return Trip only, no left ticket information
+     *
+     * @param tripId  trip id
+     * @param headers headers
+     * @return HttpEntity
+     */
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(value = &quot;/trips/{tripId}&quot;)
+    public HttpEntity retrieve(@PathVariable String tripId, @RequestHeader HttpHeaders headers) {
+        // Trip
+<span class="fc" id="L85">        TravelController.LOGGER.info(&quot;[retrieve][Retrieve trip][TripId: {}]&quot;, tripId);</span>
+<span class="fc" id="L86">        return ok(travelService.retrieve(tripId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(value = &quot;/trips&quot;)
+    public HttpEntity updateTrip(@RequestBody TravelInfo info, @RequestHeader HttpHeaders headers) {
+        // Trip
+<span class="nc" id="L93">        TravelController.LOGGER.info(&quot;[update][Update trip][TripId: {}]&quot;, info.getTripId());</span>
+<span class="nc" id="L94">        return ok(travelService.update(info, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(value = &quot;/trips/{tripId}&quot;)
+    public HttpEntity deleteTrip(@PathVariable String tripId, @RequestHeader HttpHeaders headers) {
+        // string
+<span class="nc" id="L101">        TravelController.LOGGER.info(&quot;[delete][Delete trip][TripId: {}]&quot;, tripId);</span>
+<span class="nc" id="L102">        return ok(travelService.delete(tripId, headers));</span>
+    }
+
+    /**
+     * Return Trips and the remaining tickets
+     *
+     * @param info    trip info
+     * @param headers headers
+     * @return HttpEntity
+     */
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/trips/left&quot;)
+    public HttpEntity queryInfo(@RequestBody TripInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc bnc" id="L115" title="All 4 branches missed.">        if (info.getStartPlace() == null || info.getStartPlace().length() == 0 ||</span>
+<span class="nc bnc" id="L116" title="All 4 branches missed.">                info.getEndPlace() == null || info.getEndPlace().length() == 0 ||</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">                info.getDepartureTime() == null) {</span>
+<span class="nc" id="L118">            TravelController.LOGGER.info(&quot;[query][Travel Query Fail][Something null]&quot;);</span>
+<span class="nc" id="L119">            ArrayList&lt;TripResponse&gt; errorList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L120">            return ok(errorList);</span>
+        }
+<span class="nc" id="L122">        TravelController.LOGGER.info(&quot;[query][Query TripResponse]&quot;);</span>
+<span class="nc" id="L123">        return ok(travelService.queryByBatch(info, headers));</span>
+    }
+
+    /**
+     * Return Trips and the remaining tickets
+     *
+     * @param info    trip info
+     * @param headers headers
+     * @return HttpEntity
+     */
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/trips/left_parallel&quot;)
+    public HttpEntity queryInfoInparallel(@RequestBody TripInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc bnc" id="L136" title="All 4 branches missed.">        if (info.getStartPlace() == null || info.getStartPlace().length() == 0 ||</span>
+<span class="nc bnc" id="L137" title="All 4 branches missed.">                info.getEndPlace() == null || info.getEndPlace().length() == 0 ||</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">                info.getDepartureTime() == null) {</span>
+<span class="nc" id="L139">            TravelController.LOGGER.info(&quot;[queryInParallel][Travel Query Fail][Something null]&quot;);</span>
+<span class="nc" id="L140">            ArrayList&lt;TripResponse&gt; errorList = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L141">            return ok(errorList);</span>
+        }
+<span class="nc" id="L143">        TravelController.LOGGER.info(&quot;[queryInParallel][Query TripResponse]&quot;);</span>
+<span class="nc" id="L144">        return ok(travelService.queryInParallel(info, headers));</span>
+    }
+
+    /**
+     * Return a Trip and the remaining
+     *
+     * @param gtdi    trip all detail info
+     * @param headers headers
+     * @return HttpEntity
+     */
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/trip_detail&quot;)
+    public HttpEntity getTripAllDetailInfo(@RequestBody TripAllDetailInfo gtdi, @RequestHeader HttpHeaders headers) {
+        // TripAllDetailInfo
+        // TripAllDetail tripAllDetail
+<span class="fc" id="L159">        TravelController.LOGGER.info(&quot;[getTripAllDetailInfo][Get trip detail][TripId: {}]&quot;, gtdi.getTripId());</span>
+<span class="fc" id="L160">        return ok(travelService.getTripAllDetailInfo(gtdi, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(value = &quot;/trips&quot;)
+    public HttpEntity queryAll(@RequestHeader HttpHeaders headers) {
+        // List&lt;Trip&gt;
+<span class="fc" id="L167">        TravelController.LOGGER.info(&quot;[queryAll][Query all trips]&quot;);</span>
+<span class="fc" id="L168">        return ok(travelService.queryAll(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(value = &quot;/admin_trip&quot;)
+    public HttpEntity adminQueryAll(@RequestHeader HttpHeaders headers) {
+        // ArrayList&lt;AdminTrip&gt;
+<span class="nc" id="L175">        TravelController.LOGGER.info(&quot;[adminQueryAll][Admin query all trips]&quot;);</span>
+<span class="nc" id="L176">        return ok(travelService.adminQueryAll(headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

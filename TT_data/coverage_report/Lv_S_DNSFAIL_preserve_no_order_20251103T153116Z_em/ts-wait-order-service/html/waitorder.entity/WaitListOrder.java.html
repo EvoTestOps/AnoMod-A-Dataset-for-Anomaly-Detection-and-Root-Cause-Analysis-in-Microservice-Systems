@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WaitListOrder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">waitorder.entity</a> &gt; <span class="el_source">WaitListOrder.java</span></div><h1>WaitListOrder.java</h1><pre class="source lang-java linenums">package waitorder.entity;
+
+import edu.fudan.common.util.StringUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.hibernate.annotations.GenericGenerator;
+
+import javax.persistence.*;
+import java.util.Calendar;
+import java.util.Date;
+
+
+<span class="nc" id="L13">@Data</span>
+<span class="nc" id="L14">@AllArgsConstructor</span>
+@Entity
+@GenericGenerator(name = &quot;jpa-uuid&quot;, strategy =&quot;uuid&quot;)
+public class WaitListOrder {
+    @Id
+    @GeneratedValue(generator = &quot;jpa-uuid&quot;)
+    @Column(length = 36)
+<span class="nc" id="L21">    private String id;</span>
+
+//    private String travelDate;
+    private String travelTime;
+
+    @Column(length = 36)
+<span class="nc" id="L27">    private String accountId;</span>
+<span class="nc" id="L28">    private String contactsId;</span>
+<span class="nc" id="L29">    private String contactsName;</span>
+<span class="nc" id="L30">    private int contactsDocumentType;</span>
+<span class="nc" id="L31">    private String contactsDocumentNumber;</span>
+<span class="nc" id="L32">    private String trainNumber;</span>
+<span class="nc" id="L33">    private int seatType;</span>
+
+    @Column(name = &quot;from_station&quot;)
+<span class="nc" id="L36">    private String from;</span>
+    @Column(name = &quot;to_station&quot;)
+<span class="nc" id="L38">    private String to;</span>
+
+<span class="nc" id="L40">    private String price;</span>
+    private String waitUtilTime;
+    private String createdTime;
+<span class="nc" id="L43">    private int status;</span>
+
+
+<span class="fc" id="L46">    public WaitListOrder(){</span>
+<span class="fc" id="L47">        createdTime = StringUtils.Date2String(new Date(System.currentTimeMillis()));</span>
+//        trainNumber = &quot;G1235&quot;;
+//        seatType = SeatClass.FIRSTCLASS.getCode();
+//        from = &quot;shanghai&quot;;
+//        to = &quot;taiyuan&quot;;
+//        price = &quot;0.0&quot;;
+
+        //wait until 24 hours later
+<span class="fc" id="L55">        Calendar c = Calendar.getInstance();</span>
+<span class="fc" id="L56">        c.setTime(new Date(System.currentTimeMillis()));</span>
+<span class="fc" id="L57">        c.add(Calendar.DAY_OF_MONTH,1);</span>
+<span class="fc" id="L58">        waitUtilTime = StringUtils.Date2String(c.getTime());</span>
+<span class="fc" id="L59">        travelTime=StringUtils.Date2String(c.getTime());</span>
+<span class="fc" id="L60">        status= WaitListOrderStatus.NOTPAID.getCode();</span>
+<span class="fc" id="L61">    }</span>
+
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//        WaitListOrder that = (WaitListOrder) o;
+//        return contactsDocumentType == that.contactsDocumentType
+//                &amp;&amp; coachNumber == that.coachNumber
+//                &amp;&amp; seatClass == that.seatClass
+//                &amp;&amp; id.equals(that.id)
+//                &amp;&amp; Objects.equals(travelTime, that.travelTime)
+//                &amp;&amp; Objects.equals(accountId, that.accountId)
+//                &amp;&amp; Objects.equals(contactsName, that.contactsName)
+//                &amp;&amp; Objects.equals(contactsDocumentNumber, that.contactsDocumentNumber)
+//                &amp;&amp; Objects.equals(trainNumber, that.trainNumber)
+//                &amp;&amp; Objects.equals(seatNumber, that.seatNumber)
+//                &amp;&amp; Objects.equals(fromStation, that.fromStation)
+//                &amp;&amp; Objects.equals(toStation, that.toStation)
+//                &amp;&amp; Objects.equals(price, that.price);
+//    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L85">        int result = 17;</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        result = 31 * result + (id == null ? 0 : id.hashCode());</span>
+<span class="nc" id="L87">        return result;</span>
+    }
+
+<span class="nc" id="L90">    public Date getCreatedTime(){ return StringUtils.String2Date(createdTime); }</span>
+
+<span class="nc" id="L92">    public Date getTravelTime(){ return StringUtils.String2Date(createdTime); }</span>
+
+<span class="nc" id="L94">    public Date getWaitUtilTime(){ return StringUtils.String2Date(waitUtilTime); }</span>
+
+    public void setCreatedTime(Date createdTime){
+<span class="nc" id="L97">        this.createdTime = StringUtils.Date2String(createdTime);</span>
+<span class="nc" id="L98">    }</span>
+
+<span class="nc" id="L100">    public void setTravelTime(Date travelTime){ this.createdTime = StringUtils.Date2String(travelTime); }</span>
+
+<span class="nc" id="L102">    public void setWaitUntilTime(Date waitUntilTime){ this.waitUtilTime=StringUtils.Date2String(waitUntilTime);}</span>
+
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

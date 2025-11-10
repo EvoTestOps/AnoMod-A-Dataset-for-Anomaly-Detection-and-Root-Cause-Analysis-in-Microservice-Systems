@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InitData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">price.init</a> &gt; <span class="el_source">InitData.java</span></div><h1>InitData.java</h1><pre class="source lang-java linenums">package price.init;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import price.entity.PriceConfig;
+import price.service.PriceService;
+
+import java.util.UUID;
+
+/**
+ * @author  Chenjie Xu
+ * @date 2017/6/12.
+ */
+@Component
+<span class="fc" id="L16">public class InitData implements CommandLineRunner {</span>
+
+    @Autowired
+    PriceService service;
+
+<span class="fc" id="L21">    String gaoTieOne = &quot;GaoTieOne&quot;;</span>
+<span class="fc" id="L22">    String zhiDa = &quot;ZhiDa&quot;;</span>
+
+    @Override
+    public void run(String... args)throws Exception{
+<span class="fc" id="L26">        PriceConfig priceConfig = new PriceConfig();</span>
+<span class="fc" id="L27">        priceConfig.setId(UUID.fromString(&quot;6d20b8cb-039c-474c-ae25-b6177ea41152&quot;).toString());</span>
+<span class="fc" id="L28">        priceConfig.setRouteId(&quot;92708982-77af-4318-be25-57ccb0ff69ad&quot;);</span>
+<span class="fc" id="L29">        priceConfig.setTrainType(gaoTieOne);</span>
+<span class="fc" id="L30">        priceConfig.setBasicPriceRate(0.38);</span>
+<span class="fc" id="L31">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L32">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L34">        priceConfig.setId(UUID.fromString(&quot;c5679b7e-4a54-4f52-9939-1ae86ba16fa7&quot;).toString());</span>
+<span class="fc" id="L35">        priceConfig.setRouteId(&quot;aefcef3f-3f42-46e8-afd7-6cb2a928bd3d&quot;);</span>
+<span class="fc" id="L36">        priceConfig.setTrainType(gaoTieOne);</span>
+<span class="fc" id="L37">        priceConfig.setBasicPriceRate(0.5);</span>
+<span class="fc" id="L38">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L39">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L41">        priceConfig.setId(UUID.fromString(&quot;719287d6-d3e7-4b54-9a92-71d039748b22&quot;).toString());</span>
+<span class="fc" id="L42">        priceConfig.setRouteId(&quot;a3f256c1-0e43-4f7d-9c21-121bf258101f&quot;);</span>
+<span class="fc" id="L43">        priceConfig.setTrainType(gaoTieOne);</span>
+<span class="fc" id="L44">        priceConfig.setBasicPriceRate(0.7);</span>
+<span class="fc" id="L45">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L46">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L48">        priceConfig.setId(UUID.fromString(&quot;7de18cf8-bb17-4bb2-aeb4-85d8176d3a93&quot;).toString());</span>
+<span class="fc" id="L49">        priceConfig.setRouteId(&quot;084837bb-53c8-4438-87c8-0321a4d09917&quot;);</span>
+<span class="fc" id="L50">        priceConfig.setTrainType(&quot;GaoTieTwo&quot;);</span>
+<span class="fc" id="L51">        priceConfig.setBasicPriceRate(0.6);</span>
+<span class="fc" id="L52">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L53">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L55">        priceConfig.setId(UUID.fromString(&quot;d5c4523a-827c-468c-95be-e9024a40572e&quot;).toString());</span>
+<span class="fc" id="L56">        priceConfig.setRouteId(&quot;f3d4d4ef-693b-4456-8eed-59c0d717dd08&quot;);</span>
+<span class="fc" id="L57">        priceConfig.setTrainType(&quot;DongCheOne&quot;);</span>
+<span class="fc" id="L58">        priceConfig.setBasicPriceRate(0.45);</span>
+<span class="fc" id="L59">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L60">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L62">        priceConfig.setId(UUID.fromString(&quot;b90a6ad7-ffad-4624-9655-48e9e185fa6c&quot;).toString());</span>
+<span class="fc" id="L63">        priceConfig.setRouteId(&quot;0b23bd3e-876a-4af3-b920-c50a90c90b04&quot;);</span>
+<span class="fc" id="L64">        priceConfig.setTrainType(zhiDa);</span>
+<span class="fc" id="L65">        priceConfig.setBasicPriceRate(0.35);</span>
+<span class="fc" id="L66">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L67">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L69">        priceConfig.setId(UUID.fromString(&quot;8fb01829-393f-4af4-9e96-f72866f94d14&quot;).toString());</span>
+<span class="fc" id="L70">        priceConfig.setRouteId(&quot;9fc9c261-3263-4bfa-82f8-bb44e06b2f52&quot;);</span>
+<span class="fc" id="L71">        priceConfig.setTrainType(zhiDa);</span>
+<span class="fc" id="L72">        priceConfig.setBasicPriceRate(0.35);</span>
+<span class="fc" id="L73">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L74">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L76">        priceConfig.setId(UUID.fromString(&quot;8b059dc5-01a2-4f8f-8f94-6c886b38bb34&quot;).toString());</span>
+<span class="fc" id="L77">        priceConfig.setRouteId(&quot;d693a2c5-ef87-4a3c-bef8-600b43f62c68&quot;);</span>
+<span class="fc" id="L78">        priceConfig.setTrainType(zhiDa);</span>
+<span class="fc" id="L79">        priceConfig.setBasicPriceRate(0.32);</span>
+<span class="fc" id="L80">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L82">        priceConfig.setId(UUID.fromString(&quot;dd0e572e-7443-420c-8280-7d8215636069&quot;).toString());</span>
+<span class="fc" id="L83">        priceConfig.setRouteId(&quot;20eb7122-3a11-423f-b10a-be0dc5bce7db&quot;);</span>
+<span class="fc" id="L84">        priceConfig.setTrainType(&quot;TeKuai&quot;);</span>
+<span class="fc" id="L85">        priceConfig.setBasicPriceRate(0.30);</span>
+<span class="fc" id="L86">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L87">        service.createNewPriceConfig(priceConfig, null);</span>
+
+<span class="fc" id="L89">        priceConfig.setId(UUID.fromString(&quot;0eb474c9-f8be-4119-8681-eb538a404a6a&quot;).toString());</span>
+<span class="fc" id="L90">        priceConfig.setRouteId(&quot;1367db1f-461e-4ab7-87ad-2bcc05fd9cb7&quot;);</span>
+<span class="fc" id="L91">        priceConfig.setTrainType(&quot;KuaiSu&quot;);</span>
+<span class="fc" id="L92">        priceConfig.setBasicPriceRate(0.2);</span>
+<span class="fc" id="L93">        priceConfig.setFirstClassPriceRate(1.0);</span>
+<span class="fc" id="L94">        service.createNewPriceConfig(priceConfig, null);</span>
+<span class="fc" id="L95">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

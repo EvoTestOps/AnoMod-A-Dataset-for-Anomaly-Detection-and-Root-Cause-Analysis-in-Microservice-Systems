@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InitData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">other.init</a> &gt; <span class="el_source">InitData.java</span></div><h1>InitData.java</h1><pre class="source lang-java linenums">package other.init;
+
+import edu.fudan.common.entity.OrderStatus;
+import edu.fudan.common.util.StringUtils;
+import org.apache.tomcat.jni.Time;
+import other.entity.Order;
+import edu.fudan.common.entity.SeatClass;
+import other.service.OrderOtherService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+import java.util.UUID;
+
+/**
+ * @author fdse
+ */
+@Component
+<span class="fc" id="L20">public class InitData implements CommandLineRunner {</span>
+    @Autowired
+    OrderOtherService service;
+
+    @Override
+    public void run(String... args)throws Exception{
+
+<span class="fc" id="L27">        Order order1 = new Order();</span>
+
+<span class="fc" id="L29">        order1.setAccountId(&quot;4d2a46c7-71cb-4cf1-b5bb-b68406d9da6f&quot;);</span>
+<span class="fc" id="L30">        order1.setCoachNumber(5);</span>
+<span class="fc" id="L31">        order1.setContactsDocumentNumber(&quot;Test&quot;);</span>
+<span class="fc" id="L32">        order1.setContactsName(&quot;Test&quot;);</span>
+<span class="fc" id="L33">        order1.setDocumentType(1);</span>
+<span class="fc" id="L34">        order1.setFrom(&quot;shanghai&quot;);</span>
+<span class="fc" id="L35">        order1.setId(&quot;4d2a46c7-71cb-4cf1-c5bb-b68406d9da6f&quot;);</span>
+<span class="fc" id="L36">        order1.setPrice(&quot;100&quot;);</span>
+<span class="fc" id="L37">        order1.setSeatClass(SeatClass.FIRSTCLASS.getCode());</span>
+<span class="fc" id="L38">        order1.setSeatNumber(&quot;6A&quot;);</span>
+<span class="fc" id="L39">        order1.setStatus(OrderStatus.PAID.getCode());</span>
+<span class="fc" id="L40">        order1.setTo(&quot;taiyuan&quot;);</span>
+<span class="fc" id="L41">        order1.setTrainNumber(&quot;K1235&quot;);</span>
+<span class="fc" id="L42">        order1.setTravelDate(&quot;2022-10-01 00:00:00&quot;); //NOSONAR</span>
+<span class="fc" id="L43">        order1.setTravelTime(&quot;2022-10-01 00:00:00&quot;); //NOSONAR</span>
+<span class="fc" id="L44">        service.create(order1,null);</span>
+<span class="fc" id="L45">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

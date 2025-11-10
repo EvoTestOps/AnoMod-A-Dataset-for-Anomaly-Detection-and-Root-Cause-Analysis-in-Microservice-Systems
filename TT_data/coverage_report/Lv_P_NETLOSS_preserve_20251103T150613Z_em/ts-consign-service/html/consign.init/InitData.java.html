@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InitData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">consign.init</a> &gt; <span class="el_source">InitData.java</span></div><h1>InitData.java</h1><pre class="source lang-java linenums">package consign.init;
+
+import consign.entity.Consign;
+import consign.entity.ConsignRecord;
+import consign.repository.ConsignRepository;
+import consign.service.ConsignService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+
+@Component
+<span class="fc" id="L14">public class InitData implements CommandLineRunner {</span>
+    @Autowired
+    ConsignService service;
+
+    @Autowired
+    ConsignRepository repository;
+
+    @Override
+    public void run(String... args) throws Exception {
+        //do nothing
+       /* ConsignRecord c_1 = new ConsignRecord();
+        String id_1 = &quot;ff8080817b3e4c27017b3e4c3bee0000&quot;;
+        String orderID_1 = &quot;ff8080817b3e4c27017b3e4order0000&quot;;
+        String accountID_1 = &quot;ff8080817b3e4c27017b3e4c3acc0000&quot;;
+        String consignee_1 = &quot;xxx1&quot;;
+        c_1.setId(id_1);
+        c_1.setAccountId(accountID_1);
+        c_1.setOrderId(orderID_1);
+        c_1.setConsignee(consignee_1);
+        c_1.setFrom(&quot;from&quot;);
+        c_1.setTo(&quot;to&quot;);
+        c_1.setHandleDate(&quot;handle_date&quot;);
+        c_1.setTargetDate(&quot;target_date&quot;);
+        c_1.setPhone(&quot;12345&quot;);
+        c_1.setWeight(10);
+        repository.save(c_1);
+
+        ConsignRecord c_2 = new ConsignRecord();
+        String id_2 = &quot;ff8080817b3e4c27017b3e4c3bee1111&quot;;
+        String orderID_2 = &quot;ff8080817b3e4c27017b3e4order1111&quot;;
+        String accountID_2 = &quot;ff8080817b3e4c27017b3e4c3acc0000&quot;;  //同一个account
+        String consignee_2 = &quot;xxx2&quot;;
+        c_2.setId(id_2);
+        c_2.setAccountId(accountID_2);
+        c_2.setOrderId(orderID_2);
+        c_2.setConsignee(consignee_2);
+        c_2.setFrom(&quot;from2&quot;);
+        c_2.setTo(&quot;to2&quot;);
+        c_2.setHandleDate(&quot;handle_date2&quot;);
+        c_2.setTargetDate(&quot;target_date2&quot;);
+        c_2.setPhone(&quot;12345&quot;);
+        c_2.setWeight(12);
+        repository.save(c_2);
+
+        ConsignRecord res1 = repository.findById(id_1).get();
+        System.out.println(&quot;id查找成功 ： &quot; + res1.getId());
+        ConsignRecord res2 = repository.findByOrderId(orderID_1);
+        System.out.println(&quot;orderID查找成功 ： &quot;+ res2.getId());
+        ArrayList&lt;ConsignRecord&gt; res3 = repository.findByAccountId(accountID_1);
+        System.out.println(&quot;accountID查找成功 ： &quot; + res3.size());
+        ArrayList&lt;ConsignRecord&gt; res4 = repository.findByConsignee(consignee_1);
+        System.out.println(&quot;consignee查找成功 ： &quot; + res4.size());
+*/
+
+
+<span class="fc" id="L69">    }</span>
+
+
+
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

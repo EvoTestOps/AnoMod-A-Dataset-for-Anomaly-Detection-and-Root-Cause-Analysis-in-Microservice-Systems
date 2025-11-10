@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FoodDeliveryServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">food_delivery.service</a> &gt; <span class="el_source">FoodDeliveryServiceImpl.java</span></div><h1>FoodDeliveryServiceImpl.java</h1><pre class="source lang-java linenums">package food_delivery.service;
+
+
+import edu.fudan.common.util.Response;
+import food_delivery.entity.*;
+import edu.fudan.common.entity.*;
+import food_delivery.repository.FoodDeliveryOrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L26">public class FoodDeliveryServiceImpl implements FoodDeliveryService {</span>
+
+    @Autowired
+    FoodDeliveryOrderRepository foodDeliveryOrderRepository;
+
+<span class="fc" id="L31">    private static final Logger LOGGER = LoggerFactory.getLogger(FoodDeliveryServiceImpl.class);</span>
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L40">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+    @Override
+    public Response createFoodDeliveryOrder(FoodDeliveryOrder fd, HttpHeaders headers) {
+<span class="nc" id="L45">        String stationFoodStoreId = fd.getStationFoodStoreId();</span>
+
+<span class="nc" id="L47">        String staion_food_service_url = getServiceUrl(&quot;ts-station-food-service&quot;);</span>
+//        staion_food_service_url = &quot;http://ts-station-food-service&quot;; // 测试
+<span class="nc" id="L49">        ResponseEntity&lt;Response&lt;StationFoodStoreInfo&gt;&gt; getStationFoodStore = restTemplate.exchange(</span>
+                staion_food_service_url + &quot;/api/v1/stationfoodservice/stationfoodstores/bystoreid/&quot; + stationFoodStoreId,
+                HttpMethod.GET,
+                new HttpEntity(headers),
+<span class="nc" id="L53">                new ParameterizedTypeReference&lt;Response&lt;StationFoodStoreInfo&gt;&gt;() {</span>
+                });
+<span class="nc" id="L55">        Response&lt;StationFoodStoreInfo&gt; result = getStationFoodStore.getBody();</span>
+<span class="nc" id="L56">        StationFoodStoreInfo stationFoodStoreInfo = result.getData();</span>
+<span class="nc" id="L57">        List&lt;Food&gt; storeFoodList = stationFoodStoreInfo.getFoodList();</span>
+<span class="nc" id="L58">        Map&lt;String, Double&gt; foodPrice = storeFoodList.stream()</span>
+<span class="nc" id="L59">                                                     .collect(Collectors.toMap(Food::getFoodName, Food::getPrice));</span>
+<span class="nc" id="L60">        List&lt;Food&gt; orderFoodList = fd.getFoodList();</span>
+<span class="nc" id="L61">        double deliveryFee = 0;</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        for (Food food : orderFoodList) {</span>
+<span class="nc" id="L63">            Double fee = foodPrice.get(food.getFoodName());</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">            if (fee == null) {</span>
+<span class="nc" id="L65">                LOGGER.error(&quot;{}:{} have no such food: {}&quot;, stationFoodStoreId, stationFoodStoreInfo.getStoreName(), food.getFoodName());</span>
+<span class="nc" id="L66">                return new Response&lt;&gt;(0, &quot;Food not in store&quot;, null);</span>
+            }
+<span class="nc" id="L68">            deliveryFee += fee;</span>
+<span class="nc" id="L69">        }</span>
+<span class="nc" id="L70">        deliveryFee += stationFoodStoreInfo.getDeliveryFee();</span>
+<span class="nc" id="L71">        fd.setDeliveryFee(deliveryFee);</span>
+<span class="nc" id="L72">        FoodDeliveryOrder res = foodDeliveryOrderRepository.save(fd);</span>
+<span class="nc" id="L73">        return new Response&lt;&gt;(1, &quot;Save success&quot;, res);</span>
+    }
+
+    @Override
+    public Response deleteFoodDeliveryOrder(String id, HttpHeaders headers) {
+<span class="nc" id="L78">        FoodDeliveryOrder t = foodDeliveryOrderRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (t == null) {</span>
+<span class="nc" id="L80">            LOGGER.error(&quot;[deleteFoodDeliveryOrder] No such food delivery order id: {}&quot;, id);</span>
+<span class="nc" id="L81">            return new Response&lt;&gt;(0, &quot;No such food delivery order id&quot;, id);</span>
+        } else {
+<span class="nc" id="L83">            foodDeliveryOrderRepository.deleteById(id);</span>
+<span class="nc" id="L84">            LOGGER.info(&quot;[deleteFoodDeliveryOrder] Delete success, food delivery order id: {}&quot;, id);</span>
+<span class="nc" id="L85">            return new Response&lt;&gt;(1, &quot;Delete success&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response getFoodDeliveryOrderById(String id, HttpHeaders headers) {
+<span class="nc" id="L91">        FoodDeliveryOrder t = foodDeliveryOrderRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (t == null) {</span>
+<span class="nc" id="L93">            LOGGER.error(&quot;[deleteFoodDeliveryOrder] No such food delivery order id: {}&quot;, id);</span>
+<span class="nc" id="L94">            return new Response&lt;&gt;(0, &quot;No such food delivery order id&quot;, id);</span>
+        } else {
+<span class="nc" id="L96">            LOGGER.info(&quot;[getFoodDeliveryOrderById] Get success, food delivery order id: {}&quot;, id);</span>
+<span class="nc" id="L97">            return new Response&lt;&gt;(1, &quot;Get success&quot;, t);</span>
+        }
+    }
+
+    @Override
+    public Response getAllFoodDeliveryOrders(HttpHeaders headers) {
+<span class="nc" id="L103">        List&lt;FoodDeliveryOrder&gt; foodDeliveryOrders = foodDeliveryOrderRepository.findAll();</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (foodDeliveryOrders == null) {</span>
+<span class="nc" id="L105">            LOGGER.error(&quot;[getAllFoodDeliveryOrders] Food delivery orders query error&quot;);</span>
+<span class="nc" id="L106">            return new Response&lt;&gt;(0, &quot;food delivery orders query error&quot;, null);</span>
+        } else {
+<span class="nc" id="L108">            LOGGER.info(&quot;[getAllFoodDeliveryOrders] Get all food delivery orders success&quot;);</span>
+<span class="nc" id="L109">            return new Response&lt;&gt;(1, &quot;Get success&quot;, foodDeliveryOrders);</span>
+        }
+    }
+
+    @Override
+    public Response getFoodDeliveryOrderByStoreId(String storeId, HttpHeaders headers) {
+<span class="nc" id="L115">        List&lt;FoodDeliveryOrder&gt; foodDeliveryOrders = foodDeliveryOrderRepository.findByStationFoodStoreId(storeId);</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (foodDeliveryOrders == null) {</span>
+<span class="nc" id="L117">            LOGGER.error(&quot;[getAllFoodDeliveryOrders] Food delivery orders query error&quot;);</span>
+<span class="nc" id="L118">            return new Response&lt;&gt;(0, &quot;food delivery orders query error&quot;, storeId);</span>
+        } else {
+<span class="nc" id="L120">            LOGGER.info(&quot;[getAllFoodDeliveryOrders] Get food delivery orders by storeId {} success&quot;, storeId);</span>
+<span class="nc" id="L121">            return new Response&lt;&gt;(1, &quot;Get success&quot;, foodDeliveryOrders);</span>
+        }
+    }
+
+    @Override
+    public Response updateTripId(TripOrderInfo tripInfo, HttpHeaders headers) {
+<span class="nc" id="L127">        String id = tripInfo.getOrderId();</span>
+<span class="nc" id="L128">        String tripId = tripInfo.getTripId();</span>
+<span class="nc" id="L129">        FoodDeliveryOrder t = foodDeliveryOrderRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (t == null) {</span>
+<span class="nc" id="L131">            LOGGER.error(&quot;[updateTripId] No such delivery order id: {}&quot;, id);</span>
+<span class="nc" id="L132">            return new Response&lt;&gt;(0, &quot;No such delivery order id&quot;, id);</span>
+        } else {
+<span class="nc" id="L134">            t.setTripId(tripId);</span>
+<span class="nc" id="L135">            foodDeliveryOrderRepository.save(t);</span>
+<span class="nc" id="L136">            LOGGER.info(&quot;[updateTripId] update tripId success. id:{}, tripId:{}&quot;, id, tripId);</span>
+<span class="nc" id="L137">            return new Response&lt;&gt;(1, &quot;update tripId success&quot;, t);</span>
+        }
+    }
+
+    @Override
+    public Response updateSeatNo(SeatInfo seatInfo, HttpHeaders headers) {
+<span class="nc" id="L143">        String id = seatInfo.getOrderId();</span>
+<span class="nc" id="L144">        int seatNo = seatInfo.getSeatNo();</span>
+<span class="nc" id="L145">        FoodDeliveryOrder t = foodDeliveryOrderRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (t == null) {</span>
+<span class="nc" id="L147">            LOGGER.error(&quot;[updateSeatNo] No such delivery order id: {}&quot;, id);</span>
+<span class="nc" id="L148">            return new Response&lt;&gt;(0, &quot;No such delivery order id&quot;, id);</span>
+        } else {
+<span class="nc" id="L150">            t.setSeatNo(seatNo);</span>
+<span class="nc" id="L151">            foodDeliveryOrderRepository.save(t);</span>
+<span class="nc" id="L152">            LOGGER.info(&quot;[updateSeatNo] update seatNo success. id:{}, seatNo:{}&quot;, id, seatNo);</span>
+<span class="nc" id="L153">            return new Response&lt;&gt;(1, &quot;update seatNo success&quot;, t);</span>
+        }
+    }
+
+    @Override
+    public Response updateDeliveryTime(DeliveryInfo deliveryInfo, HttpHeaders headers) {
+<span class="nc" id="L159">        String id = deliveryInfo.getOrderId();</span>
+<span class="nc" id="L160">        String deliveryTime = deliveryInfo.getDeliveryTime();</span>
+<span class="nc" id="L161">        FoodDeliveryOrder t = foodDeliveryOrderRepository.findById(id).orElse(null);</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (t == null) {</span>
+<span class="nc" id="L163">            LOGGER.error(&quot;[updateDeliveryTime] No such delivery order id: {}&quot;, id);</span>
+<span class="nc" id="L164">            return new Response&lt;&gt;(0, &quot;No such delivery order id&quot;, id);</span>
+        } else {
+<span class="nc" id="L166">            t.setDeliveryTime(deliveryTime);</span>
+<span class="nc" id="L167">            foodDeliveryOrderRepository.save(t);</span>
+<span class="nc" id="L168">            LOGGER.info(&quot;[updateDeliveryTime] update deliveryTime success. id:{}, deliveryTime:{}&quot;, id, deliveryTime);</span>
+<span class="nc" id="L169">            return new Response&lt;&gt;(1, &quot;update deliveryTime success&quot;, t);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotifyInfo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">notification.entity</a> &gt; <span class="el_source">NotifyInfo.java</span></div><h1>NotifyInfo.java</h1><pre class="source lang-java linenums">package notification.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import javax.persistence.Column;
+import javax.persistence.Id;
+
+
+import javax.persistence.Entity;
+import org.hibernate.annotations.GenericGenerator;
+import java.util.UUID;
+
+import lombok.Data;
+
+import javax.persistence.Entity;
+
+/**
+ * @author fdse
+ */
+<span class="pc bnc" id="L22" title="All 102 branches missed.">@Data</span>
+<span class="nc" id="L23">@AllArgsConstructor</span>
+@Entity
+@GenericGenerator(name = &quot;jpa-uuid&quot;, strategy = &quot;org.hibernate.id.UUIDGenerator&quot;)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class NotifyInfo {
+
+<span class="fc" id="L29">    public NotifyInfo(){</span>
+        //Default Constructor
+<span class="fc" id="L31">    }</span>
+
+    @Id
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @Column(length = 36)
+<span class="nc" id="L36">    private String id;</span>
+
+<span class="nc" id="L38">    private Boolean sendStatus;</span>
+
+<span class="fc" id="L40">    private String email;</span>
+<span class="fc" id="L41">    private String orderNumber;</span>
+<span class="fc" id="L42">    private String username;</span>
+<span class="fc" id="L43">    private String startPlace;</span>
+<span class="fc" id="L44">    private String endPlace;</span>
+<span class="fc" id="L45">    private String startTime;</span>
+<span class="fc" id="L46">    private String date;</span>
+<span class="fc" id="L47">    private String seatClass;</span>
+<span class="fc" id="L48">    private String seatNumber;</span>
+<span class="fc" id="L49">    private String price;</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RebookController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">rebook.controller</a> &gt; <span class="el_source">RebookController.java</span></div><h1>RebookController.java</h1><pre class="source lang-java linenums">package rebook.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+import rebook.entity.RebookInfo;
+import rebook.service.RebookService;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/rebookservice&quot;)
+<span class="fc" id="L19">public class RebookController {</span>
+
+    @Autowired
+    RebookService service;
+
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(RebookController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="nc" id="L28">        return &quot;Welcome to [ Rebook Service ] !&quot;;</span>
+    }
+
+    @PostMapping(value = &quot;/rebook/difference&quot;)
+    public HttpEntity payDifference(@RequestBody RebookInfo info,
+                                    @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L34">        RebookController.LOGGER.info(&quot;[payDifference][Pay difference][OrderId: {}]&quot;,info.getOrderId());</span>
+<span class="nc" id="L35">        return ok(service.payDifference(info, headers));</span>
+    }
+
+    @PostMapping(value = &quot;/rebook&quot;)
+    public HttpEntity rebook(@RequestBody RebookInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L40">        RebookController.LOGGER.info(&quot;[rebook][Rebook][OrderId: {}, Old Trip Id: {}, New Trip Id: {}, Date: {}, Seat Type: {}]&quot;, info.getOrderId(), info.getOldTripId(), info.getTripId(), info.getDate(), info.getSeatType());</span>
+<span class="nc" id="L41">        return ok(service.rebook(info, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

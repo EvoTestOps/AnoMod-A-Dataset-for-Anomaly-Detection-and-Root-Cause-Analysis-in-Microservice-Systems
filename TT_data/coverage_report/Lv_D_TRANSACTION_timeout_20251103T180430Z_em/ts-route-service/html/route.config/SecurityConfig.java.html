@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">route.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package route.config;
+
+import edu.fudan.common.security.jwt.JWTFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+import static org.springframework.web.cors.CorsConfiguration.ALL;
+
+/**
+ * @author fdse
+ */
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+<span class="fc" id="L27">public class SecurityConfig extends WebSecurityConfigurerAdapter {</span>
+
+    /**
+     * load password encoder
+     *
+     * @return PasswordEncoder
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+<span class="fc" id="L36">        return new BCryptPasswordEncoder();</span>
+    }
+
+    /**
+     * allow cors domain
+     * header  By default, only six fields can be taken from the header, and the other fields can only be specified in the header.
+     * credentials   Cookies are not sent by default and can only be true if a Cookie is needed
+     * Validity of this request
+     *
+     * @return WebMvcConfigurer
+     */
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+<span class="fc" id="L49">        return new WebMvcConfigurerAdapter() {</span>
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+<span class="fc" id="L52">                registry.addMapping(&quot;/**&quot;)</span>
+<span class="fc" id="L53">                        .allowedOrigins(ALL)</span>
+<span class="fc" id="L54">                        .allowedMethods(ALL)</span>
+<span class="fc" id="L55">                        .allowedHeaders(ALL)</span>
+<span class="fc" id="L56">                        .allowCredentials(false)</span>
+<span class="fc" id="L57">                        .maxAge(3600);</span>
+<span class="fc" id="L58">            }</span>
+        };
+    }
+
+
+    @Override
+    protected void configure(HttpSecurity httpSecurity) throws Exception {
+<span class="fc" id="L65">        httpSecurity.httpBasic().disable()</span>
+                // close default csrf
+<span class="fc" id="L67">                .csrf().disable()</span>
+                // close session
+<span class="fc" id="L69">                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)</span>
+<span class="fc" id="L70">                .and()</span>
+<span class="fc" id="L71">                .authorizeRequests()</span>
+<span class="fc" id="L72">                .antMatchers(&quot;/api/v1/routeservice/**&quot;).permitAll()</span>
+<span class="fc" id="L73">                .antMatchers(HttpMethod.POST, &quot;/api/v1/routeservice/routes&quot;).hasAnyRole(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L74">                .antMatchers(HttpMethod.DELETE, &quot;/api/v1/routeservice/routes/*&quot;).hasAnyRole(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L75">                .antMatchers(&quot;/swagger-ui.html&quot;, &quot;/webjars/**&quot;, &quot;/images/**&quot;,</span>
+<span class="fc" id="L76">                        &quot;/configuration/**&quot;, &quot;/swagger-resources/**&quot;, &quot;/v2/**&quot;).permitAll()</span>
+<span class="fc" id="L77">                .anyRequest().authenticated()</span>
+<span class="fc" id="L78">                .and()</span>
+<span class="fc" id="L79">                .addFilterBefore(new JWTFilter(), UsernamePasswordAuthenticationFilter.class);</span>
+
+        // close cache
+<span class="fc" id="L82">        httpSecurity.headers().cacheControl();</span>
+<span class="fc" id="L83">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

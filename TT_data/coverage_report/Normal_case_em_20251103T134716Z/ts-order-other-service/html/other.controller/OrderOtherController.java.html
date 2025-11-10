@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderOtherController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">other.controller</a> &gt; <span class="el_source">OrderOtherController.java</span></div><h1>OrderOtherController.java</h1><pre class="source lang-java linenums">package other.controller;
+
+import edu.fudan.common.entity.Seat;
+import edu.fudan.common.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+
+import other.entity.Order;
+import other.entity.QueryInfo;
+import other.service.OrderOtherService;
+
+import java.util.Date;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/orderOtherService&quot;)
+<span class="fc" id="L26">public class OrderOtherController {</span>
+
+    @Autowired
+    private OrderOtherService orderService;
+
+<span class="fc" id="L31">    private static final Logger LOGGER = LoggerFactory.getLogger(OrderOtherController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="nc" id="L35">        return &quot;Welcome to [ Order Other Service ] !&quot;;</span>
+    }
+
+    /***************************For Normal Use***************************/
+
+    @PostMapping(value = &quot;/orderOther/tickets&quot;)
+    public HttpEntity getTicketListByDateAndTripId(@RequestBody Seat seatRequest, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L42">        OrderOtherController.LOGGER.info(&quot;[getSoldTickets][Get Sold Ticket][Travel Date: {}]&quot;, seatRequest.getTravelDate().toString());</span>
+<span class="fc" id="L43">        return ok(orderService.getSoldTickets(seatRequest, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/orderOther&quot;)
+    public HttpEntity createNewOrder(@RequestBody Order createOrder, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L49">        OrderOtherController.LOGGER.info(&quot;[create][Create Order][from {} to {} at {}]&quot;, createOrder.getFrom(), createOrder.getTo(), createOrder.getTravelDate());</span>
+<span class="fc" id="L50">        return ok(orderService.create(createOrder, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/orderOther/admin&quot;)
+    public HttpEntity addcreateNewOrder(@RequestBody Order order, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L56">        OrderOtherController.LOGGER.info(&quot;[addNewOrder][Add new order][OrderId: {}]&quot;, order.getId());</span>
+<span class="fc" id="L57">        return ok(orderService.addNewOrder(order, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/orderOther/query&quot;)
+    public HttpEntity queryOrders(@RequestBody QueryInfo qi,
+                                  @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L64">        OrderOtherController.LOGGER.info(&quot;[queryOrders][Query Orders][for LoginId :{}]&quot;, qi.getLoginId());</span>
+<span class="fc" id="L65">        return ok(orderService.queryOrders(qi, qi.getLoginId(), headers));</span>
+
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/orderOther/refresh&quot;)
+    public HttpEntity queryOrdersForRefresh(@RequestBody QueryInfo qi,
+                                            @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L73">        OrderOtherController.LOGGER.info(&quot;[queryOrdersForRefresh][Query Orders][for LoginId:{}]&quot;, qi.getLoginId());</span>
+<span class="fc" id="L74">        return ok(orderService.queryOrdersForRefresh(qi, qi.getLoginId(), headers));</span>
+    }
+
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/orderOther/{travelDate}/{trainNumber}&quot;)
+    public HttpEntity calculateSoldTicket(@PathVariable String travelDate, @PathVariable String trainNumber,
+                                          @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L82">        OrderOtherController.LOGGER.info(&quot;[queryAlreadySoldOrders][Calculate Sold Tickets][Date: {} TrainNumber: {}]&quot;, travelDate, trainNumber);</span>
+<span class="fc" id="L83">        return ok(orderService.queryAlreadySoldOrders(StringUtils.String2Date(travelDate), trainNumber, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/orderOther/price/{orderId}&quot;)
+    public HttpEntity getOrderPrice(@PathVariable String orderId, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L89">        OrderOtherController.LOGGER.info(&quot;[getOrderPrice][Get Order Price][Order Id: {}]&quot;, orderId);</span>
+<span class="fc" id="L90">        return ok(orderService.getOrderPrice(orderId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/orderOther/orderPay/{orderId}&quot;)
+    public HttpEntity payOrder(@PathVariable String orderId, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L96">        OrderOtherController.LOGGER.info(&quot;[payOrder][Pay Order][Order Id: {}]&quot;, orderId);</span>
+<span class="fc" id="L97">        return ok(orderService.payOrder(orderId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/orderOther/{orderId}&quot;)
+    public HttpEntity getOrderById(@PathVariable String orderId, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L103">        OrderOtherController.LOGGER.info(&quot;[getOrderById][Get Order By Id][Order Id: {}]&quot;, orderId);</span>
+<span class="fc" id="L104">        return ok(orderService.getOrderById(orderId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/orderOther/status/{orderId}/{status}&quot;)
+    public HttpEntity modifyOrder(@PathVariable String orderId, @PathVariable int status, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L110">        OrderOtherController.LOGGER.info(&quot;[modifyOrder][Modify Order Status][Order Id: {}]&quot;, orderId);</span>
+<span class="fc" id="L111">        return ok(orderService.modifyOrder(orderId, status, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/orderOther/security/{checkDate}/{accountId}&quot;)
+    public HttpEntity securityInfoCheck(@PathVariable String checkDate, @PathVariable String accountId,
+                                        @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L118">        OrderOtherController.LOGGER.info(&quot;[checkSecurityAboutOrder][Security Info Get][CheckDate:{} , AccountId:{}]&quot;,checkDate,accountId);</span>
+<span class="fc" id="L119">        return ok(orderService.checkSecurityAboutOrder(StringUtils.String2Date(checkDate), accountId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/orderOther&quot;)
+    public HttpEntity saveOrderInfo(@RequestBody Order orderInfo,
+                                    @RequestHeader HttpHeaders headers) {
+
+<span class="nc" id="L127">        OrderOtherController.LOGGER.info(&quot;[saveChanges][Save Order Info][OrderId:{}]&quot;,orderInfo.getId());</span>
+<span class="nc" id="L128">        return ok(orderService.saveChanges(orderInfo, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/orderOther/admin&quot;)
+    public HttpEntity updateOrder(@RequestBody Order order, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L134">        OrderOtherController.LOGGER.info(&quot;[updateOrder][Update Order][OrderId: {}]&quot;, order.getId());</span>
+<span class="fc" id="L135">        return ok(orderService.updateOrder(order, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/orderOther/{orderId}&quot;)
+    public HttpEntity deleteOrder(@PathVariable String orderId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L141">        OrderOtherController.LOGGER.info(&quot;[deleteOrder][Delete Order][OrderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L142">        return ok(orderService.deleteOrder(orderId, headers));</span>
+    }
+
+    /***************For super admin(Single Service Test*******************/
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/orderOther&quot;)
+    public HttpEntity findAllOrder(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L150">        OrderOtherController.LOGGER.info(&quot;[getAllOrders][Find All Order]&quot;);</span>
+<span class="fc" id="L151">        return ok(orderService.getAllOrders(headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

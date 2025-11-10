@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">config.controller</a> &gt; <span class="el_source">ConfigController.java</span></div><h1>ConfigController.java</h1><pre class="source lang-java linenums">package config.controller;
+
+import config.entity.Config;
+import config.service.ConfigService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author  Chenjie Xu
+ * @date 2017/5/11.
+ */
+@RestController
+@RequestMapping(&quot;api/v1/configservice&quot;)
+<span class="fc" id="L23">public class ConfigController {</span>
+
+    @Autowired
+    private ConfigService configService;
+
+<span class="fc" id="L28">    private static final Logger logger = LoggerFactory.getLogger(ConfigController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L32">        return &quot;Welcome to [ Config Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(value = &quot;/configs&quot;)
+    public HttpEntity queryAll(@RequestHeader HttpHeaders headers) {
+<span class="fc" id="L38">        logger.info(&quot;[queryAll][Query all configs]&quot;);</span>
+<span class="fc" id="L39">        return ok(configService.queryAll(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/configs&quot;)
+    public HttpEntity&lt;?&gt; createConfig(@RequestBody Config info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L45">        logger.info(&quot;[createConfig][Create config][Config name: {}]&quot;, info.getName());</span>
+<span class="nc" id="L46">        return new ResponseEntity&lt;&gt;(configService.create(info, headers), HttpStatus.CREATED);</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(value = &quot;/configs&quot;)
+    public HttpEntity updateConfig(@RequestBody Config info, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L52">        logger.info(&quot;[updateConfig][Update config][Config name: {}]&quot;, info.getName());</span>
+<span class="fc" id="L53">        return ok(configService.update(info, headers));</span>
+    }
+
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(value = &quot;/configs/{configName}&quot;)
+    public HttpEntity deleteConfig(@PathVariable String configName, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L60">        logger.info(&quot;[deleteConfig][Delete config][configName: {}]&quot;, configName);</span>
+<span class="fc" id="L61">        return ok(configService.delete(configName, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(value = &quot;/configs/{configName}&quot;)
+    public HttpEntity retrieve(@PathVariable String configName, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L67">        logger.info(&quot;[retrieve][Retrieve config][configName: {}]&quot;, configName);</span>
+<span class="fc" id="L68">        return ok(configService.query(configName, headers));</span>
+    }
+
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VerifyCodeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">verifycode.service.impl</a> &gt; <span class="el_source">VerifyCodeServiceImpl.java</span></div><h1>VerifyCodeServiceImpl.java</h1><pre class="source lang-java linenums">package verifycode.service.impl;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import verifycode.service.VerifyCodeService;
+import verifycode.util.CookieUtil;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="nc" id="L28">public class VerifyCodeServiceImpl implements VerifyCodeService {</span>
+
+    public static final int CAPTCHA_EXPIRED = 1000;
+<span class="nc" id="L31">    private static final Logger LOGGER = LoggerFactory.getLogger(VerifyCodeServiceImpl.class);</span>
+
+<span class="nc" id="L33">    String ysbCaptcha = &quot;YsbCaptcha&quot;;</span>
+
+    /**
+     * build local cache
+     */
+<span class="nc" id="L38">    public Cache&lt;String, String&gt; cacheCode = CacheBuilder.newBuilder()</span>
+            // max  size
+<span class="nc" id="L40">            .maximumSize(CAPTCHA_EXPIRED)</span>
+<span class="nc" id="L41">            .expireAfterAccess(CAPTCHA_EXPIRED, TimeUnit.SECONDS)</span>
+<span class="nc" id="L42">            .build();</span>
+
+<span class="nc" id="L44">    private static char mapTable[] = {</span>
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+            'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+            'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+
+    @Override
+    public Map&lt;String, Object&gt; getImageCode(int width, int height, OutputStream os, HttpServletRequest request, HttpServletResponse response, HttpHeaders headers) {
+<span class="nc" id="L51">        Map&lt;String, Object&gt; returnMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (width &lt;= 0) {</span>
+<span class="nc" id="L53">            width = 60;</span>
+        }
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (height &lt;= 0) {</span>
+<span class="nc" id="L56">            height = 20;</span>
+        }
+<span class="nc" id="L58">        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);</span>
+
+<span class="nc" id="L60">        Graphics g = image.getGraphics();</span>
+
+<span class="nc" id="L62">        Random random = new Random(); //NOSONAR</span>
+
+<span class="nc" id="L64">        g.setColor(getRandColor(200, 250));</span>
+<span class="nc" id="L65">        g.fillRect(0, 0, width, height);</span>
+
+<span class="nc" id="L67">        g.setFont(new Font(&quot;Times New Roman&quot;, Font.PLAIN, 18));</span>
+
+<span class="nc" id="L69">        g.setColor(getRandColor(160, 200));</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        for (int i = 0; i &lt; 168; i++) {</span>
+<span class="nc" id="L71">            int x = random.nextInt(width);</span>
+<span class="nc" id="L72">            int y = random.nextInt(height);</span>
+<span class="nc" id="L73">            int xl = random.nextInt(12);</span>
+<span class="nc" id="L74">            int yl = random.nextInt(12);</span>
+<span class="nc" id="L75">            g.drawLine(x, y, x + xl, y + yl);</span>
+        }
+
+<span class="nc" id="L78">        String strEnsure = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        for (int i = 0; i &lt; 4; ++i) {</span>
+<span class="nc" id="L81">            strEnsure += mapTable[(int) (mapTable.length * Math.random())];</span>
+
+<span class="nc" id="L83">            g.setColor(new Color(20 + random.nextInt(110), 20 + random.nextInt(110), 20 + random.nextInt(110)));</span>
+
+<span class="nc" id="L85">            String str = strEnsure.substring(i, i + 1);</span>
+<span class="nc" id="L86">            g.drawString(str, 13 * i + 6, 16);</span>
+        }
+
+<span class="nc" id="L89">        g.dispose();</span>
+<span class="nc" id="L90">        returnMap.put(&quot;image&quot;, image);</span>
+<span class="nc" id="L91">        returnMap.put(&quot;strEnsure&quot;, strEnsure);</span>
+
+<span class="nc" id="L93">        Cookie cookie = CookieUtil.getCookieByName(request, ysbCaptcha);</span>
+        String cookieId;
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (cookie == null) {</span>
+<span class="nc" id="L96">            VerifyCodeServiceImpl.LOGGER.warn(&quot;[getImageCode][Get image code warn.Cookie not found][Path Info: {}]&quot;,request.getPathInfo());</span>
+<span class="nc" id="L97">            cookieId = UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;).toUpperCase();</span>
+<span class="nc" id="L98">            CookieUtil.addCookie(response, ysbCaptcha, cookieId, CAPTCHA_EXPIRED);</span>
+        } else {
+<span class="nc bnc" id="L100" title="All 2 branches missed.">            if (cookie.getValue() != null) {</span>
+<span class="nc" id="L101">                cookieId = UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;).toUpperCase();</span>
+<span class="nc" id="L102">                CookieUtil.addCookie(response, ysbCaptcha, cookieId, CAPTCHA_EXPIRED);</span>
+            } else {
+<span class="nc" id="L104">                cookieId = cookie.getValue();</span>
+            }
+        }
+<span class="nc" id="L107">        VerifyCodeServiceImpl.LOGGER.info(&quot;[getImageCode][strEnsure: {}]&quot;, strEnsure);</span>
+<span class="nc" id="L108">        cacheCode.put(cookieId, strEnsure);</span>
+<span class="nc" id="L109">        return returnMap;</span>
+    }
+
+    @Override
+    public boolean verifyCode(HttpServletRequest request, HttpServletResponse response, String receivedCode, HttpHeaders headers) {
+<span class="nc" id="L114">        boolean result = false;</span>
+<span class="nc" id="L115">        Cookie cookie = CookieUtil.getCookieByName(request, ysbCaptcha);</span>
+        String cookieId;
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (cookie == null) {</span>
+<span class="nc" id="L118">            VerifyCodeServiceImpl.LOGGER.warn(&quot;[verifyCode][Verify code warn][Cookie not found][Path Info: {}]&quot;,request.getPathInfo());</span>
+<span class="nc" id="L119">            cookieId = UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;).toUpperCase();</span>
+<span class="nc" id="L120">            CookieUtil.addCookie(response, ysbCaptcha, cookieId, CAPTCHA_EXPIRED);</span>
+        } else {
+<span class="nc" id="L122">            cookieId = cookie.getValue();</span>
+        }
+
+<span class="nc" id="L125">        String code = cacheCode.getIfPresent(cookieId);</span>
+<span class="nc" id="L126">        LOGGER.info(&quot;GET Code By cookieId &quot; + cookieId + &quot;   is :&quot; + code);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        if (code == null) {</span>
+<span class="nc" id="L128">            VerifyCodeServiceImpl.LOGGER.warn(&quot;[verifyCode][Get image code warn][Code not found][CookieId: {}]&quot;,cookieId);</span>
+<span class="nc" id="L129">            return false;</span>
+        }
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (code.equalsIgnoreCase(receivedCode)) {</span>
+<span class="nc" id="L132">            result = true;</span>
+        }
+<span class="nc" id="L134">        return result;</span>
+    }
+
+
+    static Color getRandColor(int fc, int bc) {
+<span class="nc" id="L139">        Random random = new Random(); //NOSONAR</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">        if (fc &gt; 255) {</span>
+<span class="nc" id="L141">            fc = 255;</span>
+        }
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        if (bc &gt; 255) {</span>
+<span class="nc" id="L144">            bc = 255;</span>
+        }
+<span class="nc" id="L146">        int r = fc + random.nextInt(bc - fc);</span>
+<span class="nc" id="L147">        int g = fc + random.nextInt(bc - fc);</span>
+<span class="nc" id="L148">        int b = fc + random.nextInt(bc - fc);</span>
+<span class="nc" id="L149">        return new Color(r, g, b);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

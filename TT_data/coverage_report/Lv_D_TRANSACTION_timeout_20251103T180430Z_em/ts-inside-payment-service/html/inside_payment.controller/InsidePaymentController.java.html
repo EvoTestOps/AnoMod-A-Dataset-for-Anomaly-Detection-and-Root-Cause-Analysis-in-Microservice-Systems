@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InsidePaymentController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">inside_payment.controller</a> &gt; <span class="el_source">InsidePaymentController.java</span></div><h1>InsidePaymentController.java</h1><pre class="source lang-java linenums">package inside_payment.controller;
+
+import inside_payment.entity.*;
+import inside_payment.service.InsidePaymentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/inside_pay_service&quot;)
+<span class="fc" id="L19">public class InsidePaymentController {</span>
+
+    @Autowired
+    public InsidePaymentService service;
+
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(InsidePaymentController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="nc" id="L28">        return &quot;Welcome to [ InsidePayment Service ] !&quot;;</span>
+    }
+
+    @PostMapping(value = &quot;/inside_payment&quot;)
+    public HttpEntity pay(@RequestBody PaymentInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L33">        InsidePaymentController.LOGGER.info(&quot;[pay][Inside Payment Service.Pay][Pay for: {}]&quot;, info.getOrderId());</span>
+<span class="nc" id="L34">        return ok(service.pay(info, headers));</span>
+    }
+
+    @PostMapping(value = &quot;/inside_payment/account&quot;)
+    public HttpEntity createAccount(@RequestBody AccountInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L39">        LOGGER.info(&quot;[createAccount][Create account][accountInfo: {}]&quot;, info);</span>
+<span class="nc" id="L40">        return ok(service.createAccount(info, headers));</span>
+    }
+
+    @GetMapping(value = &quot;/inside_payment/{userId}/{money}&quot;)
+    public HttpEntity addMoney(@PathVariable String userId, @PathVariable
+            String money, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L46">        LOGGER.info(&quot;[addMoney][add money][userId: {}, money: {}]&quot;, userId, money);</span>
+<span class="nc" id="L47">        return ok(service.addMoney(userId, money, headers));</span>
+    }
+
+    @GetMapping(value = &quot;/inside_payment/payment&quot;)
+    public HttpEntity queryPayment(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L52">        LOGGER.info(&quot;[queryPayment][query payment]&quot;);</span>
+<span class="nc" id="L53">        return ok(service.queryPayment(headers));</span>
+    }
+
+    @GetMapping(value = &quot;/inside_payment/account&quot;)
+    public HttpEntity queryAccount(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L58">        LOGGER.info(&quot;[queryAccount][query account]&quot;);</span>
+<span class="nc" id="L59">        return ok(service.queryAccount(headers));</span>
+    }
+
+    @GetMapping(value = &quot;/inside_payment/drawback/{userId}/{money}&quot;)
+    public HttpEntity drawBack(@PathVariable String userId, @PathVariable String money, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L64">        LOGGER.info(&quot;[drawBack][draw back payment][userId: {}, money: {}]&quot;, userId, money);</span>
+<span class="nc" id="L65">        return ok(service.drawBack(userId, money, headers));</span>
+    }
+
+    @PostMapping(value = &quot;/inside_payment/difference&quot;)
+    public HttpEntity payDifference(@RequestBody PaymentInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L70">        LOGGER.info(&quot;[payDifference][pay difference]&quot;);</span>
+<span class="nc" id="L71">        return ok(service.payDifference(info, headers));</span>
+    }
+
+    @GetMapping(value = &quot;/inside_payment/money&quot;)
+    public HttpEntity queryAddMoney(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L76">        LOGGER.info(&quot;[queryAddMoney][query add money]&quot;);</span>
+<span class="nc" id="L77">        return ok(service.queryAddMoney(headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

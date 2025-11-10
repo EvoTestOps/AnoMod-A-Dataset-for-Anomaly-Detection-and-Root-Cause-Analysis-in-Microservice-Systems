@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TravelServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">travel2.service</a> &gt; <span class="el_source">TravelServiceImpl.java</span></div><h1>TravelServiceImpl.java</h1><pre class="source lang-java linenums">package travel2.service;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.fudan.common.entity.*;
+import edu.fudan.common.util.JsonUtils;
+import edu.fudan.common.util.Response;
+import edu.fudan.common.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import travel2.entity.AdminTrip;
+import travel2.entity.Trip;
+import travel2.entity.Travel;
+import travel2.entity.TripAllDetail;
+import travel2.repository.TripRepository;
+
+import javax.transaction.Transactional;
+import java.util.*;
+
+/**
+ * @author fdse
+ */
+@Service
+<span class="fc" id="L33">public class TravelServiceImpl implements TravelService {</span>
+
+    @Autowired
+    TripRepository repository;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+<span class="fc" id="L44">    private static final Logger LOGGER = LoggerFactory.getLogger(TravelServiceImpl.class);</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="fc" id="L47">        return &quot;http://&quot; + serviceName; }</span>
+
+<span class="fc" id="L49">    String success = &quot;Success&quot;;</span>
+<span class="fc" id="L50">    String noCnontent = &quot;No Content&quot;;</span>
+
+    @Override
+    public Response getRouteByTripId(String tripId, HttpHeaders headers) {
+<span class="fc" id="L54">        TripId tripId1 = new TripId(tripId);</span>
+
+<span class="fc" id="L56">        Trip trip = repository.findByTripId(tripId1);</span>
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        if (trip == null) {</span>
+<span class="fc" id="L58">            TravelServiceImpl.LOGGER.error(&quot;[getRouteByTripId][Get Route By Trip ID Fail][Trip Not Found][TripId: {}]&quot;, tripId);</span>
+<span class="fc" id="L59">            return new Response&lt;&gt;(0, &quot;\&quot;[Get Route By Trip ID] Trip Not Found:\&quot; + tripId&quot;, null);</span>
+        } else {
+<span class="nc" id="L61">            Route route = getRouteByRouteId(trip.getRouteId(), headers);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">            if (route == null) {</span>
+<span class="nc" id="L63">                TravelServiceImpl.LOGGER.error(&quot;[getRouteByTripId][Get route by Trip id error][Route not found][RouteId: {}]&quot;,trip.getRouteId());</span>
+<span class="nc" id="L64">                return new Response&lt;&gt;(0, &quot;\&quot;[Get Route By Trip ID] Route Not Found:\&quot; + trip.getRouteId()&quot;, null);</span>
+            } else {
+<span class="nc" id="L66">                TravelServiceImpl.LOGGER.info(&quot;[getRouteByTripId][Get Route By Trip ID Success]&quot;);</span>
+<span class="nc" id="L67">                return new Response&lt;&gt;(1, &quot;[Get Route By Trip ID] Success&quot;, route);</span>
+            }
+        }
+    }
+
+
+    @Override
+    public Response getTrainTypeByTripId(String tripId, HttpHeaders headers) {
+<span class="fc" id="L75">        TripId tripId1 = new TripId(tripId);</span>
+<span class="fc" id="L76">        TrainType trainType = null;</span>
+<span class="fc" id="L77">        Trip trip = repository.findByTripId(tripId1);</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (trip != null) {</span>
+<span class="nc" id="L79">            trainType = getTrainTypeByName(trip.getTrainTypeName(), headers);</span>
+        }
+        else {
+<span class="fc" id="L82">            TravelServiceImpl.LOGGER.error(&quot;[getTrainTypeByTripId[]Get Train Type by Trip id error][Trip not found][TripId: {}]&quot;,tripId);</span>
+        }
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (trainType != null) {</span>
+<span class="nc" id="L85">            return new Response&lt;&gt;(1, &quot;Success query Train by trip id&quot;, trainType);</span>
+        } else {
+<span class="fc" id="L87">            TravelServiceImpl.LOGGER.error(&quot;[getTrainTypeByTripId][Get Train Type by Trip id error][Train Type not found][TripId: {}]&quot;,tripId);</span>
+<span class="fc" id="L88">            return new Response&lt;&gt;(0, noCnontent, null);</span>
+        }
+    }
+
+    @Override
+    public Response getTripByRoute(ArrayList&lt;String&gt; routeIds, HttpHeaders headers) {
+<span class="fc" id="L94">        ArrayList&lt;ArrayList&lt;Trip&gt;&gt; tripList = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">        for (String routeId : routeIds) {</span>
+<span class="nc" id="L96">            ArrayList&lt;Trip&gt; tempTripList = repository.findByRouteId(routeId);</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">            if (tempTripList == null) {</span>
+<span class="nc" id="L98">                tempTripList = new ArrayList&lt;&gt;();</span>
+            }
+<span class="nc" id="L100">            tripList.add(tempTripList);</span>
+<span class="nc" id="L101">        }</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        if (!tripList.isEmpty()) {</span>
+<span class="nc" id="L103">            return new Response&lt;&gt;(1, success, tripList);</span>
+        } else {
+<span class="fc" id="L105">            TravelServiceImpl.LOGGER.warn(&quot;[getTripByRoute][Get Trips by Route ids warn][Trips not found][RouteIdNumber: {}]&quot;,routeIds.size());</span>
+<span class="fc" id="L106">            return new Response&lt;&gt;(0, noCnontent, null);</span>
+        }
+    }
+
+    @Override
+    public Response create(edu.fudan.common.entity.TravelInfo info, HttpHeaders headers) {
+<span class="fc" id="L112">        TripId ti = new TripId(info.getTripId());</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (repository.findByTripId(ti) == null) {</span>
+<span class="nc" id="L114">            Trip trip = new Trip(ti, info.getTrainTypeName(), info.getStartStationName(),</span>
+<span class="nc" id="L115">                    info.getStationsName(), info.getTerminalStationName(), info.getStartTime(), info.getEndTime());</span>
+<span class="nc" id="L116">            trip.setRouteId(info.getRouteId());</span>
+<span class="nc" id="L117">            repository.save(trip);</span>
+<span class="nc" id="L118">            return new Response&lt;&gt;(1, &quot;Create trip info:&quot; + ti.toString() + &quot;.&quot;, null);</span>
+        } else {
+<span class="fc" id="L120">            TravelServiceImpl.LOGGER.error(&quot;[getTripByRoute][Create trip error][Trip already exists][TripId: {}]&quot;,info.getTripId());</span>
+<span class="fc" id="L121">            return new Response&lt;&gt;(1, &quot;Trip &quot; + info.getTripId() + &quot; already exists&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response retrieve(String tripId, HttpHeaders headers) {
+<span class="fc" id="L127">        TripId ti = new TripId(tripId);</span>
+<span class="fc" id="L128">        Trip trip = repository.findByTripId(ti);</span>
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (trip != null) {</span>
+<span class="nc" id="L130">            return new Response&lt;&gt;(1, &quot;Search Trip Success by Trip Id &quot; + tripId, trip);</span>
+        } else {
+<span class="fc" id="L132">            TravelServiceImpl.LOGGER.error(&quot;[retrieve][Retrieve trip error][Trip not found][TripId: {}]&quot;,tripId);</span>
+<span class="fc" id="L133">            return new Response&lt;&gt;(0, &quot;No Content according to tripId&quot; + tripId, null);</span>
+        }
+    }
+
+    @Override
+    public Response update(edu.fudan.common.entity.TravelInfo info, HttpHeaders headers) {
+<span class="fc" id="L139">        TripId ti = new TripId(info.getTripId());</span>
+<span class="fc" id="L140">        Trip t = repository.findByTripId(ti);</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        if (t != null) {</span>
+<span class="nc" id="L142">            t.setStartStationName(info.getTrainTypeName());</span>
+<span class="nc" id="L143">            t.setStartStationName( info.getStartStationName());</span>
+<span class="nc" id="L144">            t.setStationsName(info.getStationsName());</span>
+<span class="nc" id="L145">            t.setTerminalStationName(info.getTerminalStationName());</span>
+<span class="nc" id="L146">            t.setStartTime(info.getStartTime());</span>
+<span class="nc" id="L147">            t.setEndTime(info.getEndTime());</span>
+<span class="nc" id="L148">            t.setRouteId(info.getRouteId());</span>
+<span class="nc" id="L149">            repository.save(t);</span>
+<span class="nc" id="L150">            return new Response&lt;&gt;(1, &quot;Update trip info:&quot; + ti.toString(), t);</span>
+        } else {
+<span class="fc" id="L152">            TravelServiceImpl.LOGGER.error(&quot;[update][Update trip error][Trip not found][TripId: {}]&quot;,info.getTripId());</span>
+<span class="fc" id="L153">            return new Response&lt;&gt;(1, &quot;Trip&quot; + info.getTripId() + &quot;doesn 't exists&quot;, null);</span>
+        }
+    }
+
+    @Override
+    @Transactional
+    public Response delete(String tripId, HttpHeaders headers) {
+<span class="fc" id="L160">        TripId ti = new TripId(tripId);</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">        if (repository.findByTripId(ti) != null) {</span>
+<span class="nc" id="L162">            repository.deleteByTripId(ti);</span>
+<span class="nc" id="L163">            return new Response&lt;&gt;(1, &quot;Delete trip:&quot; + tripId + &quot;.&quot;, tripId);</span>
+        } else {
+<span class="fc" id="L165">            TravelServiceImpl.LOGGER.error(&quot;[delete][Delete trip error][Trip not found][TripId: {}]&quot;,tripId);</span>
+<span class="fc" id="L166">            return new Response&lt;&gt;(0, &quot;Trip &quot; + tripId + &quot; doesn't exist.&quot;, null);</span>
+        }
+    }
+
+    @Override
+    public Response queryByBatch(TripInfo info, HttpHeaders headers) {
+
+        //Gets the start and arrival stations of the train number to query. The originating and arriving stations received here are both station names, so two requests need to be sent to convert to station ids
+<span class="nc" id="L174">        String startPlaceName = info.getStartPlace();</span>
+<span class="nc" id="L175">        String endPlaceName = info.getEndPlace();</span>
+
+        //This is the final result
+<span class="nc" id="L178">        List&lt;TripResponse&gt; list = new ArrayList&lt;&gt;();</span>
+
+        //Check all train info
+<span class="nc" id="L181">        List&lt;Trip&gt; allTripList = repository.findAll();</span>
+<span class="nc" id="L182">        list = getTicketsByBatch(allTripList, startPlaceName, endPlaceName, info.getDepartureTime(), headers);</span>
+<span class="nc" id="L183">        return new Response&lt;&gt;(1, success, list);</span>
+    }
+
+    @Override
+    public Response query(TripInfo info, HttpHeaders headers) {
+
+        //Gets the start and arrival stations of the train number to query. The originating and arriving stations received here are both station names, so two requests need to be sent to convert to station ids
+<span class="nc" id="L190">        String StartPlaceName = info.getStartPlace();</span>
+<span class="nc" id="L191">        String endPlaceName = info.getEndPlace();</span>
+
+        //This is the final result
+<span class="nc" id="L194">        ArrayList&lt;TripResponse&gt; list = new ArrayList&lt;&gt;();</span>
+
+        //Check all train info
+<span class="nc" id="L197">        ArrayList&lt;Trip&gt; allTripList = repository.findAll();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        if(allTripList != null){</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">            for (Trip tempTrip : allTripList) {</span>
+                //Get the detailed route list of this train
+<span class="nc" id="L201">                TripResponse response = getTickets(tempTrip, null, StartPlaceName, endPlaceName, info.getDepartureTime(), headers);</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">                if (response == null) {</span>
+<span class="nc" id="L203">                    TravelServiceImpl.LOGGER.warn(&quot;[query][Query trip error][Tickets not found][start: {},end: {},time: {}]&quot;, StartPlaceName, endPlaceName, info.getDepartureTime());</span>
+                }else{
+<span class="nc" id="L205">                    list.add(response);</span>
+                }
+<span class="nc" id="L207">            }</span>
+        }
+<span class="nc" id="L209">        return new Response&lt;&gt;(1, &quot;Success Query&quot;, list);</span>
+    }
+
+    @Override
+    public Response getTripAllDetailInfo(TripAllDetailInfo gtdi, HttpHeaders headers) {
+<span class="fc" id="L214">        TripAllDetail gtdr = new TripAllDetail();</span>
+<span class="fc" id="L215">        TravelServiceImpl.LOGGER.debug(&quot;[getTripAllDetailInfo][gtdi info: {}]&quot;, gtdi.toString());</span>
+<span class="fc" id="L216">        Trip trip = repository.findByTripId(new TripId(gtdi.getTripId()));</span>
+<span class="pc bpc" id="L217" title="1 of 2 branches missed.">        if (trip == null) {</span>
+<span class="fc" id="L218">            gtdr.setTripResponse(null);</span>
+<span class="fc" id="L219">            gtdr.setTrip(null);</span>
+<span class="fc" id="L220">            TravelServiceImpl.LOGGER.error(&quot;[getTripAllDetailInfo][Get trip detail error][Trip not found][TripId: {}]&quot;,gtdi.getTripId());</span>
+<span class="fc" id="L221">            return new Response&lt;&gt;(0, &quot;Trip not found&quot;, gtdr);</span>
+        } else {
+<span class="nc" id="L223">            String endPlaceName = gtdi.getTo();</span>
+<span class="nc" id="L224">            String StartPlaceName = gtdi.getFrom();</span>
+<span class="nc" id="L225">            TripResponse tripResponse = getTickets(trip, null, gtdi.getFrom(), gtdi.getTo(), gtdi.getTravelDate(), headers);</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">            if (tripResponse == null) {</span>
+<span class="nc" id="L227">                gtdr.setTrip(null);</span>
+<span class="nc" id="L228">                gtdr.setTripResponse(null);</span>
+<span class="nc" id="L229">                TravelServiceImpl.LOGGER.warn(&quot;[getTripAllDetailInfo][Query trip error][Tickets not found][start: {},end: {}]&quot;, gtdi.getTo(), gtdi.getFrom());</span>
+<span class="nc" id="L230">                return new Response&lt;&gt;(0, &quot;getTickets failed&quot;, gtdr);</span>
+            } else {
+<span class="nc" id="L232">                gtdr.setTripResponse(tripResponse);</span>
+<span class="nc" id="L233">                gtdr.setTrip(repository.findByTripId(new TripId(gtdi.getTripId())));</span>
+            }
+        }
+<span class="nc" id="L236">        return new Response&lt;&gt;(1, success, gtdr);</span>
+    }
+
+    private List&lt;TripResponse&gt; getTicketsByBatch(List&lt;Trip&gt; trips, String startPlaceName, String endPlaceName, String departureTime, HttpHeaders headers) {
+<span class="nc" id="L240">        List&lt;TripResponse&gt; responses = new ArrayList&lt;&gt;();</span>
+        //Determine if the date checked is the same day and after
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        if (!afterToday(departureTime)) {</span>
+<span class="nc" id="L243">            TravelServiceImpl.LOGGER.info(&quot;[getTickets][depaturetime not vailid][departuretime: {}]&quot;, departureTime);</span>
+<span class="nc" id="L244">            return responses;</span>
+        }
+
+<span class="nc" id="L247">        List&lt;Travel&gt; infos = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L248">        Map&lt;String, Trip&gt; tripMap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">        for(Trip trip: trips){</span>
+<span class="nc" id="L250">            Travel query = new Travel();</span>
+<span class="nc" id="L251">            query.setTrip(trip);</span>
+<span class="nc" id="L252">            query.setStartPlace(startPlaceName);</span>
+<span class="nc" id="L253">            query.setEndPlace(endPlaceName);</span>
+<span class="nc" id="L254">            query.setDepartureTime(departureTime);</span>
+
+<span class="nc" id="L256">            infos.add(query);</span>
+<span class="nc" id="L257">            tripMap.put(trip.getTripId().toString(), trip);</span>
+<span class="nc" id="L258">        }</span>
+
+<span class="nc" id="L260">        TravelServiceImpl.LOGGER.info(&quot;[getTicketsByBatch][before get basic][trips: {}]&quot;, trips);</span>
+
+<span class="nc" id="L262">        HttpEntity requestEntity = new HttpEntity(infos, null);</span>
+<span class="nc" id="L263">        String basic_service_url = getServiceUrl(&quot;ts-basic-service&quot;);</span>
+<span class="nc" id="L264">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                basic_service_url + &quot;/api/v1/basicservice/basic/travels&quot;,
+                HttpMethod.POST,
+                requestEntity,
+                Response.class);
+
+<span class="nc" id="L270">        Response r = re.getBody();</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">        if(r.getStatus() == 0){</span>
+<span class="nc" id="L272">            TravelServiceImpl.LOGGER.info(&quot;[getTicketsByBatch][Ts-basic-service response status is 0][response is: {}]&quot;, r);</span>
+<span class="nc" id="L273">            return responses;</span>
+        }
+        Map&lt;String, TravelResult&gt; trMap;
+<span class="nc" id="L276">        ObjectMapper mapper = new ObjectMapper();</span>
+        try{
+<span class="nc" id="L278">            trMap = mapper.readValue(JsonUtils.object2Json(r.getData()), new TypeReference&lt;Map&lt;String, TravelResult&gt;&gt;(){});</span>
+<span class="nc" id="L279">        }catch(Exception e) {</span>
+<span class="nc" id="L280">            TravelServiceImpl.LOGGER.warn(&quot;[getTicketsByBatch][Ts-basic-service convert data failed][Fail msg: {}]&quot;, e.getMessage());</span>
+<span class="nc" id="L281">            return responses;</span>
+<span class="nc" id="L282">        }</span>
+
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        for(Map.Entry&lt;String, TravelResult&gt; trEntry: trMap.entrySet()){</span>
+            //Set the returned ticket information
+<span class="nc" id="L286">            String tripNumber = trEntry.getKey();</span>
+<span class="nc" id="L287">            TravelResult tr = trEntry.getValue();</span>
+<span class="nc" id="L288">            Trip trip = tripMap.get(tripNumber);</span>
+
+<span class="nc" id="L290">            TripResponse response = setResponse(trip, tr, startPlaceName, endPlaceName, departureTime, headers);</span>
+<span class="nc" id="L291">            responses.add(response);</span>
+<span class="nc" id="L292">        }</span>
+<span class="nc" id="L293">        return responses;</span>
+    }
+
+
+    private TripResponse getTickets(Trip trip, Route route1, String startPlaceName, String endPlaceName, String departureTime, HttpHeaders headers) {
+
+        //Determine if the date checked is the same day and after
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        if (!afterToday(departureTime)) {</span>
+<span class="nc" id="L301">            return null;</span>
+        }
+
+<span class="nc" id="L304">        Travel query = new Travel();</span>
+<span class="nc" id="L305">        query.setTrip(trip);</span>
+<span class="nc" id="L306">        query.setStartPlace(startPlaceName);</span>
+<span class="nc" id="L307">        query.setEndPlace(endPlaceName);</span>
+<span class="nc" id="L308">        query.setDepartureTime(departureTime);</span>
+
+<span class="nc" id="L310">        HttpEntity requestEntity = new HttpEntity(query, null);</span>
+<span class="nc" id="L311">        String basic_service_url = getServiceUrl(&quot;ts-basic-service&quot;);</span>
+<span class="nc" id="L312">        ResponseEntity&lt;Response&lt;TravelResult&gt;&gt; re = restTemplate.exchange(</span>
+                basic_service_url + &quot;/api/v1/basicservice/basic/travel&quot;,
+                HttpMethod.POST,
+                requestEntity,
+<span class="nc" id="L316">                new ParameterizedTypeReference&lt;Response&lt;edu.fudan.common.entity.TravelResult&gt;&gt;() {</span>
+                });
+<span class="nc" id="L318">        Response r = re.getBody();</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        if(r.getStatus() == 0){</span>
+<span class="nc" id="L320">            TravelServiceImpl.LOGGER.info(&quot;[getTickets][Ts-basic-service response status is 0][response is: {}]&quot;, r);</span>
+<span class="nc" id="L321">            return null;</span>
+        }
+<span class="nc" id="L323">        TravelResult resultForTravel =  re.getBody().getData();</span>
+
+        //Set the returned ticket information
+<span class="nc" id="L326">        return setResponse(trip, resultForTravel, startPlaceName, endPlaceName, departureTime, headers);</span>
+    }
+
+    private TripResponse setResponse(Trip trip, TravelResult tr, String startPlaceName, String endPlaceName, String departureTime, HttpHeaders headers){
+        //Set the returned ticket information
+<span class="nc" id="L331">        TripResponse response = new TripResponse();</span>
+<span class="nc" id="L332">        response.setConfortClass(50);</span>
+<span class="nc" id="L333">        response.setEconomyClass(50);</span>
+
+<span class="nc" id="L335">        Route route = tr.getRoute();</span>
+<span class="nc" id="L336">        List&lt;String&gt; stationList = route.getStations();</span>
+
+<span class="nc" id="L338">        int firstClassTotalNum = tr.getTrainType().getConfortClass();</span>
+<span class="nc" id="L339">        int secondClassTotalNum = tr.getTrainType().getEconomyClass();</span>
+
+<span class="nc" id="L341">        int first = getRestTicketNumber(departureTime, trip.getTripId().toString(),</span>
+<span class="nc" id="L342">                startPlaceName, endPlaceName, SeatClass.FIRSTCLASS.getCode(), firstClassTotalNum, stationList, headers);</span>
+
+<span class="nc" id="L344">        int second = getRestTicketNumber(departureTime, trip.getTripId().toString(),</span>
+<span class="nc" id="L345">                startPlaceName, endPlaceName, SeatClass.SECONDCLASS.getCode(), secondClassTotalNum, stationList, headers);</span>
+<span class="nc" id="L346">        response.setConfortClass(first);</span>
+<span class="nc" id="L347">        response.setEconomyClass(second);</span>
+
+<span class="nc" id="L349">        response.setStartStation(startPlaceName);</span>
+<span class="nc" id="L350">        response.setTerminalStation(endPlaceName);</span>
+
+        //Calculate the distance from the starting point
+<span class="nc" id="L353">        int indexStart = route.getStations().indexOf(startPlaceName);</span>
+<span class="nc" id="L354">        int indexEnd = route.getStations().indexOf(endPlaceName);</span>
+<span class="nc" id="L355">        int distanceStart = route.getDistances().get(indexStart) - route.getDistances().get(0);</span>
+<span class="nc" id="L356">        int distanceEnd = route.getDistances().get(indexEnd) - route.getDistances().get(0);</span>
+<span class="nc" id="L357">        TrainType trainType = tr.getTrainType();</span>
+        //Train running time is calculated according to the average running speed of the train
+<span class="nc" id="L359">        int minutesStart = 60 * distanceStart / trainType.getAverageSpeed();</span>
+<span class="nc" id="L360">        int minutesEnd = 60 * distanceEnd / trainType.getAverageSpeed();</span>
+
+<span class="nc" id="L362">        Calendar calendarStart = Calendar.getInstance();</span>
+<span class="nc" id="L363">        calendarStart.setTime(StringUtils.String2Date(trip.getStartTime()));</span>
+<span class="nc" id="L364">        calendarStart.add(Calendar.MINUTE, minutesStart);</span>
+<span class="nc" id="L365">        response.setStartTime(StringUtils.Date2String(calendarStart.getTime()));</span>
+<span class="nc" id="L366">        TravelServiceImpl.LOGGER.info(&quot;[getTickets][Calculate distance][calculate time：{}  time: {}]&quot;, minutesStart, calendarStart.getTime());</span>
+
+<span class="nc" id="L368">        Calendar calendarEnd = Calendar.getInstance();</span>
+<span class="nc" id="L369">        calendarEnd.setTime(StringUtils.String2Date(trip.getStartTime()));</span>
+<span class="nc" id="L370">        calendarEnd.add(Calendar.MINUTE, minutesEnd);</span>
+<span class="nc" id="L371">        response.setEndTime(StringUtils.Date2String(calendarEnd.getTime()));</span>
+<span class="nc" id="L372">        TravelServiceImpl.LOGGER.info(&quot;[getTickets][Calculate distance][calculate time：{}  time: {}]&quot;, minutesEnd, calendarEnd.getTime());</span>
+
+<span class="nc" id="L374">        response.setTripId(trip.getTripId());</span>
+<span class="nc" id="L375">        response.setTrainTypeName(trip.getTrainTypeName());</span>
+<span class="nc" id="L376">        response.setPriceForConfortClass(tr.getPrices().get(&quot;confortClass&quot;));</span>
+<span class="nc" id="L377">        response.setPriceForEconomyClass(tr.getPrices().get(&quot;economyClass&quot;));</span>
+
+<span class="nc" id="L379">        return response;</span>
+    }
+
+    @Override
+    public Response queryAll(HttpHeaders headers) {
+<span class="fc" id="L384">        List&lt;Trip&gt; tripList = repository.findAll();</span>
+<span class="pc bpc" id="L385" title="2 of 4 branches missed.">        if (tripList != null &amp;&amp; !tripList.isEmpty()) {</span>
+<span class="fc" id="L386">            return new Response&lt;&gt;(1, success, tripList);</span>
+        }
+<span class="nc" id="L388">        TravelServiceImpl.LOGGER.warn(&quot;[queryAll][Query all trips warn][{}]&quot;,&quot;No Content&quot;);</span>
+<span class="nc" id="L389">        return new Response&lt;&gt;(0, noCnontent, null);</span>
+    }
+
+    private static boolean afterToday(String date) {
+<span class="nc" id="L393">        Calendar calDateA = Calendar.getInstance();</span>
+<span class="nc" id="L394">        Date today = new Date();</span>
+<span class="nc" id="L395">        calDateA.setTime(today);</span>
+
+<span class="nc" id="L397">        Calendar calDateB = Calendar.getInstance();</span>
+<span class="nc" id="L398">        calDateB.setTime(StringUtils.String2Date(date));</span>
+
+<span class="nc bnc" id="L400" title="All 2 branches missed.">        if (calDateA.get(Calendar.YEAR) &gt; calDateB.get(Calendar.YEAR)) {</span>
+<span class="nc" id="L401">            return false;</span>
+<span class="nc bnc" id="L402" title="All 2 branches missed.">        } else if (calDateA.get(Calendar.YEAR) == calDateB.get(Calendar.YEAR)) {</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">            if (calDateA.get(Calendar.MONTH) &gt; calDateB.get(Calendar.MONTH)) {</span>
+<span class="nc" id="L404">                return false;</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">            } else if (calDateA.get(Calendar.MONTH) == calDateB.get(Calendar.MONTH)) {</span>
+<span class="nc bnc" id="L406" title="All 2 branches missed.">                return calDateA.get(Calendar.DAY_OF_MONTH) &lt;= calDateB.get(Calendar.DAY_OF_MONTH);</span>
+            } else {
+<span class="nc" id="L408">                return true;</span>
+            }
+        } else {
+<span class="nc" id="L411">            return true;</span>
+        }
+    }
+
+    private TrainType getTrainTypeByName(String trainTypeName, HttpHeaders headers) {
+<span class="fc" id="L416">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="fc" id="L417">        String train_service_url = getServiceUrl(&quot;ts-train-service&quot;);</span>
+<span class="fc" id="L418">        ResponseEntity&lt;Response&lt;TrainType&gt;&gt; re = restTemplate.exchange(</span>
+                train_service_url + &quot;/api/v1/trainservice/trains/byName/&quot; + trainTypeName,
+                HttpMethod.GET,
+                requestEntity,
+<span class="fc" id="L422">                new ParameterizedTypeReference&lt;Response&lt;TrainType&gt;&gt;() {</span>
+                });
+
+<span class="fc" id="L425">        return re.getBody().getData();</span>
+    }
+
+    private Route getRouteByRouteId(String routeId, HttpHeaders headers) {
+<span class="fc" id="L429">        TravelServiceImpl.LOGGER.debug(&quot;[getRouteByRouteId][Get Route By Id][Route ID：{}]&quot;, routeId);</span>
+<span class="fc" id="L430">        HttpEntity requestEntity = new HttpEntity(null);</span>
+<span class="fc" id="L431">        String route_service_url = getServiceUrl(&quot;ts-route-service&quot;);</span>
+<span class="fc" id="L432">        ResponseEntity&lt;Response&gt; re = restTemplate.exchange(</span>
+                route_service_url + &quot;/api/v1/routeservice/routes/&quot; + routeId,
+                HttpMethod.GET,
+                requestEntity,
+                Response.class);
+<span class="fc" id="L437">        Response result = re.getBody();</span>
+
+<span class="pc bpc" id="L439" title="1 of 2 branches missed.">        if (result.getStatus() == 0 ) {</span>
+<span class="nc" id="L440">            TravelServiceImpl.LOGGER.error(&quot;[getRouteByRouteId][Get Route By Id Fail][Route not found][RouteId: {}]&quot;, routeId);</span>
+<span class="nc" id="L441">            return null;</span>
+        } else {
+<span class="fc" id="L443">            TravelServiceImpl.LOGGER.info(&quot;[getRouteByRouteId][Get Route By Id Success]&quot;);</span>
+<span class="fc" id="L444">            return JsonUtils.conveterObject(result.getData(), Route.class);</span>
+        }
+    }
+
+    private int getRestTicketNumber(String travelDate, String trainNumber, String startStationName, String endStationName, int seatType, int totalNum, List&lt;String&gt; stationList, HttpHeaders headers) {
+<span class="nc" id="L449">        Seat seatRequest = new Seat();</span>
+
+<span class="nc" id="L451">        seatRequest.setDestStation(endStationName);</span>
+<span class="nc" id="L452">        seatRequest.setStartStation(startStationName);</span>
+<span class="nc" id="L453">        seatRequest.setTrainNumber(trainNumber);</span>
+<span class="nc" id="L454">        seatRequest.setTravelDate(travelDate);</span>
+<span class="nc" id="L455">        seatRequest.setSeatType(seatType);</span>
+<span class="nc" id="L456">        seatRequest.setTotalNum(totalNum);</span>
+<span class="nc" id="L457">        seatRequest.setStations(stationList);</span>
+
+<span class="nc" id="L459">        TravelServiceImpl.LOGGER.info(&quot;[getRestTicketNumber][Seat request][request: {}]&quot;, seatRequest.toString());</span>
+
+<span class="nc" id="L461">        HttpEntity requestEntity = new HttpEntity(seatRequest, null);</span>
+<span class="nc" id="L462">        String seat_service_url = getServiceUrl(&quot;ts-seat-service&quot;);</span>
+<span class="nc" id="L463">        ResponseEntity&lt;Response&lt;Integer&gt;&gt; re = restTemplate.exchange(</span>
+                seat_service_url + &quot;/api/v1/seatservice/seats/left_tickets&quot;,
+                HttpMethod.POST,
+                requestEntity,
+<span class="nc" id="L467">                new ParameterizedTypeReference&lt;Response&lt;Integer&gt;&gt;() {</span>
+                });
+<span class="nc" id="L469">        TravelServiceImpl.LOGGER.info(&quot;[getRestTicketNumber][Get Rest tickets num][num is: {}]&quot;, re.getBody().toString());</span>
+
+<span class="nc" id="L471">        return re.getBody().getData();</span>
+    }
+
+    @Override
+    public Response adminQueryAll(HttpHeaders headers) {
+<span class="fc" id="L476">        List&lt;Trip&gt; trips = repository.findAll();</span>
+<span class="fc" id="L477">        ArrayList&lt;AdminTrip&gt; adminTrips = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L478" title="1 of 2 branches missed.">        if(trips != null){</span>
+<span class="fc bfc" id="L479" title="All 2 branches covered.">            for (Trip trip : trips) {</span>
+<span class="fc" id="L480">                AdminTrip adminTrip = new AdminTrip();</span>
+<span class="fc" id="L481">                adminTrip.setRoute(getRouteByRouteId(trip.getRouteId(), headers));</span>
+<span class="fc" id="L482">                adminTrip.setTrainType(getTrainTypeByName(trip.getTrainTypeName(), headers));</span>
+<span class="fc" id="L483">                adminTrip.setTrip(trip);</span>
+<span class="fc" id="L484">                adminTrips.add(adminTrip);</span>
+<span class="fc" id="L485">            }</span>
+        }
+
+<span class="pc bpc" id="L488" title="1 of 2 branches missed.">        if (!adminTrips.isEmpty()) {</span>
+<span class="fc" id="L489">            return new Response&lt;&gt;(1, &quot;Travel Service Admin Query All Travel Success&quot;, adminTrips);</span>
+        } else {
+<span class="nc" id="L491">            TravelServiceImpl.LOGGER.warn(&quot;[adminQueryAll][Admin query all trips warn][{}]&quot;,&quot;No Content&quot;);</span>
+<span class="nc" id="L492">            return new Response&lt;&gt;(0, noCnontent, null);</span>
+        }
+    }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

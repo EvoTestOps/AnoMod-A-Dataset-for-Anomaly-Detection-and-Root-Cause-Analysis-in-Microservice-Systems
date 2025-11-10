@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InitData.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">com.trainticket.init</a> &gt; <span class="el_source">InitData.java</span></div><h1>InitData.java</h1><pre class="source lang-java linenums">package com.trainticket.init;
+
+import com.trainticket.entity.Payment;
+import com.trainticket.repository.PaymentRepository;
+import com.trainticket.service.PaymentService;
+import edu.fudan.common.util.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+/**
+ * @author fdse
+ */
+@Component
+<span class="fc" id="L17">public class InitData implements CommandLineRunner {</span>
+    @Autowired
+    PaymentService service;
+
+    @Autowired
+    PaymentRepository paymentRepository;
+
+    @Override
+    public void run(String... args) throws Exception{
+
+<span class="fc" id="L27">        Payment payment = new Payment();</span>
+<span class="fc" id="L28">        payment.setId(&quot;5ad7750ba68b49c0a8c035276b067701&quot;);</span>
+<span class="fc" id="L29">        payment.setOrderId(&quot;5ad7750b-a68b-49c0-a8c0-32776b067701&quot;);</span>
+<span class="fc" id="L30">        payment.setPrice(&quot;10000.0&quot;);</span>
+<span class="fc" id="L31">        payment.setUserId(&quot;4d2a46c7-71cb-4cf1-b5bb-b68406d9da6f&quot;);</span>
+<span class="fc" id="L32">        service.initPayment(payment, null);</span>
+
+        /*Payment payment_1 = new Payment();
+        payment_1.setId(&quot;5ad7750ba68b49c0a8c035276b060000&quot;);
+        payment_1.setOrderId(&quot;5ad7750b-a68b-49c0-a8c0-32776b060000&quot;);
+        payment_1.setPrice(&quot;10000.0&quot;);
+        payment_1.setUserId(&quot;4d2a46c7-71cb-4cf1-b5bb-b68406d90000&quot;);
+        service.initPayment(payment_1, null);  //findById
+
+        Payment payment_2 = new Payment();
+        payment_2.setId(&quot;5ad7750ba68b49c0a8c035276b061111&quot;);
+        payment_2.setOrderId(&quot;5ad7750b-a68b-49c0-a8c0-32776b061111&quot;);
+        payment_2.setPrice(&quot;5000.0&quot;);
+        payment_2.setUserId(&quot;4d2a46c7-71cb-4cf1-b5bb-b68406d91111&quot;);
+        service.initPayment(payment_2, null);
+
+        Response r1 = service.query(null);  //findAll
+        List&lt;Payment&gt; payments = (List&lt;Payment&gt;) r1.getData();
+        System.out.println(payments.size());
+
+        Payment payment_3 = new Payment();
+        payment_3.setId(&quot;5ad7750ba68b49c0a8c035276b062222&quot;);
+        payment_3.setOrderId(&quot;5ad7750b-a68b-49c0-a8c0-32776b062222&quot;);
+        payment_3.setPrice(&quot;500.0&quot;);
+        payment_3.setUserId(&quot;4d2a46c7-71cb-4cf1-b5bb-b68406d92222&quot;);
+        service.pay(payment_3,null);  //findByOrderID
+
+        service.addMoney(payment_1,null); //addMoney
+        service.addMoney(payment_2,null); //addMoney*/
+
+<span class="fc" id="L62">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

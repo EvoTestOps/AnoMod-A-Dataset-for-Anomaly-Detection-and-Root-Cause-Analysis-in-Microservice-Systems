@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GatewayConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">gateway</a> &gt; <span class="el_source">GatewayConfiguration.java</span></div><h1>GatewayConfiguration.java</h1><pre class="source lang-java linenums">package gateway;
+
+import com.alibaba.csp.sentinel.adapter.gateway.common.rule.GatewayFlowRule;
+import com.alibaba.csp.sentinel.adapter.gateway.common.rule.GatewayRuleManager;
+import com.alibaba.csp.sentinel.adapter.gateway.sc.SentinelGatewayFilter;
+import com.alibaba.csp.sentinel.adapter.gateway.sc.callback.BlockRequestHandler;
+import com.alibaba.csp.sentinel.adapter.gateway.sc.callback.GatewayCallbackManager;
+import com.alibaba.csp.sentinel.adapter.gateway.sc.exception.SentinelGatewayBlockExceptionHandler;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerCodecConfigurer;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.reactive.result.view.ViewResolver;
+
+import javax.annotation.PostConstruct;
+import java.util.*;
+
+/**
+ * 网关配置类
+ *
+ * &lt;p&gt;主要是&lt;a href=&quot;https://sentinelguard.io/zh-cn/docs/api-gateway-flow-control.html&quot;&gt;基于sentinel的网关限流策略配置&lt;/a&gt;&lt;/p&gt;
+ *
+ * @author Akasaka Isami
+ * @since 2022-06-30 15:13:58
+ */
+
+@Configuration
+public class GatewayConfiguration {
+
+    private final List&lt;ViewResolver&gt; viewResolvers;
+    private final ServerCodecConfigurer serverCodecConfigurer;
+
+    public GatewayConfiguration(ObjectProvider&lt;List&lt;ViewResolver&gt;&gt; viewResolversProvider,
+<span class="fc" id="L42">                                ServerCodecConfigurer serverCodecConfigurer) {</span>
+<span class="fc" id="L43">        this.viewResolvers = viewResolversProvider.getIfAvailable(Collections::emptyList);</span>
+<span class="fc" id="L44">        this.serverCodecConfigurer = serverCodecConfigurer;</span>
+<span class="fc" id="L45">    }</span>
+
+
+    /**
+     * 配置限流的异常处理器
+     *
+     * @return 限流的异常处理器
+     */
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public SentinelGatewayBlockExceptionHandler sentinelGatewayBlockExceptionHandler() {
+        // Register the block exception handler for Spring Cloud Gateway.
+<span class="fc" id="L57">        return new SentinelGatewayBlockExceptionHandler(viewResolvers, serverCodecConfigurer);</span>
+    }
+
+    /**
+     * 初始化一个限流的过滤器
+     *
+     * @return 限流过滤器
+     */
+    @Bean
+    @Order(-1)
+    public GlobalFilter sentinelGatewayFilter() {
+<span class="fc" id="L68">        return new SentinelGatewayFilter();</span>
+    }
+
+    /**
+     * 配置初始化的限流参数
+     */
+    @PostConstruct
+    public void doInit() {
+<span class="fc" id="L76">        initGatewayRules();</span>
+//        initBlockHandlers();
+
+<span class="fc" id="L79">        System.out.println(&quot;===== begin to do flow control&quot;);</span>
+<span class="fc" id="L80">        System.out.println(&quot;only 20 requests per second can pass&quot;);</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * 注册函数用于实现自定义的逻辑处理被限流的请求
+     *
+     * &lt;p&gt;默认是返回错误信息： “Blocked by Sentinel: FlowException”。 这里自定义了异常处理，封装了自然语句。&lt;/p&gt;
+     */
+    private void initBlockHandlers() {
+<span class="nc" id="L89">        BlockRequestHandler blockRequestHandler = (serverWebExchange, throwable) -&gt; {</span>
+<span class="nc" id="L90">            Map&lt;Object, Object&gt; map = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L91">            map.put(&quot;code&quot;, 0);</span>
+<span class="nc" id="L92">            map.put(&quot;message&quot;, &quot;接口被限流了&quot;);</span>
+<span class="nc" id="L93">            return ServerResponse.status(HttpStatus.OK).</span>
+<span class="nc" id="L94">                    contentType(MediaType.APPLICATION_JSON_UTF8).</span>
+<span class="nc" id="L95">                    body(BodyInserters.fromObject(map));</span>
+        };
+<span class="nc" id="L97">        GatewayCallbackManager.setBlockHandler(blockRequestHandler);</span>
+<span class="nc" id="L98">    }</span>
+
+
+    /**
+     * 初始化流量控制规则
+     *
+     * &lt;p&gt;Sentinal 的流量控制只能基于 route 或自定义 api 分组，这里的限流还是基于 application.yml 中定义的路由（即每个服务）采用 QPS 流量控制策略。
+     * 当前是简单的对转发到 admin-basic-info-service 服务的流量做了QPS限制，每秒不超过20个请求。&lt;/p&gt;
+     */
+    private void initGatewayRules() {
+<span class="fc" id="L108">        Set&lt;GatewayFlowRule&gt; rules = new HashSet&lt;&gt;();</span>
+
+        // 对于转发到 admin-basic-info 的请求 set limit qps to 20
+        // qps 超过 20 直接拒绝
+<span class="fc" id="L112">        rules.add(new GatewayFlowRule(&quot;admin-basic-info&quot;) //资源名称，对应路由 id</span>
+<span class="fc" id="L113">                .setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_DEFAULT)</span>
+<span class="fc" id="L114">                .setCount(20) // 限流qps阈值</span>
+<span class="fc" id="L115">                .setIntervalSec(1) // 统计时间窗口，单位是秒，默认是 1 秒</span>
+        );
+
+<span class="fc" id="L118">        GatewayRuleManager.loadRules(rules);</span>
+<span class="fc" id="L119">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

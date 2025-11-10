@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Delivery.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">delivery.entity</a> &gt; <span class="el_source">Delivery.java</span></div><h1>Delivery.java</h1><pre class="source lang-java linenums">package delivery.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.hibernate.annotations.GeneratorType;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.GenericGenerators;
+
+import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Entity;
+import java.util.UUID;
+
+<span class="pc bnc" id="L16" title="All 46 branches missed.">@Data</span>
+<span class="nc" id="L17">@AllArgsConstructor</span>
+@Entity
+@GenericGenerator(name = &quot;jpa-uuid&quot;, strategy = &quot;org.hibernate.id.UUIDGenerator&quot;)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Delivery {
+<span class="fc" id="L22">    public Delivery() {</span>
+        //Default Constructor
+<span class="fc" id="L24">    }</span>
+
+    @Id
+    @GeneratedValue(generator = &quot;jpa-uuid&quot;)
+    @Column(length = 36)
+<span class="fc" id="L29">    private String id;</span>
+
+<span class="fc" id="L31">    private UUID orderId;</span>
+<span class="fc" id="L32">    private String foodName;</span>
+<span class="fc" id="L33">    private String storeName;</span>
+<span class="fc" id="L34">    private String stationName;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

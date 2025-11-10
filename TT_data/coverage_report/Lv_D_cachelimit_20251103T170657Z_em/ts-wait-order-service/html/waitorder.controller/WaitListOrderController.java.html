@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WaitListOrderController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">waitorder.controller</a> &gt; <span class="el_source">WaitListOrderController.java</span></div><h1>WaitListOrderController.java</h1><pre class="source lang-java linenums">package waitorder.controller;
+
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+import waitorder.entity.WaitListOrderVO;
+import waitorder.service.WaitListOrderService;
+
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/waitorderservice&quot;)
+<span class="fc" id="L21">public class WaitListOrderController {</span>
+
+    @Autowired
+    private WaitListOrderService waitListOrderService;
+
+<span class="fc" id="L26">    private static final Logger LOGGER = LoggerFactory.getLogger(WaitListOrderController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="nc" id="L30">        return &quot;Welcome to [ Wait Order Service ] !&quot;;</span>
+    }
+
+    @PostMapping(path = &quot;/order&quot;)
+    public HttpEntity createNewOrder(@RequestBody WaitListOrderVO createOrder, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L35">        WaitListOrderController.LOGGER.info(&quot;[createWaitOrder][Create Wait Order][from {} to {} at {}]&quot;, createOrder.getFrom(), createOrder.getTo(), createOrder.getDate());</span>
+<span class="nc" id="L36">        return ok(waitListOrderService.create(createOrder, headers));</span>
+    }
+
+    @GetMapping(path = &quot;/orders&quot;)
+    public HttpEntity getAllOrders(@RequestHeader HttpHeaders headers){
+<span class="nc" id="L41">        LOGGER.info(&quot;[getAllOrders][Get All Orders]&quot;);</span>
+<span class="nc" id="L42">        return ok(waitListOrderService.getAllOrders(headers));</span>
+    }
+
+    @GetMapping(path = &quot;/waitlistorders&quot;)
+    public HttpEntity getWaitListOrders(@RequestHeader HttpHeaders headers){
+<span class="nc" id="L47">        LOGGER.info(&quot;[getWaitListOrders][Get All Wait List Orders]&quot;);</span>
+<span class="nc" id="L48">        return ok(waitListOrderService.getAllWaitListOrders(headers));</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

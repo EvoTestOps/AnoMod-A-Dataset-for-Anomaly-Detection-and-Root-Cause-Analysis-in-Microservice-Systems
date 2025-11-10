@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TravelPlanController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">travelplan.controller</a> &gt; <span class="el_source">TravelPlanController.java</span></div><h1>TravelPlanController.java</h1><pre class="source lang-java linenums">package travelplan.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+import edu.fudan.common.entity.TripInfo;
+import travelplan.entity.TransferTravelInfo;
+import travelplan.service.TravelPlanService;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;api/v1/travelplanservice&quot;)
+<span class="fc" id="L20">public class TravelPlanController {</span>
+
+    @Autowired
+    TravelPlanService travelPlanService;
+
+<span class="fc" id="L25">    private static final Logger LOGGER = LoggerFactory.getLogger(TravelPlanController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot; )
+    public String home() {
+<span class="fc" id="L29">        return &quot;Welcome to [ TravelPlan Service ] !&quot;;</span>
+    }
+
+    @PostMapping(value=&quot;/travelPlan/transferResult&quot; )
+    public HttpEntity getTransferResult(@RequestBody TransferTravelInfo info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L34">        TravelPlanController.LOGGER.info(&quot;[getTransferSearch][Search Transit][start: {},end: {}]&quot;,info.getStartStation(),info.getEndStation());</span>
+<span class="nc" id="L35">        return ok(travelPlanService.getTransferSearch(info, headers));</span>
+    }
+
+    @PostMapping(value=&quot;/travelPlan/cheapest&quot;)
+    public HttpEntity getByCheapest(@RequestBody TripInfo queryInfo, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L40">        TravelPlanController.LOGGER.info(&quot;[getCheapest][Search Cheapest][start: {},end: {},time: {}]&quot;,queryInfo.getStartPlace(),queryInfo.getEndPlace(),queryInfo.getDepartureTime());</span>
+<span class="nc" id="L41">        return ok(travelPlanService.getCheapest(queryInfo, headers));</span>
+    }
+
+    @PostMapping(value=&quot;/travelPlan/quickest&quot;)
+    public HttpEntity getByQuickest(@RequestBody TripInfo queryInfo, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L46">        TravelPlanController.LOGGER.info(&quot;[getQuickest][Search Quickest][start: {},end: {},time: {}]&quot;,queryInfo.getStartPlace(),queryInfo.getEndPlace(),queryInfo.getDepartureTime());</span>
+<span class="nc" id="L47">        return ok(travelPlanService.getQuickest(queryInfo, headers));</span>
+    }
+
+    @PostMapping(value=&quot;/travelPlan/minStation&quot;)
+    public HttpEntity getByMinStation(@RequestBody TripInfo queryInfo, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L52">        TravelPlanController.LOGGER.info(&quot;[getMinStation][Search Min Station][start: {},end: {},time: {}]&quot;,queryInfo.getStartPlace(),queryInfo.getEndPlace(),queryInfo.getDepartureTime());</span>
+<span class="nc" id="L53">        return ok(travelPlanService.getMinStation(queryInfo, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

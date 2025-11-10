@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PollThread.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">waitorder.utils</a> &gt; <span class="el_source">PollThread.java</span></div><h1>PollThread.java</h1><pre class="source lang-java linenums">package waitorder.utils;
+
+import edu.fudan.common.entity.Contacts;
+import edu.fudan.common.util.Response;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import waitorder.entity.WaitListOrderStatus;
+import waitorder.entity.WaitListOrderVO;
+import waitorder.service.WaitListOrderService;
+
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
+public class PollThread extends Thread{
+
+    private Date waitUntil;
+
+    private WaitListOrderVO waitListOrderVO;
+
+    private HttpHeaders httpHeaders;
+
+    private RestTemplate restTemplate;
+
+    private WaitListOrderService waitListOrderService;
+
+<span class="nc" id="L30">    final static Integer INTERVAL_MINUTES=5;</span>
+
+<span class="nc" id="L32">    public PollThread(Date waitUntilTime,WaitListOrderService service, WaitListOrderVO order, RestTemplate template, HttpHeaders headers){</span>
+<span class="nc" id="L33">        restTemplate=template;</span>
+<span class="nc" id="L34">        httpHeaders=headers;</span>
+<span class="nc" id="L35">        waitListOrderVO=order;</span>
+<span class="nc" id="L36">        waitListOrderService =service;</span>
+<span class="nc" id="L37">        waitUntil=waitUntilTime;</span>
+<span class="nc" id="L38">    }</span>
+
+
+    @Override
+    public void run() {
+<span class="nc" id="L43">        String service_url=getServiceUrl(&quot;ts-preserve-service&quot;);</span>
+<span class="nc" id="L44">        HttpEntity requestEntityPreserve = new HttpEntity(waitListOrderVO,httpHeaders);</span>
+
+        //TODO compare with waitUntilTime
+        while(true){
+<span class="nc" id="L48">            long currentTime=System.currentTimeMillis();</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">            if(waitUntil.getTime()&gt;currentTime){</span>
+                // expired
+<span class="nc" id="L51">                waitListOrderService.modifyWaitListOrderStatus(WaitListOrderStatus.EXPIRED.getCode(), waitListOrderVO.getAccountId());</span>
+<span class="nc" id="L52">                break;</span>
+            }
+<span class="nc" id="L54">            Response postResult=doPreserve(service_url,requestEntityPreserve);</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">            if(postResult.getStatus()==0){</span>
+                //预定失败
+                try {
+<span class="nc" id="L58">                    TimeUnit.MINUTES.sleep(INTERVAL_MINUTES);</span>
+<span class="nc" id="L59">                } catch (InterruptedException e) {</span>
+<span class="nc" id="L60">                    e.printStackTrace();</span>
+<span class="nc" id="L61">                }</span>
+            } else{
+                // preserve success
+<span class="nc" id="L64">                waitListOrderService.modifyWaitListOrderStatus(WaitListOrderStatus.COLLECTED.getCode(),waitListOrderVO.getAccountId());</span>
+<span class="nc" id="L65">                break;</span>
+            }
+<span class="nc" id="L67">        }</span>
+<span class="nc" id="L68">    }</span>
+
+    private String getServiceUrl(String serviceName) {
+<span class="nc" id="L71">        return &quot;http://&quot; + serviceName;</span>
+    }
+
+    private Response doPreserve(String url, HttpEntity requestParam){
+<span class="nc" id="L75">        ResponseEntity&lt;Response&lt;Contacts&gt;&gt; rePostPreserveResult = restTemplate.exchange(</span>
+                url + &quot;/api/v1/contactservice/preserve&quot;,
+                HttpMethod.POST,
+                requestParam,
+<span class="nc" id="L79">                new ParameterizedTypeReference&lt;Response&lt;Contacts&gt;&gt;() {</span>
+                });
+<span class="nc" id="L81">        return rePostPreserveResult.getBody();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SeatController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">seat.controller</a> &gt; <span class="el_source">SeatController.java</span></div><h1>SeatController.java</h1><pre class="source lang-java linenums">package seat.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+import edu.fudan.common.entity.Seat;
+import seat.service.SeatService;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/seatservice&quot;)
+<span class="fc" id="L19">public class SeatController {</span>
+
+    @Autowired
+    private SeatService seatService;
+
+<span class="fc" id="L24">    private static final Logger LOGGER = LoggerFactory.getLogger(SeatController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home() {
+<span class="fc" id="L28">        return &quot;Welcome to [ Seat Service ] !&quot;;</span>
+    }
+
+    /**
+     * Assign seats by seat request
+     *
+     * @param seatRequest seat request
+     * @param headers headers
+     * @return HttpEntity
+     */
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/seats&quot;)
+    public HttpEntity create(@RequestBody Seat seatRequest, @RequestHeader HttpHeaders headers) {
+<span class="fc" id="L41">        SeatController.LOGGER.info(&quot;[distributeSeat][Create seat][TravelDate: {},TrainNumber: {},SeatType: {}]&quot;,seatRequest.getTravelDate(),seatRequest.getTrainNumber(),seatRequest.getSeatType());</span>
+<span class="fc" id="L42">        return ok(seatService.distributeSeat(seatRequest, headers));</span>
+    }
+
+    /**
+     * get left ticket of interval
+     * query specific interval residual
+     *
+     * @param seatRequest seat request
+     * @param headers headers
+     * @return HttpEntity
+     */
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(value = &quot;/seats/left_tickets&quot;)
+    public HttpEntity getLeftTicketOfInterval(@RequestBody Seat seatRequest, @RequestHeader HttpHeaders headers) {
+        // int
+<span class="nc" id="L57">        SeatController.LOGGER.info(&quot;[getLeftTicketOfInterval][Get left ticket of interval][TravelDate: {},TrainNumber: {},SeatType: {}]&quot;,seatRequest.getTravelDate(),seatRequest.getTrainNumber(),seatRequest.getSeatType());</span>
+<span class="nc" id="L58">        return ok(seatService.getLeftTicketOfInterval(seatRequest, headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

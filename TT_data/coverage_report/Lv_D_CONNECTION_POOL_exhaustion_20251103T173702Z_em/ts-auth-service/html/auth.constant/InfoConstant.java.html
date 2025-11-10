@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InfoConstant.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">auth.constant</a> &gt; <span class="el_source">InfoConstant.java</span></div><h1>InfoConstant.java</h1><pre class="source lang-java linenums">package auth.constant;
+
+/**
+ * @author fdse
+ */
+public class InfoConstant {
+
+<span class="nc" id="L8">    private InfoConstant() {</span>
+<span class="nc" id="L9">        throw new IllegalStateException(&quot;Utility class&quot;);</span>
+    }
+
+    // User service information. If require params, the suffix number is the number of params
+
+    public static final String DUPLICATE = &quot;Duplicate&quot;;
+    public static final String USER_HAS_ALREADY_EXIST = &quot;User has already exist.&quot;;
+    public static final String PROPERTIES_CANNOT_BE_EMPTY_1 = &quot;{0} cannot be empty.&quot;;
+    public static final String USER_IS_NOT_EXIST_2 = &quot;User is not exist, {0}: {1}.&quot;;
+    public static final String PASSWORD_LEAST_CHAR_1 = &quot;Passwords must contain at least {0} characters.&quot;; //NOSONAR
+    public static final String USER_NAME_NOT_FOUND_1 = &quot;Username not found: {0}.&quot;;
+
+    // User properties
+
+    public static final String ID = &quot;id&quot;;
+    public static final String USERNAME = &quot;username&quot;;
+    public static final String PASSWORD = &quot;password&quot;; //NOSONAR
+    public static final String ROLES = &quot;roles&quot;;
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

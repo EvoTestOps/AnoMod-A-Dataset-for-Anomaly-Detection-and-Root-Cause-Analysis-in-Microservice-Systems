@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ContactsController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">contacts.controller</a> &gt; <span class="el_source">ContactsController.java</span></div><h1>ContactsController.java</h1><pre class="source lang-java linenums">package contacts.controller;
+
+import contacts.entity.*;
+import edu.fudan.common.util.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import contacts.service.ContactsService;
+
+import java.util.UUID;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;api/v1/contactservice&quot;)
+<span class="fc" id="L21">public class ContactsController {</span>
+
+
+    @Autowired
+    private ContactsService contactsService;
+
+<span class="fc" id="L27">    private static final Logger LOGGER = LoggerFactory.getLogger(ContactsController.class);</span>
+
+    @GetMapping(path = &quot;/contacts/welcome&quot;)
+    public String home() {
+<span class="nc" id="L31">        return &quot;Welcome to [ Contacts Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/contacts&quot;)
+    public HttpEntity getAllContacts(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L37">        ContactsController.LOGGER.info(&quot;[getAllContacts][Get All Contacts]&quot;);</span>
+<span class="nc" id="L38">        return ok(contactsService.getAllContacts(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/contacts&quot;)
+    public ResponseEntity&lt;Response&gt; createNewContacts(@RequestBody Contacts aci,
+                                                      @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L45">        ContactsController.LOGGER.info(&quot;[createNewContacts][VerifyLogin Success]&quot;);</span>
+<span class="nc" id="L46">        return new ResponseEntity&lt;&gt;(contactsService.create(aci, headers), HttpStatus.CREATED);</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PostMapping(path = &quot;/contacts/admin&quot;)
+    public HttpEntity&lt;?&gt; createNewContactsAdmin(@RequestBody Contacts aci, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L52">        aci.setId(UUID.randomUUID().toString());</span>
+<span class="nc" id="L53">        ContactsController.LOGGER.info(&quot;[createNewContactsAdmin][Create Contacts In Admin]&quot;);</span>
+<span class="nc" id="L54">        return new ResponseEntity&lt;&gt;(contactsService.createContacts(aci, headers), HttpStatus.CREATED);</span>
+    }
+
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/contacts/{contactsId}&quot;)
+    public HttpEntity deleteContacts(@PathVariable String contactsId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L61">        return ok(contactsService.delete(contactsId, headers));</span>
+    }
+
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PutMapping(path = &quot;/contacts&quot;)
+    public HttpEntity modifyContacts(@RequestBody Contacts info, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L68">        ContactsController.LOGGER.info(&quot;[Contacts modifyContacts][Modify Contacts] ContactsId: {}&quot;, info.getId());</span>
+<span class="nc" id="L69">        return ok(contactsService.modify(info, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/contacts/account/{accountId}&quot;)
+    public HttpEntity findContactsByAccountId(@PathVariable String accountId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L75">        ContactsController.LOGGER.info(&quot;[findContactsByAccountId][Find Contacts By Account Id][accountId: {}]&quot;, accountId);</span>
+<span class="nc" id="L76">        ContactsController.LOGGER.info(&quot;[ContactsService][VerifyLogin Success]&quot;);</span>
+<span class="nc" id="L77">        return ok(contactsService.findContactsByAccountId(accountId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/contacts/{id}&quot;)
+    public HttpEntity getContactsByContactsId(@PathVariable String id, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L83">        ContactsController.LOGGER.info(&quot;[ContactsService][Contacts Id Print][id: {}]&quot;, id);</span>
+<span class="nc" id="L84">        ContactsController.LOGGER.info(&quot;[ContactsService][VerifyLogin Success]&quot;);</span>
+<span class="nc" id="L85">        return ok(contactsService.findContactsById(id, headers));</span>
+    }
+
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Consign.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">consign.entity</a> &gt; <span class="el_source">Consign.java</span></div><h1>Consign.java</h1><pre class="source lang-java linenums">package consign.entity;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
+
+import javax.persistence.*;
+
+
+/**
+ * @author fdse
+ */
+<span class="nc bnc" id="L14" title="All 84 branches missed.">@Data</span>
+<span class="nc" id="L15">@AllArgsConstructor</span>
+<span class="nc" id="L16">@NoArgsConstructor</span>
+@GenericGenerator(name=&quot;jpa-uuid&quot;,strategy =&quot;uuid&quot;)
+public class Consign {
+    @Id
+    @GeneratedValue(generator = &quot;jpa-uuid&quot;)
+    @Column(length = 36)
+<span class="nc" id="L22">    private String id;        //id主键改成String类型的 自定义生成策略</span>
+<span class="nc" id="L23">    private String orderId;   //这次托运关联订单</span>
+<span class="nc" id="L24">    private String accountId;  //这次托运关联的账户</span>
+
+<span class="nc" id="L26">    private String handleDate;</span>
+<span class="nc" id="L27">    private String targetDate;</span>
+<span class="nc" id="L28">    private String from;</span>
+<span class="nc" id="L29">    private String to;</span>
+<span class="nc" id="L30">    private String consignee;</span>
+<span class="nc" id="L31">    private String phone;</span>
+<span class="nc" id="L32">    private double weight;</span>
+<span class="nc" id="L33">    private boolean isWithin;</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

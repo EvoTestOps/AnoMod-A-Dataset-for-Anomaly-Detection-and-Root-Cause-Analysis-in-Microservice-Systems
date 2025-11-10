@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrainServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">train.service</a> &gt; <span class="el_source">TrainServiceImpl.java</span></div><h1>TrainServiceImpl.java</h1><pre class="source lang-java linenums">package train.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import train.entity.TrainType;
+import train.repository.TrainTypeRepository;
+
+import java.util.List;
+
+@Service
+<span class="fc" id="L15">public class TrainServiceImpl implements TrainService {</span>
+
+    @Autowired
+    private TrainTypeRepository repository;
+
+<span class="fc" id="L20">    private static final Logger LOGGER = LoggerFactory.getLogger(TrainServiceImpl.class);</span>
+
+    @Override
+    public boolean create(TrainType trainType, HttpHeaders headers) {
+<span class="fc" id="L24">        boolean result = false;</span>
+<span class="pc bpc" id="L25" title="1 of 2 branches missed.">        if(trainType.getName().isEmpty()){</span>
+<span class="nc" id="L26">            TrainServiceImpl.LOGGER.error(&quot;[create][Create train error][Train Type name not specified]&quot;);</span>
+<span class="nc" id="L27">            return result;</span>
+        }
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        if (repository.findByName(trainType.getName()) == null) {</span>
+<span class="nc" id="L30">            TrainType type = new TrainType(trainType.getName(), trainType.getEconomyClass(), trainType.getConfortClass());</span>
+<span class="nc" id="L31">            type.setAverageSpeed(trainType.getAverageSpeed());</span>
+<span class="nc" id="L32">            repository.save(type);</span>
+<span class="nc" id="L33">            result = true;</span>
+<span class="nc" id="L34">        }</span>
+        else {
+<span class="fc" id="L36">            TrainServiceImpl.LOGGER.error(&quot;[create][Create train error][Train already exists][TrainTypeId: {}]&quot;,trainType.getId());</span>
+        }
+<span class="fc" id="L38">        return result;</span>
+    }
+
+    @Override
+    public TrainType retrieve(String id, HttpHeaders headers) {
+<span class="pc bpc" id="L43" title="1 of 2 branches missed.">        if (!repository.findById(id).isPresent()) {</span>
+<span class="fc" id="L44">            TrainServiceImpl.LOGGER.error(&quot;[retrieve][Retrieve train error][Train not found][TrainTypeId: {}]&quot;,id);</span>
+<span class="fc" id="L45">            return null;</span>
+        } else {
+<span class="nc" id="L47">            return repository.findById(id).get();</span>
+        }
+    }
+
+    @Override
+    public TrainType retrieveByName(String name, HttpHeaders headers) {
+<span class="fc" id="L53">        TrainType tt = repository.findByName(name);</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (tt == null) {</span>
+<span class="fc" id="L55">            TrainServiceImpl.LOGGER.error(&quot;[retrieveByName][RetrieveByName error][Train not found][TrainTypeName: {}]&quot;, name);</span>
+<span class="fc" id="L56">            return null;</span>
+        } else {
+<span class="fc" id="L58">            return tt;</span>
+        }
+    }
+
+    @Override
+    public List&lt;TrainType&gt; retrieveByNames(List&lt;String&gt; names, HttpHeaders headers) {
+<span class="fc" id="L64">        List&lt;TrainType&gt; tt = repository.findByNames(names);</span>
+<span class="pc bpc" id="L65" title="2 of 4 branches missed.">        if (tt == null || tt.isEmpty()) {</span>
+<span class="fc" id="L66">            TrainServiceImpl.LOGGER.error(&quot;[retrieveByNames][RetrieveByNames error][Train not found][TrainTypeNames: {}]&quot;, names);</span>
+<span class="fc" id="L67">            return null;</span>
+        } else {
+<span class="nc" id="L69">            return tt;</span>
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean update(TrainType trainType, HttpHeaders headers) {
+<span class="fc" id="L76">        boolean result = false;</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        if (repository.findById(trainType.getId()).isPresent()) {</span>
+<span class="nc" id="L78">            TrainType type = new TrainType(trainType.getName(), trainType.getEconomyClass(), trainType.getConfortClass(), trainType.getAverageSpeed());</span>
+<span class="nc" id="L79">            type.setId(trainType.getId());</span>
+<span class="nc" id="L80">            repository.save(type);</span>
+<span class="nc" id="L81">            result = true;</span>
+<span class="nc" id="L82">        }</span>
+        else {
+<span class="fc" id="L84">            TrainServiceImpl.LOGGER.error(&quot;[update][Update train error][Train not found][TrainTypeId: {}]&quot;,trainType.getId());</span>
+        }
+<span class="fc" id="L86">        return result;</span>
+    }
+
+    @Override
+    public boolean delete(String id, HttpHeaders headers) {
+<span class="fc" id="L91">        boolean result = false;</span>
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (repository.findById(id).isPresent()) {</span>
+<span class="nc" id="L93">            repository.deleteById(id);</span>
+<span class="nc" id="L94">            result = true;</span>
+        }
+        else {
+<span class="fc" id="L97">            TrainServiceImpl.LOGGER.error(&quot;[delete][Delete train error][Train not found][TrainTypeId: {}]&quot;,id);</span>
+        }
+<span class="fc" id="L99">        return result;</span>
+    }
+
+    @Override
+    public List&lt;TrainType&gt; query(HttpHeaders headers) {
+<span class="fc" id="L104">        return repository.findAll();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

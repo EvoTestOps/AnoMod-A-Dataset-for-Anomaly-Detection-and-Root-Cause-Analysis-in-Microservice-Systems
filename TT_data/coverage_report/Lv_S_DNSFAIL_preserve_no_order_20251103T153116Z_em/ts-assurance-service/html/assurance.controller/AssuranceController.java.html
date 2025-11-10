@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AssuranceController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCo Coverage Report</a> &gt; <a href="index.source.html" class="el_package">assurance.controller</a> &gt; <span class="el_source">AssuranceController.java</span></div><h1>AssuranceController.java</h1><pre class="source lang-java linenums">package assurance.controller;
+
+import assurance.service.AssuranceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+import static org.springframework.http.ResponseEntity.ok;
+
+/**
+ * @author fdse
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/assuranceservice&quot;)
+<span class="fc" id="L20">public class AssuranceController {</span>
+
+    @Autowired
+    private AssuranceService assuranceService;
+
+<span class="fc" id="L25">    private static final Logger LOGGER = LoggerFactory.getLogger(AssuranceController.class);</span>
+
+    @GetMapping(path = &quot;/welcome&quot;)
+    public String home(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L29">        return &quot;Welcome to [ Assurance Service ] !&quot;;</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/assurances&quot;)
+    public HttpEntity getAllAssurances(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L35">        AssuranceController.LOGGER.info(&quot;[getAllAssurances][Get All Assurances]&quot;);</span>
+<span class="nc" id="L36">        return ok(assuranceService.getAllAssurances(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/assurances/types&quot;)
+    public HttpEntity getAllAssuranceType(@RequestHeader HttpHeaders headers) {
+<span class="nc" id="L42">        AssuranceController.LOGGER.info(&quot;[getAllAssuranceType][Get Assurance Type]&quot;);</span>
+<span class="nc" id="L43">        return ok(assuranceService.getAllAssuranceTypes(headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/assurances/assuranceid/{assuranceId}&quot;)
+    public HttpEntity deleteAssurance(@PathVariable String assuranceId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L49">        AssuranceController.LOGGER.info(&quot;[deleteAssurance][Delete Assurance][assuranceId: {}]&quot;, assuranceId);</span>
+<span class="nc" id="L50">        return ok(assuranceService.deleteById(UUID.fromString(assuranceId), headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @DeleteMapping(path = &quot;/assurances/orderid/{orderId}&quot;)
+    public HttpEntity deleteAssuranceByOrderId(@PathVariable String orderId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L56">        AssuranceController.LOGGER.info(&quot;[deleteAssuranceByOrderId][Delete Assurance by orderId][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L57">        return ok(assuranceService.deleteByOrderId(UUID.fromString(orderId), headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @PatchMapping(path = &quot;/assurances/{assuranceId}/{orderId}/{typeIndex}&quot;)
+    public HttpEntity modifyAssurance(@PathVariable String assuranceId,
+                                      @PathVariable String orderId,
+                                      @PathVariable int typeIndex, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L65">        AssuranceController.LOGGER.info(&quot;[modifyAssurance][Modify Assurance][assuranceId: {}, orderId: {}, typeIndex: {}]&quot;,</span>
+<span class="nc" id="L66">                assuranceId, orderId, typeIndex);</span>
+<span class="nc" id="L67">        return ok(assuranceService.modify(assuranceId, orderId, typeIndex, headers));</span>
+    }
+
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/assurances/{typeIndex}/{orderId}&quot;)
+    public HttpEntity createNewAssurance(@PathVariable int typeIndex, @PathVariable String orderId, @RequestHeader HttpHeaders headers) {
+        //Assurance
+<span class="nc" id="L75">        AssuranceController.LOGGER.info(&quot;[createNewAssurance][Create new assurance][typeIndex: {}, orderId: {}]&quot;, typeIndex, orderId);</span>
+<span class="nc" id="L76">        return ok(assuranceService.create(typeIndex, orderId, headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/assurances/assuranceid/{assuranceId}&quot;)
+    public HttpEntity getAssuranceById(@PathVariable String assuranceId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L82">        AssuranceController.LOGGER.info(&quot;[getAssuranceById][Find assurance by assuranceId][assureId: {}]&quot;, assuranceId);</span>
+<span class="nc" id="L83">        return ok(assuranceService.findAssuranceById(UUID.fromString(assuranceId), headers));</span>
+    }
+
+    @CrossOrigin(origins = &quot;*&quot;)
+    @GetMapping(path = &quot;/assurance/orderid/{orderId}&quot;)
+    public HttpEntity findAssuranceByOrderId(@PathVariable String orderId, @RequestHeader HttpHeaders headers) {
+<span class="nc" id="L89">        AssuranceController.LOGGER.info(&quot;[findAssuranceByOrderId][Find assurance by orderId][orderId: {}]&quot;, orderId);</span>
+<span class="nc" id="L90">        return ok(assuranceService.findAssuranceByOrderId(UUID.fromString(orderId), headers));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
