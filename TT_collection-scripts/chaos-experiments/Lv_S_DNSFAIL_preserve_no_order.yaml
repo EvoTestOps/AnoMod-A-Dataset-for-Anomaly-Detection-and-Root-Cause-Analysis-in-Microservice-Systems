@@ -1,0 +1,21 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: DNSChaos
+metadata:
+  name: preserve-dns-no-order
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-preserve-dns-no-order"
+    anomaly_level: "service"
+    anomaly_type: "dns_failure"
+    target_service: "ts-preserve-service"
+spec:
+  action: error
+  mode: one
+  # duration: "120s"
+  selector:
+    namespaces: ["default"]
+    labelSelectors:
+      app: "ts-preserve-service"
+  patterns:
+    - "ts-order-service*"        # Can't resolve order service
+    - "ts-order-other-service*"  # Can't resolve order-other service

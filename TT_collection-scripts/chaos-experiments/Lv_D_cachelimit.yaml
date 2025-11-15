@@ -1,0 +1,22 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: db-cache-limit
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-db-cache-limit"
+    anomaly_level: "database"
+    anomaly_type: "cache_limit"
+    target_service: "tsdb-mysql"
+spec:
+  mode: fixed-percent
+  value: "100"
+  selector:
+    namespaces: ["default"]
+    labelSelectors:
+      app: "tsdb-mysql"
+  # No duration = runs until manually stopped
+  stressors:
+    memory:
+      workers: 1
+      size: "85%" 

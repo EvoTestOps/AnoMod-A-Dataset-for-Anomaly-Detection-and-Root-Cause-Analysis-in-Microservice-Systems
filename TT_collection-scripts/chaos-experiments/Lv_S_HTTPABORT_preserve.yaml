@@ -1,0 +1,25 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: HTTPChaos
+metadata:
+  name: preserve-http-abort
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-preserve-http-abort"
+    anomaly_level: "service"
+    anomaly_type: "http_fault"
+    target_service: "ts-preserve-service"
+spec:
+  mode: fixed-percent
+  value: "70"  # 70% of requests fail
+  # No duration = runs until manually stopped
+  selector:
+    namespaces: ["default"]
+    labelSelectors:
+      app: "ts-preserve-service"
+  target: Request
+  port: 14568  # ts-preserve-service port
+  method: POST
+  path: "/api/v1/preserveservice/*"
+  abort: true
+  replace:
+    code: 503  # Service Unavailable

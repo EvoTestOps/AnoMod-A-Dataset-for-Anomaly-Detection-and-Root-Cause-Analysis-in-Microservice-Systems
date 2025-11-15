@@ -1,0 +1,22 @@
+# Scheduled Order Service Kill - Service Level Anomaly
+# This experiment kills ts-order-service pods every 3 seconds
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: order-kill-scheduled
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-order-kill-scheduled"
+    anomaly_level: "service"
+    anomaly_type: "kill_service_instance"
+    target_service: "ts-order-service"
+spec:
+  schedule: '@every 3s'
+  type: 'PodChaos'
+  podChaos:
+    action: pod-kill
+    mode: one
+    selector:
+      namespaces: ["default"]
+      labelSelectors:
+        app: "ts-order-service" 

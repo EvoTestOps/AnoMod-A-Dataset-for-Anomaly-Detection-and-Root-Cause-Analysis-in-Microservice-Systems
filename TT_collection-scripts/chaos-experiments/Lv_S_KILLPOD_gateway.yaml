@@ -1,0 +1,22 @@
+# Scheduled Gateway Service Kill - Service Level Anomaly
+# This experiment kills ts-gateway-service pods every 3 seconds
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: gateway-kill-scheduled
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-gateway-kill-scheduled"
+    anomaly_level: "service"
+    anomaly_type: "kill_service_instance"
+    target_service: "ts-gateway-service"
+spec:
+  schedule: '@every 3s'
+  type: 'PodChaos'
+  podChaos:
+    action: pod-kill
+    mode: one
+    selector:
+      namespaces: ["default"]
+      labelSelectors:
+        app: "ts-gateway-service"

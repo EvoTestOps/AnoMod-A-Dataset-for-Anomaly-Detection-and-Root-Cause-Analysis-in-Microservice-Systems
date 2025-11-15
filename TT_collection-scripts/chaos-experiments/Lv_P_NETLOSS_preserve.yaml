@@ -1,0 +1,22 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: preserve-network-loss
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-preserve-network-loss"
+    anomaly_level: "performance"
+    anomaly_type: "network_loss"
+    target_service: "ts-preserve-service"
+spec:
+  mode: fixed-percent
+  value: "100"  # Affect all preserve service pods
+  selector:
+    namespaces: ["default"]
+    labelSelectors:
+      app: "ts-preserve-service"
+  # No duration = runs until manually stopped
+  action: loss
+  loss:
+    loss: "90"      # 90% packet loss rate
+    correlation: "0"   # No correlation between consecutive losses

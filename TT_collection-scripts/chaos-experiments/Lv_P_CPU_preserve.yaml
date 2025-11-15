@@ -1,0 +1,22 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: preserve-cpu-contention
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-preserve-cpu-contention"
+    anomaly_level: "performance"
+    anomaly_type: "cpu_contention"
+    target_service: "ts-preserve-service"
+spec:
+  mode: fixed-percent
+  value: "100"  # Affect all preserve service pods
+  selector:
+    namespaces: ["default"]
+    labelSelectors:
+      app: "ts-preserve-service"
+  # No duration = runs until manually stopped
+  stressors:
+    cpu:
+      workers: 2      # 2 CPU stress workers
+      load: 80        # 80% CPU load per worker

@@ -1,0 +1,32 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: db-connection-pool-exhaustion
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-db-connection-pool-exhaustion"
+    anomaly_level: "database"
+    anomaly_type: "connection_pool_exhaustion"
+    target_service: "tsdb-mysql"
+spec:
+  mode: all
+  selector:
+    namespaces: ["default"]
+    labelSelectors:
+      app: "tsdb-mysql"  # Target the main database
+  # No duration = runs until manually stopped
+  action: delay
+  delay:
+    latency: "8s"      # 8 second delay per database operation
+    jitter: "2s"       # Random variation ±2s
+    correlation: "0"   # No correlation between delays
+  direction: from      # Only affect traffic FROM applications TO database
+  target:
+    mode: all
+    selector:
+      namespaces: ["default"]
+      # Target multiple services that use the database
+      expressionSelectors:
+        - key: "app"
+          operator: In
+          values: ["ts-order-service", "ts-preserve-service", "ts-user-service"]

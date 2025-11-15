@@ -1,0 +1,19 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: preserve-disk-io-stress-alt
+  namespace: chaos-mesh
+  labels:
+    experiment_id: "chaos-preserve-disk-io-stress-alt"
+    anomaly_level: "performance"
+    anomaly_type: "disk_io_stress"
+    target_service: "ts-preserve-service"
+spec:
+  mode: fixed-percent
+  value: "100"  # Affect all preserve service pods
+  selector:
+    namespaces: ["default"]
+    labelSelectors:
+      app: "ts-preserve-service"
+  # No duration = runs until manually stopped
+  stressngStressors: "--iomix 2 --iomix-bytes 1G --timeout 0"
