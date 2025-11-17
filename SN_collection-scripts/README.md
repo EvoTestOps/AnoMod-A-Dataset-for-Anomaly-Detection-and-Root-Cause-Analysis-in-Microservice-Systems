@@ -30,7 +30,7 @@
 - **Canonical storage**: the curated dataset for this project resides under `AnoMod/SN_data`, mirroring the modality folders described above. Point `${DATA_ARCHIVE_ROOT}` to this location when reproducing the release layout.
 
 ### 4. Environment Configuration
-- **System requirements**: Linux x86-64, 16+GB RAM, Docker 24+, Docker Compose v1 or v2, Python 3.9+, Node Exporter/Prometheus stack for metrics, ChaosBlade 1.7.4, wrk2, EvoMaster (Docker image `webfuzzing/evomaster`).
+- **System requirements**: Linux x86-64, 16+GB RAM, Docker 24+, Docker Compose, Python 3.9+, Node Exporter/Prometheus stack for metrics, ChaosBlade 1.7.4, wrk2, EvoMaster (Docker image `webfuzzing/evomaster`).
 - **Core dependencies**:
   - Shell utilities: `jq`, `tcpdump`, `tshark`, `curl`.
   - Python packages: `requests`, `aiohttp`, `pandas`, `numpy`, `timeout_decorator`.
@@ -88,14 +88,6 @@
   - Coverage collector waits for exec dumps and confirms move to `${DATASET_STORAGE_DIR}/coverage_data`.
 
 ### 7. Technical Architecture
-```
-[Chaos Selector] -> [automated_multimodal_collection.sh] -> [collect_all_data.sh]
-      |                        |                                   |
-      v                        v                                   v
-[ChaosBlade CLI]      [EvoMaster | wrk2]                [Dataset/* collectors]
-      |                        |                                   |
-      +------------> [Dockerized SocialNetwork] <------------------+
-```
 - **Modules**:
   - *Trigger layer*: EvoMaster suites (`BlackBox_tests/...`) and wrk2 Lua workload.
   - *Chaos layer*: ChaosBlade CPU/network/disk/service/database primitives.
